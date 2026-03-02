@@ -1,0 +1,1 @@
+These projects deepen my understanding of AI and prompt engineering. I iteratively generate, review, and edit code, ensuring I fully understand each line while refining my prompts to improve outcomes.
