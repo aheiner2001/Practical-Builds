@@ -1,7 +1,7 @@
 # CSE310-S1 Cloud Databases
 
 ## Repository
-[View Repository Here](https://github.com/aheiner2001/cse310-s1-cloud-databases/tree/main)
+[Cloud Todo](https://github.com/aheiner2001/cse310-s1-cloud-databases/tree/main)
 
 **Built with a team**
 
