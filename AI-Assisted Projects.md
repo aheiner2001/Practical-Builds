@@ -1,4 +1,6 @@
 These projects deepen my understanding of AI and prompt engineering. I iteratively generate, review, and edit code, ensuring I fully understand each line while refining my prompts to improve outcomes.
+### Custom AI Agent
+[AI Agents Repository](https://github.com/aheiner2001/AI-agents)
 
 ### Multi StopWatch Tool
 - A versatile stopwatch with visual timers and customizable goals (e.g., 30 min, 15 sec, 2 hours). Simply type your desired duration.  
