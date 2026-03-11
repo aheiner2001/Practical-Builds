@@ -1,3 +1,3 @@
 ### Problems
 
-*   lsr -monet tracker
+* money tracker
