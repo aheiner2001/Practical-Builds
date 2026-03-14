@@ -5,4 +5,5 @@
 * work inventory managment (what tools do i have, repairs needed)
 * unfocused scrolling(
 * customer time estimation. ML model
+* Data pipeline
 * 
