@@ -6,14 +6,14 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Tabl
 from reportlab.lib.units import inch
 from io import BytesIO
 from PIL import Image as PILImage, ImageOps
+import base64
 
 # --- Configuration ---
 DUSTY_BLUE = colors.Color(0.28, 0.44, 0.53) # RGB: 72, 112, 135
 WHITE = colors.white
 
-def create_pdf(name, phone, before_imgs, after_imgs):
+def create_pdf(name, phone, notes, before_imgs, after_imgs): # Added 'notes' parameter
     buffer = BytesIO()
-    # Bottom margin increased to 70 to make room for the footer
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=70)
     story = []
     styles = getSampleStyleSheet()
@@ -27,6 +27,11 @@ def create_pdf(name, phone, before_imgs, after_imgs):
         'SectionStyle', parent=styles['Heading2'], fontSize=14, textColor=WHITE, 
         backColor=DUSTY_BLUE, borderPadding=6, spaceBefore=15, spaceAfter=12, alignment=1
     )
+    # Style for the notes text
+    notes_style = ParagraphStyle(
+        'NotesStyle', parent=styles['Normal'], fontSize=11, leading=14, 
+        textColor=colors.black, leftIndent=10, rightIndent=10
+    )
     footer_style = ParagraphStyle(
         'FooterStyle', parent=styles['Normal'], fontSize=12, textColor=WHITE, 
         backColor=DUSTY_BLUE, borderPadding=10, alignment=1
@@ -37,7 +42,14 @@ def create_pdf(name, phone, before_imgs, after_imgs):
     story.append(Paragraph(f"<b>Customer:</b> {name.upper()} &nbsp;&nbsp; | &nbsp;&nbsp; <b>Phone:</b> {phone}", styles['Normal']))
     story.append(Spacer(1, 0.2 * inch))
 
-    # 2. Image Processing Logic (with Rotation Fix)
+    # --- NEW: Notes Section ---
+    if notes:
+        story.append(Paragraph("JOB NOTES & OBSERVATIONS", section_style))
+        # We put notes in a simple table to give it a slight border/structure if desired
+        story.append(Paragraph(notes.replace('\n', '<br/>'), notes_style))
+        story.append(Spacer(1, 0.2 * inch))
+
+    # 2. Image Processing Logic
     def add_image_section(label, files):
         if not files: return
         story.append(Paragraph(label, section_style))
@@ -45,16 +57,12 @@ def create_pdf(name, phone, before_imgs, after_imgs):
         row = []
         
         for uploaded_file in files:
-            # FIX: Open and correct orientation
             img = PILImage.open(uploaded_file)
             img = ImageOps.exif_transpose(img) 
-            
-            # Save corrected image to a temporary buffer
             img_tmp = BytesIO()
             img.save(img_tmp, format="PNG")
             img_tmp.seek(0)
 
-            # Standardize sizing for a 2-column layout
             aspect = img.height / float(img.width)
             width = 3.1 * inch
             height = width * aspect
@@ -66,7 +74,7 @@ def create_pdf(name, phone, before_imgs, after_imgs):
                 grid_data.append(row)
                 row = []
         
-        if row: # Add remaining image
+        if row:
             row.append("")
             grid_data.append(row)
 
@@ -78,16 +86,14 @@ def create_pdf(name, phone, before_imgs, after_imgs):
         ]))
         story.append(t)
 
-    # Add the sections
     add_image_section("BEFORE SERVICE", before_imgs)
     story.append(Spacer(1, 0.2 * inch))
     add_image_section("AFTER SERVICE", after_imgs)
 
-    # 3. Professional "Thank You" Footer
+    # 3. Footer
     story.append(Spacer(1, 0.5 * inch))
     story.append(Paragraph("THANK YOU FOR YOUR BUSINESS! WE APPRECIATE YOU.", footer_style))
 
-    # Build PDF
     doc.build(story)
     pdf_out = buffer.getvalue()
     buffer.close()
@@ -96,7 +102,6 @@ def create_pdf(name, phone, before_imgs, after_imgs):
 # --- Streamlit UI ---
 st.set_page_config(page_title="Pro Window Report", page_icon="🧽")
 
-# Custom CSS for that Dusty Blue feel in the app itself
 st.markdown("""
     <style>
     .stButton>button { background-color: #487087; color: white; width: 100%; border-radius: 8px; height: 3em; font-weight: bold; }
@@ -109,22 +114,25 @@ st.title("🧽 Report Generator")
 name = st.text_input("Customer Name", placeholder="John Smith")
 phone = st.text_input("Customer Phone", placeholder="(555) 000-0000")
 
+# NEW: Note section in UI
+job_notes = st.text_area("Job Notes", placeholder="E.g., Cleared hard water stains on west side, noted small screen tear in kitchen...")
+
 col1, col2 = st.columns(2)
 with col1:
     before = st.file_uploader("Before Photos", accept_multiple_files=True)
 with col2:
     after = st.file_uploader("After Photos", accept_multiple_files=True)
-import base64
 
 def display_pdf(pdf_bytes):
-    # Encode the PDF to base64 for embedding in an iframe
     base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="700" height="1000" type="application/pdf"></iframe>'
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
     st.markdown(pdf_display, unsafe_allow_html=True)
+
 if st.button("GENERATE PROFESSIONAL PDF"):
     if name:
-        with st.spinner("Processing images and generating report..."):
-            pdf_data = create_pdf(name, phone, before, after)
+        with st.spinner("Processing..."):
+            # Pass job_notes to the function
+            pdf_data = create_pdf(name, phone, job_notes, before, after)
             st.success("Report Generated!")
             st.download_button(
                 label="📥 Download PDF Report",
@@ -132,6 +140,7 @@ if st.button("GENERATE PROFESSIONAL PDF"):
                 file_name=f"Report_{name.replace(' ', '_')}.pdf",
                 mime="application/pdf"
             )
-           
+            st.divider()
+            display_pdf(pdf_data)
     else:
         st.error("Please enter a Customer Name to continue.")
