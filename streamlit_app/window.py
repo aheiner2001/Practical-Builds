@@ -120,22 +120,30 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     ))
 
     # Customer info box
-    customer_table = Table([
-        [Paragraph(f"<b>Customer:</b> {name}"),
-         Paragraph(f"<b>Phone:</b> {phone}", info_style)]
-    ], colWidths=[3.4*inch, 3.4*inch])
+    # customer_table = Table([
+    story.append(Paragraph(f"<b>Customer:</b> {name}", ParagraphStyle(
+        'HeaderSub',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=ACCENT,
+        alignment=1,
+        spaceAfter=10,
+        fontName='Helvetica-Bold'
+    ))
+         # Paragraph(f"<b>Phone:</b> {phone}", info_style)]
+    # ], colWidths=[3.4*inch, 3.4*inch])
 
-    customer_table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), LIGHT_BG),
-        ('BOX', (0,0), (-1,-1), 0.5, SLATE),
-        ('INNERGRID', (0,0), (-1,-1), 0.25, SLATE),
-        ('LEFTPADDING', (0,0), (-1,-1), 10),
-        ('RIGHTPADDING', (0,0), (-1,-1), 10),
-        ('TOPPADDING', (0,0), (-1,-1), 8),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 8),
-    ]))
+    # customer_table.setStyle(TableStyle([
+    #     ('BACKGROUND', (0,0), (-1,-1), LIGHT_BG),
+    #     ('BOX', (0,0), (-1,-1), 0.5, SLATE),
+    #     ('INNERGRID', (0,0), (-1,-1), 0.25, SLATE),
+    #     ('LEFTPADDING', (0,0), (-1,-1), 10),
+    #     ('RIGHTPADDING', (0,0), (-1,-1), 10),
+    #     ('TOPPADDING', (0,0), (-1,-1), 8),
+    #     ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+    # ]))
 
-    story.append(customer_table)
+    # story.append(customer_table)
 
     # --- NOTES ---
     if notes:
