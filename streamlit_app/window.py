@@ -164,7 +164,7 @@ if st.button("GENERATE PROFESSIONAL PDF"):
                 file_name=f"Report_{name.replace(' ', '_')}.pdf",
                 mime="application/pdf"
             )
-            st.divider()
-            display_pdf(pdf_data)
+            
+            
     else:
         st.error("Please enter a Customer Name to continue.")
