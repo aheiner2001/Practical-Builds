@@ -85,7 +85,13 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         spaceAfter=10,
         fontName='Helvetica-Bold'
     )
-
+    center_info = ParagraphStyle(
+    'CenterInfo',
+    parent=info_style,
+    alignment=1,  # center
+    spaceBefore=10,
+    spaceAfter=10
+)
     info_style = ParagraphStyle(
         'Info',
         parent=styles['Normal'],
@@ -147,16 +153,29 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     story.append(Spacer(1, 0.4*inch))
       # --- REVIEW SECTION ---
     review_url = "https://share.google/KKCvRlDReYr8iJceZ"
-    story.append(Paragraph(
-        f"""
-        It would mean a lot if you left a review!<br/>
-        If you mention <b>Aaron</b>, it would help even more! <br/><br/>
-        <font color="#448AFF">
-        <a href="{review_url}"><b>Leave a review here</b></a>
-        </font>
-        """,
-        info_style
-    ))
+  review_para = Paragraph(
+    f"""
+    It would mean a lot if you left a review!<br/>
+    If you mention <b>Aaron</b>, it would help even more!<br/><br/>
+    <font color="#448AFF">
+    <a href="{review_url}"><b>Leave a review here</b></a>
+    </font>
+    """,
+    center_info
+)
+
+review_box = Table([[review_para]], colWidths=[6.8*inch])
+
+review_box.setStyle(TableStyle([
+    ('BOX', (0,0), (-1,-1), 1, ACCENT),
+    ('DASHED', (0,0), (-1,-1), 1, ACCENT),  # dashed border
+    ('LEFTPADDING', (0,0), (-1,-1), 12),
+    ('RIGHTPADDING', (0,0), (-1,-1), 12),
+    ('TOPPADDING', (0,0), (-1,-1), 10),
+    ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+]))
+
+story.append(review_box)
     # --- NOTES ---
     
     if notes:
