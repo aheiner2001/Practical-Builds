@@ -117,7 +117,6 @@ if st.button("GENERATE CLEAN PDF"):
             pdf = create_pdf(name, phone, notes, before, after, city)
             st.success("Report Ready!")
             st.download_button("📥 Download PDF", pdf, f"Glide_Report_{name}.pdf", "application/pdf")
-            st.divider()
-            st.markdown(f'<iframe src="data:application/pdf;base64,{base64.b64encode(pdf).decode()}" width="100%" height="800"></iframe>', unsafe_allow_html=True)
+            
     else: 
         st.error("Please provide a Customer Name.")
