@@ -91,7 +91,8 @@ if "messages" not in st.session_state:
 
 def get_gemini_response(prompt, chat_history):
     # Pass the context to Gemini
-    response = model.generate_content(f"Answer this pizza question: {prompt}")
+    context = "i am a oggie boogie bean boy"
+    response = model.generate_content(f"Answer this quesiton very promptly and quick using this contect:{context} here is the question: {prompt}")
     return response.text
 
 # 4. PAGE CONTENT
