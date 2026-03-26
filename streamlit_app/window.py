@@ -102,10 +102,34 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs): # Added 'notes' par
 # --- Streamlit UI ---
 st.set_page_config(page_title="Pro Window Report", page_icon="🧽")
 
-st.markdown("""
+# Custom CSS for that Dusty Blue feel and fixing the red outline
+st.markdown(f"""
     <style>
-    .stButton>button { background-color: #487087; color: white; width: 100%; border-radius: 8px; height: 3em; font-weight: bold; }
-    header {visibility: hidden;}
+    /* 1. Style the buttons */
+    .stButton>button {{ 
+        background-color: #487087; 
+        color: white; 
+        width: 100%; 
+        border-radius: 8px; 
+        height: 3em; 
+        font-weight: bold; 
+        border: none;
+    }}
+    
+    /* 2. Change the border color when you CLICK into a box (Focus) */
+    .stTextInput div[data-baseweb="input"], .stTextArea div[data-baseweb="base-input"] {{
+        border-color: #e0e0e0; /* Default border color when not selected */
+    }}
+
+    /* This part removes the red/orange and replaces it with Dusty Blue */
+    .stTextInput div[data-baseweb="input"]:focus-within, 
+    .stTextArea div[data-baseweb="base-input"]:focus-within {{
+        border-color: #487087 !important;
+        box-shadow: 0 0 0 1px #487087 !important;
+    }}
+
+    /* 3. Hide the Streamlit header for a cleaner look */
+    header {{visibility: hidden;}}
     </style>
     """, unsafe_allow_html=True)
 
