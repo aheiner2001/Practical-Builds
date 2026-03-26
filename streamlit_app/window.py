@@ -125,7 +125,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         'HeaderSub',
         parent=styles['Normal'],
         fontSize=11,
-        textColor=ACCENT,
+        textColor=NAVY,
         alignment=1,
         spaceAfter=10,
         fontName='Helvetica-Bold'
