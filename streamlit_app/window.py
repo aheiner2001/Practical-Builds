@@ -20,11 +20,7 @@ WHITE = colors.white
 def get_weather(city):
     """Fetches simple weather via Open-Meteo (No API Key needed)"""
     try:
-        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=en&format=json"
-        geo_res = requests.get(geo_url).json()
-        if not geo_res.get('results'): return "Weather: N/A"
-        
-        # 40.0966° N is positive, 111.5707° W is negative
+        # Defaulting to Rexburg coordinates as requested
         lat = 40.0966
         lon = -111.5707
         weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&temperature_unit=fahrenheit"
@@ -40,7 +36,6 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     story, styles = [], getSampleStyleSheet()
 
     # --- TIMEZONE FIX ---
-    # Forces the server to use Mountain Time instead of UTC
     local_tz = pytz.timezone('US/Mountain')
     now_local = datetime.now(local_tz)
     submit_time = now_local.strftime("%B %d, %Y at %I:%M %p")
@@ -93,7 +88,8 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     story.append(Spacer(1, 0.3*inch))
     story.append(Paragraph("GLIDE WINDOW CLEANING • REXBURG, ID", ParagraphStyle('F', parent=styles['Normal'], fontSize=8, textColor=SLATE, alignment=1)))
 
-    doc.build(story); return buffer.getvalue()
+    doc.build(story)
+    return buffer.getvalue()
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="Glide Report Generator", layout="centered")
@@ -101,23 +97,27 @@ st.markdown("<style>.stButton>button { background-color: #2C3E50; color: white; 
 
 st.title("📄 Service Report Generator")
 
-
+# User Inputs
 name = st.text_input("Customer Name")
-
-
 phone = st.text_input("Customer Phone")
 notes = st.text_area("Job Notes & Observations")
 
+# Hardcoded city since the input was removed
+city = "Rexburg"
+
 c1, c2 = st.columns(2)
-with c1: before = st.file_uploader("Before Photos", accept_multiple_files=True)
-with c2: after = st.file_uploader("After Photos", accept_multiple_files=True)
+with c1: 
+    before = st.file_uploader("Before Photos", accept_multiple_files=True)
+with c2: 
+    after = st.file_uploader("After Photos", accept_multiple_files=True)
 
 if st.button("GENERATE CLEAN PDF"):
-    
+    if name: # Only check for name now
         with st.spinner("Processing..."):
             pdf = create_pdf(name, phone, notes, before, after, city)
             st.success("Report Ready!")
             st.download_button("📥 Download PDF", pdf, f"Glide_Report_{name}.pdf", "application/pdf")
             st.divider()
             st.markdown(f'<iframe src="data:application/pdf;base64,{base64.b64encode(pdf).decode()}" width="100%" height="800"></iframe>', unsafe_allow_html=True)
-    else: st.error("Please provide Name and City.")
+    else: 
+        st.error("Please provide a Customer Name.")
