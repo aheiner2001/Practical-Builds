@@ -114,7 +114,13 @@ with col1:
     before = st.file_uploader("Before Photos", accept_multiple_files=True)
 with col2:
     after = st.file_uploader("After Photos", accept_multiple_files=True)
+import base64
 
+def display_pdf(pdf_bytes):
+    # Encode the PDF to base64 for embedding in an iframe
+    base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="700" height="1000" type="application/pdf"></iframe>'
+    st.markdown(pdf_display, unsafe_allow_html=True)
 if st.button("GENERATE PROFESSIONAL PDF"):
     if name:
         with st.spinner("Processing images and generating report..."):
