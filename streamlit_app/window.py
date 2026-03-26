@@ -177,7 +177,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     # --- NOTES ---
     if notes:
         story.append(Paragraph("JOB NOTES", header_style))
-        story.append(HRFlowable(width="100%", thickness=1, color=GREEN, spaceBefore=2, spaceAfter=6))
+    
 
         notes_table = Table([
             [Paragraph(notes.replace('\n', '<br/>'), info_style)]
