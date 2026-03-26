@@ -101,7 +101,7 @@ st.markdown("<style>.stButton>button { background-color: #2C3E50; color: white; 
 
 st.title("📄 Service Report Generator")
 
-c_meta1, c_meta2 = st.columns(2)
+
 with c_meta1: name = st.text_input("Customer Name")
 
 
