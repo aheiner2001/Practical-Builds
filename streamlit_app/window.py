@@ -102,7 +102,7 @@ st.markdown("<style>.stButton>button { background-color: #2C3E50; color: white; 
 st.title("📄 Service Report Generator")
 
 
-with c_meta1: name = st.text_input("Customer Name")
+name = st.text_input("Customer Name")
 
 
 phone = st.text_input("Customer Phone")
