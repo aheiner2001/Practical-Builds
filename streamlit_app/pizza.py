@@ -11,7 +11,7 @@ try:
     genai.configure(api_key=GOOGLE_API_KEY)
     # Try the absolute model path
     # Use the direct stable string for the 2.5 series
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-2.5-flash')
 except Exception as e:
     st.error("API Key not found. Please add GOOGLE_API_KEY to your Streamlit Secrets.")
 
