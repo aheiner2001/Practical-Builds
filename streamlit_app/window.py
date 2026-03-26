@@ -206,8 +206,8 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         """,
         info_style
     ))
-    add_imgs("BEFORE PHOTOS", before_imgs)
-    add_imgs("AFTER PHOTOS", after_imgs)
+    add_imgs("BEFORE – FEATURED PHOTOS", before_imgs)
+    add_imgs("AFTER – FEATURED PHOTOS", after_imgs)
 
  
 
