@@ -53,8 +53,13 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs):
     service_text = f"""
     <b>Serviced by:</b> Aaron Heiner<br/>
     <b>Customer:</b> {name.upper()} &nbsp;&nbsp; | &nbsp;&nbsp; <b>Phone:</b> {phone}<br/>
-    <a href="{review_url}" color="#487087"><u>It would help me a ton if you could leave a review for Glide Window Cleaning! If you could mention my name (Aaron) in the review, it helps me out even more. Thank you for your support!"</u></a>
-    """
+  # --- UPDATED REVIEW SECTION WITH SEPARATE LINES ---
+review_url = "https://www.google.com/search?q=Glide+Window+Cleaning+Reviews"
+note = f"""
+<b>A Note from Aaron Heiner:</b><br/>
+It would help me a ton if you could leave a review for Glide Window Cleaning! If you could mention my name (Aaron) in the review, it helps me out even more. Thank you for your support!<br/>
+<a href="{review_url}" color="#487087"><b><u>Please leave a review!</u></b></a>
+"""
     story.append(Paragraph(service_text, info_style))
     story.append(Spacer(1, 0.1 * inch))
 
