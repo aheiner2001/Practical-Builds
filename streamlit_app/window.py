@@ -142,7 +142,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     #     ('TOPPADDING', (0,0), (-1,-1), 8),
     #     ('BOTTOMPADDING', (0,0), (-1,-1), 8),
     # ]))
-
+                )
     # story.append(customer_table)
 
     # --- NOTES ---
