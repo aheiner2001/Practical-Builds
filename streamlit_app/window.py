@@ -27,6 +27,17 @@ def get_weather(city):
     except:
         return "Weather unavailable"
 
+# --- Theme Setup ---
+NAVY = colors.HexColor("#1F3A5F")
+SLATE = colors.HexColor("#6B7A8F")
+LIGHT_BG = colors.HexColor("#F4F7FB")
+ACCENT = colors.HexColor("#448AFF")
+
+# NEW COLORS
+GREEN = colors.HexColor("#2E7D32")
+LIGHT_GREEN_BG = colors.HexColor("#E8F5E9")
+CTA_BORDER = colors.HexColor("#E5533D")  # orange/red
+
 def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     buffer = BytesIO()
 
@@ -85,13 +96,17 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         spaceAfter=10
     )
 
+    # ✅ GREEN SECTION HEADERS
     header_style = ParagraphStyle(
         'HeaderSub',
         parent=styles['Normal'],
         fontSize=11,
-        textColor=ACCENT,
+        textColor=GREEN,
+        backColor=LIGHT_GREEN_BG,
         alignment=0,
+        spaceBefore=20,
         spaceAfter=10,
+        leftIndent=6,
         fontName='Helvetica-Bold'
     )
 
@@ -147,14 +162,17 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     review_box = Table([[review_para]], colWidths=[6.8*inch])
 
     review_box.setStyle(TableStyle([
-        ('BOX', (0,0), (-1,-1), 1, ACCENT),
-        ('LEFTPADDING', (0,0), (-1,-1), 12),
-        ('RIGHTPADDING', (0,0), (-1,-1), 12),
-        ('TOPPADDING', (0,0), (-1,-1), 10),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+        ('BOX', (0,0), (-1,-1), 1.2, CTA_BORDER),
+        ('LEFTPADDING', (0,0), (-1,-1), 14),
+        ('RIGHTPADDING', (0,0), (-1,-1), 14),
+        ('TOPPADDING', (0,0), (-1,-1), 12),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 12),
     ]))
 
     story.append(review_box)
+
+    # ✅ SPACE AFTER REVIEW BOX
+    story.append(Spacer(1, 0.35*inch))
 
     # --- NOTES ---
     if notes:
@@ -204,10 +222,13 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
 
         table.setStyle(TableStyle([
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 12),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 14),
         ]))
 
         story.append(table)
+
+        # ✅ SPACE AFTER EACH IMAGE SECTION
+        story.append(Spacer(1, 0.25*inch))
 
     # --- IMAGES ---
     add_imgs("BEFORE – FEATURED PHOTOS", before_imgs)
