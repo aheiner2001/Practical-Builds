@@ -145,7 +145,8 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
                 )
     # story.append(customer_table)
     story.append(Spacer(1, 0.4*inch))
-
+      # --- REVIEW SECTION ---
+    review_url = "https://share.google/KKCvRlDReYr8iJceZ"
     story.append(Paragraph(
         f"""
         It would mean a lot if you left a review!<br/>
@@ -227,8 +228,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         story.append(table)
 
     # --- IMAGES ---
-       # --- REVIEW SECTION ---
-    review_url = "https://share.google/KKCvRlDReYr8iJceZ"
+     
 
   
     add_imgs("BEFORE – FEATURED PHOTOS", before_imgs)
