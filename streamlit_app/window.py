@@ -49,8 +49,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs):
     # 1. Header Section
     story.append(Paragraph("WINDOW WASHING REPORT", title_style))
     
-    review_url = "https://share.google/jPmaCiXb5TcV3MCwu"
-    service_text = f"""
+    
     <b>Serviced by:</b> Aaron Heiner<br/>
     <b>Customer:</b> {name.upper()} &nbsp;&nbsp; | &nbsp;&nbsp; <b>Phone:</b> {phone}<br/>
   # --- UPDATED REVIEW SECTION WITH SEPARATE LINES ---
