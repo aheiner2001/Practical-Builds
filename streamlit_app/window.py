@@ -136,5 +136,4 @@ if st.button("GENERATE PROFESSIONAL PDF"):
             st.subheader("Report Preview")
             display_pdf(pdf_data)
     else:
-    else:
         st.error("Please enter a Customer Name to continue.")
