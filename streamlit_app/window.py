@@ -34,9 +34,9 @@ LIGHT_BG = colors.HexColor("#F4F7FB")
 ACCENT = colors.HexColor("#448AFF")
 
 # NEW COLORS
-GREEN = colors.HexColor("#2E7D32")
-LIGHT_GREEN_BG = colors.HexColor("#E8F5E9")
-CTA_BORDER = colors.HexColor("#E5533D")  # orange/red
+GREEN = colors.HexColor("#1F3A5F")
+
+CTA_BORDER = colors.HexColor("#1F3A5F")  # orange/red
 
 def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     buffer = BytesIO()
@@ -102,7 +102,6 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         parent=styles['Normal'],
         fontSize=11,
         textColor=GREEN,
-        backColor=LIGHT_GREEN_BG,
         alignment=0,
         spaceBefore=20,
         spaceAfter=10,
