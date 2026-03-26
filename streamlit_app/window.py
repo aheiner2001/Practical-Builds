@@ -183,7 +183,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         alignment=1,
         spaceAfter=10,
         fontName='Helvetica-Bold'
-    ))
+    )))
 
         grid = []
         row = []
