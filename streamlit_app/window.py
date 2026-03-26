@@ -24,7 +24,6 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs):
         spaceAfter=15, fontName='Helvetica-Bold'
     )
     
-    # NEW: Cleaner Section Header Style (Bordered)
     section_style = ParagraphStyle(
         'SectionStyle', parent=styles['Heading2'], fontSize=12, textColor=DUSTY_BLUE, 
         backColor=colors.whitesmoke, borderColor=DUSTY_BLUE, borderWidth=1,
@@ -49,29 +48,26 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs):
     # 1. Header Section
     story.append(Paragraph("WINDOW WASHING REPORT", title_style))
     
+    # --- FIXED REVIEW & SERVICE SECTION ---
+    review_url = "https://www.google.com/search?q=Glide+Window+Cleaning+Reviews"
     
+    service_text = f"""
     <b>Serviced by:</b> Aaron Heiner<br/>
-    <b>Customer:</b> {name.upper()} &nbsp;&nbsp; | &nbsp;&nbsp; <b>Phone:</b> {phone}<br/>
-  # --- UPDATED REVIEW SECTION WITH SEPARATE LINES ---
-review_url = "https://www.google.com/search?q=Glide+Window+Cleaning+Reviews"
-note = f"""
-<b>A Note from Aaron Heiner:</b><br/>
-It would help me a ton if you could leave a review for Glide Window Cleaning! If you could mention my name (Aaron) in the review, it helps me out even more. Thank you for your support!<br/>
-<a href="{review_url}" color="#487087"><b><u>Please leave a review!</u></b></a>
-"""
+    <b>Customer:</b> {name.upper()} &nbsp;&nbsp; | &nbsp;&nbsp; <b>Phone:</b> {phone}<br/><br/>
+    It would help me a ton if you could leave a review for Glide Window Cleaning! If you could mention my name (Aaron) in the review, it helps me out even more. Thank you for your support!<br/>
+    <a href="{review_url}" color="#487087"><b><u>Please leave a review!</u></b></a>
+    """
+    
     story.append(Paragraph(service_text, info_style))
     story.append(Spacer(1, 0.1 * inch))
 
     # 2. JOB NOTES (Boxed Section)
     if notes:
         story.append(Paragraph("JOB NOTES & OBSERVATIONS", section_style))
-        
-        # Wrapping notes in a table to create a clean border box
         notes_data = [[Paragraph(notes.replace('\n', '<br/>'), notes_style)]]
         notes_table = Table(notes_data, colWidths=[6.8 * inch])
         notes_table.setStyle(TableStyle([
             ('BOX', (0,0), (-1,-1), 0.5, colors.lightgrey),
-            ('INNERGRID', (0,0), (-1,-1), 0.5, colors.lightgrey),
             ('LEFTPADDING', (0,0), (-1,-1), 15),
             ('RIGHTPADDING', (0,0), (-1,-1), 15),
             ('TOPPADDING', (0,0), (-1,-1), 10),
@@ -128,13 +124,12 @@ It would help me a ton if you could leave a review for Glide Window Cleaning! If
     pdf_out = buffer.getvalue()
     buffer.close()
     return pdf_out
+
 # --- Streamlit UI ---
 st.set_page_config(page_title="Pro Window Report", page_icon="🧽")
 
-# Custom CSS for that Dusty Blue feel and fixing the red outline
 st.markdown(f"""
     <style>
-    /* 1. Style the buttons */
     .stButton>button {{ 
         background-color: #487087; 
         color: white; 
@@ -144,20 +139,14 @@ st.markdown(f"""
         font-weight: bold; 
         border: none;
     }}
-    
-    /* 2. Change the border color when you CLICK into a box (Focus) */
     .stTextInput div[data-baseweb="input"], .stTextArea div[data-baseweb="base-input"] {{
-        border-color: #e0e0e0; /* Default border color when not selected */
+        border-color: #e0e0e0;
     }}
-
-    /* This part removes the red/orange and replaces it with Dusty Blue */
     .stTextInput div[data-baseweb="input"]:focus-within, 
     .stTextArea div[data-baseweb="base-input"]:focus-within {{
         border-color: #487087 !important;
         box-shadow: 0 0 0 1px #487087 !important;
     }}
-
-    /* 3. Hide the Streamlit header for a cleaner look */
     header {{visibility: hidden;}}
     </style>
     """, unsafe_allow_html=True)
@@ -166,9 +155,7 @@ st.title("🧽 Report Generator")
 
 name = st.text_input("Customer Name", placeholder="John Smith")
 phone = st.text_input("Customer Phone", placeholder="(555) 000-0000")
-
-# NEW: Note section in UI
-job_notes = st.text_area("Job Notes", placeholder="E.g., Cleared hard water stains on west side, noted small screen tear in kitchen...")
+job_notes = st.text_area("Job Notes", placeholder="E.g., Cleared hard water stains...")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -184,7 +171,6 @@ def display_pdf(pdf_bytes):
 if st.button("GENERATE PROFESSIONAL PDF"):
     if name:
         with st.spinner("Processing..."):
-            # Pass job_notes to the function
             pdf_data = create_pdf(name, phone, job_notes, before, after)
             st.success("Report Generated!")
             st.download_button(
@@ -193,7 +179,7 @@ if st.button("GENERATE PROFESSIONAL PDF"):
                 file_name=f"Report_{name.replace(' ', '_')}.pdf",
                 mime="application/pdf"
             )
-            
-            
+            st.divider()
+            display_pdf(pdf_data)
     else:
         st.error("Please enter a Customer Name to continue.")
