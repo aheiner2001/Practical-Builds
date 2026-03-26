@@ -12,10 +12,10 @@ from PIL import Image as PILImage, ImageOps
 import base64
 
 # --- Theme Setup ---
-NAVY = colors.Color(0.05, 0.08, 0.12)
-SLATE = colors.Color(0.44, 0.50, 0.56)
-LIGHT_BG = colors.Color(0.98, 0.98, 0.98)
-WHITE = colors.white
+NAVY = colors.HexColor("#1F3A5F")
+SLATE = colors.HexColor("#6B7A8F")
+LIGHT_BG = colors.HexColor("#F4F7FB")
+ACCENT = colors.HexColor("#448AFF")
 
 def get_weather(city):
     """Fetches simple weather via Open-Meteo (No API Key needed)"""
@@ -30,65 +30,192 @@ def get_weather(city):
     except:
         return "Weather: Data unavailable"
 
+
 def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=70)
-    story, styles = [], getSampleStyleSheet()
 
-    # --- TIMEZONE FIX ---
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=50,
+        leftMargin=50,
+        topMargin=50,
+        bottomMargin=70
+    )
+
+    story = []
+    styles = getSampleStyleSheet()
+
+    # --- TIMEZONE ---
     local_tz = pytz.timezone('US/Mountain')
     now_local = datetime.now(local_tz)
     submit_time = now_local.strftime("%B %d, %Y at %I:%M %p")
-    
+
     current_weather = get_weather(city)
 
-    # --- Styles ---
-    title_s = ParagraphStyle('T', parent=styles['Heading1'], fontSize=22, textColor=NAVY, spaceAfter=5)
-    meta_s = ParagraphStyle('M', parent=styles['Normal'], fontSize=9, textColor=SLATE, spaceAfter=20)
-    sect_s = ParagraphStyle('S', parent=styles['Heading2'], fontSize=10, textColor=NAVY, backColor=LIGHT_BG, 
-                            borderColor=SLATE, borderWidth=0.5, borderPadding=8, spaceBefore=20, 
-                            spaceAfter=12, fontName='Helvetica-Bold', textTransform='uppercase')
-    info_s = ParagraphStyle('I', parent=styles['Normal'], fontSize=10, leading=14, textColor=NAVY)
+    # --- STYLES ---
 
-    # 1. Header
-    story.append(Paragraph("SERVICE REPORT", title_s))
-    story.append(Paragraph(f"Submitted: {submit_time} | {current_weather}", meta_s))
-    
-    review_url = "https://share.google/KKCvRlDReYr8iJceZ"
-    story.append(Paragraph(f"<b>Customer:</b> {name.upper()} | <b>Phone:</b> {phone}", info_s))
+    title_style = ParagraphStyle(
+        'Title',
+        parent=styles['Heading1'],
+        fontSize=20,
+        textColor=NAVY,
+        alignment=1,  # center
+        spaceAfter=6,
+        fontName='Helvetica-Bold'
+    )
 
-    # 2. Notes
+    subtitle_style = ParagraphStyle(
+        'Subtitle',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=SLATE,
+        alignment=1,
+        spaceAfter=15
+    )
+
+    section_style = ParagraphStyle(
+        'Section',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=NAVY,
+        backColor=LIGHT_BG,
+        borderPadding=6,
+        spaceBefore=18,
+        spaceAfter=10,
+        fontName='Helvetica-Bold'
+    )
+
+    info_style = ParagraphStyle(
+        'Info',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.black,
+        leading=14
+    )
+
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=8,
+        textColor=SLATE,
+        alignment=1
+    )
+
+    # --- HEADER ---
+    story.append(Paragraph("GLIDE WINDOW CLEANING", title_style))
+    story.append(Paragraph("SERVICE REPORT", ParagraphStyle(
+        'HeaderSub',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=ACCENT,
+        alignment=1,
+        spaceAfter=10,
+        fontName='Helvetica-Bold'
+    )))
+
+    story.append(Paragraph(
+        f"{submit_time} • {city} • {current_weather}",
+        subtitle_style
+    ))
+
+    # Customer info box
+    customer_table = Table([
+        [Paragraph(f"<b>Customer:</b> {name}", info_style),
+         Paragraph(f"<b>Phone:</b> {phone}", info_style)]
+    ], colWidths=[3.4*inch, 3.4*inch])
+
+    customer_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), LIGHT_BG),
+        ('BOX', (0,0), (-1,-1), 0.5, SLATE),
+        ('INNERGRID', (0,0), (-1,-1), 0.25, SLATE),
+        ('LEFTPADDING', (0,0), (-1,-1), 10),
+        ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('TOPPADDING', (0,0), (-1,-1), 8),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+    ]))
+
+    story.append(customer_table)
+
+    # --- NOTES ---
     if notes:
-        story.append(Paragraph("JOB NOTES", sect_s))
-        nt = Table([[Paragraph(notes.replace('\n', '<br/>'), info_s)]], colWidths=[6.8*inch])
-        nt.setStyle(TableStyle([('BOX',(0,0),(-1,-1),0.5,SLATE),('LEFTPADDING',(0,0),(-1,-1),12),('TOPPADDING',(0,0),(-1,-1),10),('BOTTOMPADDING',(0,0),(-1,-1),10)]))
-        story.append(nt)
+        story.append(Paragraph("JOB NOTES", section_style))
 
-    # 3. Images
+        notes_table = Table([
+            [Paragraph(notes.replace('\n', '<br/>'), info_style)]
+        ], colWidths=[6.8*inch])
+
+        notes_table.setStyle(TableStyle([
+            ('BOX', (0,0), (-1,-1), 0.5, SLATE),
+            ('LEFTPADDING', (0,0), (-1,-1), 12),
+            ('TOPPADDING', (0,0), (-1,-1), 10),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+        ]))
+
+        story.append(notes_table)
+
+    # --- IMAGE FUNCTION ---
     def add_imgs(label, files):
-        if not files: return
-        story.append(Paragraph(label, sect_s))
-        grid, row = [], []
+        if not files:
+            return
+
+        story.append(Paragraph(label, section_style))
+
+        grid = []
+        row = []
+
         for f in files:
             img = ImageOps.exif_transpose(PILImage.open(f))
-            tmp = BytesIO(); img.save(tmp, format="PNG"); tmp.seek(0)
-            row.append(Image(tmp, width=3.2*inch, height=3.2*inch*(img.height/img.width)))
-            if len(row) == 2: grid.append(row); row = []
-        if row: row.append(""); grid.append(row)
-        t = Table(grid, colWidths=[3.4*inch, 3.4*inch])
-        t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'MIDDLE'),('BOTTOMPADDING',(0,0),(-1,-1),15)]))
-        story.append(t)
+            tmp = BytesIO()
+            img.save(tmp, format="PNG")
+            tmp.seek(0)
 
+            aspect = img.height / img.width
+            row.append(Image(tmp, width=3.2*inch, height=3.2*inch * aspect))
+
+            if len(row) == 2:
+                grid.append(row)
+                row = []
+
+        if row:
+            row.append("")
+            grid.append(row)
+
+        table = Table(grid, colWidths=[3.4*inch, 3.4*inch])
+
+        table.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 12),
+        ]))
+
+        story.append(table)
+
+    # --- IMAGES ---
     add_imgs("BEFORE PHOTOS", before_imgs)
     add_imgs("AFTER PHOTOS", after_imgs)
 
-    # 4. Personal Note & Footer
+    # --- REVIEW SECTION ---
+    review_url = "https://share.google/KKCvRlDReYr8iJceZ"
+
     story.append(Spacer(1, 0.4*inch))
-    story.append(Paragraph(f"It would help me a ton if you could leave a review for Glide Window Cleaning! If you could mention <b>Aaron</b>, it helps me out even more. <a href='{review_url}' color='#448AFF'><b><u>Please leave a review here!</u></b></a>", info_s))
+
+    story.append(Paragraph(
+        f"""
+        It would mean a lot if you left a review!<br/>
+        If you mention <b>Aaron</b>, it helps me personally 🙌<br/><br/>
+        <font color="#448AFF">
+        <a href="{review_url}"><b>Leave a review here</b></a>
+        </font>
+        """,
+        info_style
+    ))
+
+    # --- FOOTER ---
     story.append(Spacer(1, 0.3*inch))
-    story.append(Paragraph("GLIDE WINDOW CLEANING • REXBURG, ID", ParagraphStyle('F', parent=styles['Normal'], fontSize=8, textColor=SLATE, alignment=1)))
+    story.append(Paragraph("REXBURG, ID • GLIDE WINDOW CLEANING", footer_style))
 
     doc.build(story)
+
     return buffer.getvalue()
 
 # --- Streamlit UI ---
