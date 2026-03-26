@@ -126,7 +126,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         parent=styles['Normal'],
         fontSize=11,
         textColor=NAVY,
-        alignment=1,
+        alignment=0,
         spaceAfter=10,
         fontName='Helvetica-Bold'
     ))
@@ -152,7 +152,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         parent=styles['Normal'],
         fontSize=11,
         textColor=ACCENT,
-        alignment=1,
+        alignment=0,
         spaceAfter=10,
         fontName='Helvetica-Bold'
     )))
@@ -180,7 +180,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         parent=styles['Normal'],
         fontSize=11,
         textColor=ACCENT,
-        alignment=1,
+        alignment=0,
         spaceAfter=10,
         fontName='Helvetica-Bold'
     )))
