@@ -176,8 +176,8 @@ st.header("Tutorial Videos")
 
 v1, v2 = st.columns(2)
 with v1:
-    st.video("https://www.instagram.com/reel/DM3K4oouFIp/")
+    st.markdown(f'<iframe src="https://www.instagram.com/reel/DM3K4oouFIp/embed/" width="400" height="480" frameborder="0" scrolling="no" allowtransparency="true"></iframe>', unsafe_allow_html=True)
 with v2:
-    st.video("https://www.instagram.com/reel/DM5g1kbuvZG/")
+    st.markdown(f'<iframe src="https://www.instagram.com/reel/DM5g1kbuvZG/embed/" width="400" height="480" frameborder="0" scrolling="no" allowtransparency="true"></iframe>', unsafe_allow_html=True)
 
 st.markdown('<footer style="text-align:center; padding:4rem; color:var(--muted); font-size:0.8rem;">© 2025 Aaron Heiner</footer>', unsafe_allow_html=True)
