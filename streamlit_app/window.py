@@ -71,7 +71,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         fontSize=9,
         textColor=SLATE,
         alignment=1,
-        spaceAfter=15
+        spaceAfter=10
     )
 
     section_style = ParagraphStyle(
@@ -126,7 +126,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         parent=styles['Normal'],
         fontSize=11,
         textColor=NAVY,
-        alignment=0,
+        alignment=1,
         spaceAfter=10,
         fontName='Helvetica-Bold'
     ))
@@ -144,8 +144,20 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     # ]))
                 )
     # story.append(customer_table)
+    story.append(Spacer(1, 0.4*inch))
 
+    story.append(Paragraph(
+        f"""
+        It would mean a lot if you left a review!<br/>
+        If you mention <b>Aaron</b>, it would help even more! <br/><br/>
+        <font color="#448AFF">
+        <a href="{review_url}"><b>Leave a review here</b></a>
+        </font>
+        """,
+        info_style
+    ))
     # --- NOTES ---
+    
     if notes:
         story.append(Paragraph("JOB NOTES", ParagraphStyle(
         'HeaderSub',
@@ -218,18 +230,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
        # --- REVIEW SECTION ---
     review_url = "https://share.google/KKCvRlDReYr8iJceZ"
 
-    story.append(Spacer(1, 0.4*inch))
-
-    story.append(Paragraph(
-        f"""
-        It would mean a lot if you left a review!<br/>
-        If you mention <b>Aaron</b>, it would help even more! <br/><br/>
-        <font color="#448AFF">
-        <a href="{review_url}"><b>Leave a review here</b></a>
-        </font>
-        """,
-        info_style
-    ))
+  
     add_imgs("BEFORE – FEATURED PHOTOS", before_imgs)
     add_imgs("AFTER – FEATURED PHOTOS", after_imgs)
 
