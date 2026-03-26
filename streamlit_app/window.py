@@ -20,47 +20,63 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs):
 
     # --- Styles ---
     title_style = ParagraphStyle(
-        'TitleStyle', parent=styles['Heading1'], fontSize=26, textColor=DUSTY_BLUE, 
-        spaceAfter=10, fontName='Helvetica-Bold'
+        'TitleStyle', parent=styles['Heading1'], fontSize=28, textColor=DUSTY_BLUE, 
+        spaceAfter=15, fontName='Helvetica-Bold'
     )
+    
+    # NEW: Cleaner Section Header Style (Bordered)
     section_style = ParagraphStyle(
-        'SectionStyle', parent=styles['Heading2'], fontSize=14, textColor=WHITE, 
-        backColor=DUSTY_BLUE, borderPadding=6, spaceBefore=15, spaceAfter=12, alignment=1
+        'SectionStyle', parent=styles['Heading2'], fontSize=12, textColor=DUSTY_BLUE, 
+        backColor=colors.whitesmoke, borderColor=DUSTY_BLUE, borderWidth=1,
+        borderPadding=8, spaceBefore=20, spaceAfter=10, fontName='Helvetica-Bold',
+        alignment=0, borderRadius=4
     )
-    # Style for the service info and review link
+
     info_style = ParagraphStyle(
-        'InfoStyle', parent=styles['Normal'], fontSize=11, leading=14, textColor=colors.black
+        'InfoStyle', parent=styles['Normal'], fontSize=11, leading=16, textColor=colors.black
     )
+    
     notes_style = ParagraphStyle(
-        'NotesStyle', parent=styles['Normal'], fontSize=11, leading=14, 
-        textColor=colors.black, leftIndent=10, rightIndent=10
+        'NotesStyle', parent=styles['Normal'], fontSize=11, leading=15, 
+        textColor=colors.black
     )
+
     footer_style = ParagraphStyle(
-        'FooterStyle', parent=styles['Normal'], fontSize=12, textColor=WHITE, 
-        backColor=DUSTY_BLUE, borderPadding=10, alignment=1
+        'FooterStyle', parent=styles['Normal'], fontSize=11, textColor=WHITE, 
+        backColor=DUSTY_BLUE, borderPadding=10, alignment=1, borderRadius=4
     )
 
     # 1. Header Section
     story.append(Paragraph("WINDOW WASHING REPORT", title_style))
     
-    # --- NEW: Service & Review Section ---
-    review_url = "https://www.google.com/search?q=Glide+Window+Cleaning+Reviews" # Cleaned up base URL
+    review_url = "https://www.google.com/search?q=Glide+Window+Cleaning+Reviews"
     service_text = f"""
     <b>Serviced by:</b> Aaron Heiner<br/>
     <b>Customer:</b> {name.upper()} &nbsp;&nbsp; | &nbsp;&nbsp; <b>Phone:</b> {phone}<br/>
-    It would help out a lot if you left a review for me: 
-    <a href="{review_url}" color="blue"><u>Click here to leave a review!</u></a>
+    <a href="{review_url}" color="#487087"><u>Click here to leave a review for Glide Window Cleaning!</u></a>
     """
     story.append(Paragraph(service_text, info_style))
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.1 * inch))
 
-    # 2. Job Notes Section
+    # 2. JOB NOTES (Boxed Section)
     if notes:
         story.append(Paragraph("JOB NOTES & OBSERVATIONS", section_style))
-        story.append(Paragraph(notes.replace('\n', '<br/>'), notes_style))
-        story.append(Spacer(1, 0.2 * inch))
+        
+        # Wrapping notes in a table to create a clean border box
+        notes_data = [[Paragraph(notes.replace('\n', '<br/>'), notes_style)]]
+        notes_table = Table(notes_data, colWidths=[6.8 * inch])
+        notes_table.setStyle(TableStyle([
+            ('BOX', (0,0), (-1,-1), 0.5, colors.lightgrey),
+            ('INNERGRID', (0,0), (-1,-1), 0.5, colors.lightgrey),
+            ('LEFTPADDING', (0,0), (-1,-1), 15),
+            ('RIGHTPADDING', (0,0), (-1,-1), 15),
+            ('TOPPADDING', (0,0), (-1,-1), 10),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+            ('BACKGROUND', (0,0), (-1,-1), colors.white),
+        ]))
+        story.append(notes_table)
 
-    # 3. Image Processing Logic
+    # 3. Image Processing
     def add_image_section(label, files):
         if not files: return
         story.append(Paragraph(label, section_style))
@@ -75,7 +91,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs):
             img_tmp.seek(0)
 
             aspect = img.height / float(img.width)
-            width = 3.1 * inch
+            width = 3.2 * inch
             height = width * aspect
             
             img_rl = Image(img_tmp, width=width, height=height)
@@ -89,7 +105,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs):
             row.append("")
             grid_data.append(row)
 
-        t = Table(grid_data, colWidths=[3.3 * inch, 3.3 * inch])
+        t = Table(grid_data, colWidths=[3.4 * inch, 3.4 * inch])
         t.setStyle(TableStyle([
             ('ALIGN', (0,0), (-1,-1), 'CENTER'),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -97,12 +113,11 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs):
         ]))
         story.append(t)
 
-    add_image_section("BEFORE SERVICE", before_imgs)
-    story.append(Spacer(1, 0.2 * inch))
-    add_image_section("AFTER SERVICE", after_imgs)
+    add_image_section("BEFORE PHOTOS", before_imgs)
+    add_image_section("AFTER PHOTOS", after_imgs)
 
     # 4. Footer
-    story.append(Spacer(1, 0.5 * inch))
+    story.append(Spacer(1, 0.4 * inch))
     story.append(Paragraph("THANK YOU FOR YOUR BUSINESS! WE APPRECIATE YOU.", footer_style))
 
     doc.build(story)
