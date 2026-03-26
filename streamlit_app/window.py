@@ -12,7 +12,7 @@ import base64
 DUSTY_BLUE = colors.Color(0.28, 0.44, 0.53) # RGB: 72, 112, 135
 WHITE = colors.white
 
-def create_pdf(name, phone, notes, before_imgs, after_imgs): # Added 'notes' parameter
+def create_pdf(name, phone, notes, before_imgs, after_imgs):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=70)
     story = []
@@ -27,7 +27,10 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs): # Added 'notes' par
         'SectionStyle', parent=styles['Heading2'], fontSize=14, textColor=WHITE, 
         backColor=DUSTY_BLUE, borderPadding=6, spaceBefore=15, spaceAfter=12, alignment=1
     )
-    # Style for the notes text
+    # Style for the service info and review link
+    info_style = ParagraphStyle(
+        'InfoStyle', parent=styles['Normal'], fontSize=11, leading=14, textColor=colors.black
+    )
     notes_style = ParagraphStyle(
         'NotesStyle', parent=styles['Normal'], fontSize=11, leading=14, 
         textColor=colors.black, leftIndent=10, rightIndent=10
@@ -39,17 +42,25 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs): # Added 'notes' par
 
     # 1. Header Section
     story.append(Paragraph("WINDOW WASHING REPORT", title_style))
-    story.append(Paragraph(f"<b>Customer:</b> {name.upper()} &nbsp;&nbsp; | &nbsp;&nbsp; <b>Phone:</b> {phone}", styles['Normal']))
+    
+    # --- NEW: Service & Review Section ---
+    review_url = "https://www.google.com/search?q=Glide+Window+Cleaning+Reviews" # Cleaned up base URL
+    service_text = f"""
+    <b>Serviced by:</b> Aaron Heiner<br/>
+    <b>Customer:</b> {name.upper()} &nbsp;&nbsp; | &nbsp;&nbsp; <b>Phone:</b> {phone}<br/>
+    It would help out a lot if you left a review for me: 
+    <a href="{review_url}" color="blue"><u>Click here to leave a review!</u></a>
+    """
+    story.append(Paragraph(service_text, info_style))
     story.append(Spacer(1, 0.2 * inch))
 
-    # --- NEW: Notes Section ---
+    # 2. Job Notes Section
     if notes:
         story.append(Paragraph("JOB NOTES & OBSERVATIONS", section_style))
-        # We put notes in a simple table to give it a slight border/structure if desired
         story.append(Paragraph(notes.replace('\n', '<br/>'), notes_style))
         story.append(Spacer(1, 0.2 * inch))
 
-    # 2. Image Processing Logic
+    # 3. Image Processing Logic
     def add_image_section(label, files):
         if not files: return
         story.append(Paragraph(label, section_style))
@@ -90,7 +101,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs): # Added 'notes' par
     story.append(Spacer(1, 0.2 * inch))
     add_image_section("AFTER SERVICE", after_imgs)
 
-    # 3. Footer
+    # 4. Footer
     story.append(Spacer(1, 0.5 * inch))
     story.append(Paragraph("THANK YOU FOR YOUR BUSINESS! WE APPRECIATE YOU.", footer_style))
 
@@ -98,7 +109,6 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs): # Added 'notes' par
     pdf_out = buffer.getvalue()
     buffer.close()
     return pdf_out
-
 # --- Streamlit UI ---
 st.set_page_config(page_title="Pro Window Report", page_icon="🧽")
 
