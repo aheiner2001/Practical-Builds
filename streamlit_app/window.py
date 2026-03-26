@@ -202,7 +202,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     story.append(Paragraph(
         f"""
         It would mean a lot if you left a review!<br/>
-        If you mention <b>Aaron</b>, it helps me personally 🙌<br/><br/>
+        If you mention <b>Aaron</b>, it would help even more! <br/><br/>
         <font color="#448AFF">
         <a href="{review_url}"><b>Leave a review here</b></a>
         </font>
