@@ -9,7 +9,7 @@ st.set_page_config(page_title="Pizza Cheat Sheet", layout="wide")
 try:
     GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
     genai.configure(api_key=GOOGLE_API_KEY)
-    model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
     st.error("API Key not found. Please add GOOGLE_API_KEY to your Streamlit Secrets.")
 
