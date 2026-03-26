@@ -176,6 +176,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     # --- NOTES ---
     if notes:
         story.append(Paragraph("JOB NOTES", header_style))
+        story.append(Spacer(1, 0.15*inch))  # adds space below
 
         notes_table = Table([
             [Paragraph(notes.replace('\n', '<br/>'), info_style)]
@@ -196,6 +197,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
             return
 
         story.append(Paragraph(label, header_style))
+        story.append(Spacer(1, 0.15*inch))  # adds space below
 
         grid = []
         row = []
@@ -235,7 +237,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
 
     # --- FOOTER ---
     story.append(Spacer(1, 0.3*inch))
-    story.append(Paragraph("REXBURG, ID • GLIDE WINDOW CLEANING", footer_style))
+    story.append(Paragraph("• GLIDE WINDOW CLEANING •", footer_style))
 
     doc.build(story)
     return buffer.getvalue()
