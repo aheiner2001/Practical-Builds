@@ -5,79 +5,87 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.lib.units import inch
 from io import BytesIO
-from PIL import Image as PILImage
+from PIL import Image as PILImage, ImageOps
 
-# --- Configuration & Styling ---
-DUSTY_BLUE = colors.Color(0.28, 0.44, 0.53) # Professional Dusty Blue
+# --- Configuration ---
+DUSTY_BLUE = colors.Color(0.28, 0.44, 0.53) # RGB: 72, 112, 135
 WHITE = colors.white
 
 def create_pdf(name, phone, before_imgs, after_imgs):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
+    # Bottom margin increased to 70 to make room for the footer
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=70)
     story = []
     styles = getSampleStyleSheet()
 
-    # Custom Styles
+    # --- Styles ---
     title_style = ParagraphStyle(
-        'TitleStyle', parent=styles['Heading1'], fontSize=24, textColor=DUSTY_BLUE, 
-        spaceAfter=10, alignment=0, fontName='Helvetica-Bold'
-    )
-    sub_style = ParagraphStyle(
-        'SubStyle', parent=styles['Normal'], fontSize=12, textColor=colors.grey, spaceAfter=20
+        'TitleStyle', parent=styles['Heading1'], fontSize=26, textColor=DUSTY_BLUE, 
+        spaceAfter=10, fontName='Helvetica-Bold'
     )
     section_style = ParagraphStyle(
-        'SectionStyle', parent=styles['Heading2'], fontSize=16, textColor=WHITE, 
-        backColor=DUSTY_BLUE, borderPadding=5, spaceBefore=15, spaceAfter=10
+        'SectionStyle', parent=styles['Heading2'], fontSize=14, textColor=WHITE, 
+        backColor=DUSTY_BLUE, borderPadding=6, spaceBefore=15, spaceAfter=12, alignment=1
+    )
+    footer_style = ParagraphStyle(
+        'FooterStyle', parent=styles['Normal'], fontSize=12, textColor=WHITE, 
+        backColor=DUSTY_BLUE, borderPadding=10, alignment=1
     )
 
-    # Header Section
-    story.append(Paragraph("Window Washing Service Report", title_style))
-    story.append(Paragraph(f"Customer: {name}  |  Phone: {phone}", sub_style))
+    # 1. Header Section
+    story.append(Paragraph("WINDOW WASHING REPORT", title_style))
+    story.append(Paragraph(f"<b>Customer:</b> {name.upper()} &nbsp;&nbsp; | &nbsp;&nbsp; <b>Phone:</b> {phone}", styles['Normal']))
     story.append(Spacer(1, 0.2 * inch))
 
-    def process_image_grid(label, uploaded_files):
-        if not uploaded_files:
-            return
-        
+    # 2. Image Processing Logic (with Rotation Fix)
+    def add_image_section(label, files):
+        if not files: return
         story.append(Paragraph(label, section_style))
-        
-        row = []
         grid_data = []
+        row = []
         
-        for uploaded_file in uploaded_files:
-            # Open with PIL to get aspect ratio and resize for the PDF
+        for uploaded_file in files:
+            # FIX: Open and correct orientation
             img = PILImage.open(uploaded_file)
-            aspect = img.height / float(img.width)
+            img = ImageOps.exif_transpose(img) 
             
-            # Width is 3 inches per image (2-column grid)
-            width = 3 * inch
+            # Save corrected image to a temporary buffer
+            img_tmp = BytesIO()
+            img.save(img_tmp, format="PNG")
+            img_tmp.seek(0)
+
+            # Standardize sizing for a 2-column layout
+            aspect = img.height / float(img.width)
+            width = 3.1 * inch
             height = width * aspect
             
-            # Create ReportLab Image
-            img_rl = Image(uploaded_file, width=width, height=height)
+            img_rl = Image(img_tmp, width=width, height=height)
             row.append(img_rl)
             
             if len(row) == 2:
                 grid_data.append(row)
                 row = []
         
-        if row: # Add the last odd image
-            row.append("") # Empty cell for alignment
+        if row: # Add remaining image
+            row.append("")
             grid_data.append(row)
 
-        # Create Table for the Image Grid
-        t = Table(grid_data, colWidths=[3.2 * inch, 3.2 * inch])
+        t = Table(grid_data, colWidths=[3.3 * inch, 3.3 * inch])
         t.setStyle(TableStyle([
             ('ALIGN', (0,0), (-1,-1), 'CENTER'),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 12),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 15),
         ]))
         story.append(t)
 
-    # Add Photos
-    process_image_grid("BEFORE TREATMENT", before_imgs)
-    story.append(Spacer(1, 0.3 * inch))
-    process_image_grid("AFTER TREATMENT", after_imgs)
+    # Add the sections
+    add_image_section("BEFORE SERVICE", before_imgs)
+    story.append(Spacer(1, 0.2 * inch))
+    add_image_section("AFTER SERVICE", after_imgs)
+
+    # 3. Professional "Thank You" Footer
+    story.append(Spacer(1, 0.5 * inch))
+    story.append(Paragraph("THANK YOU FOR YOUR BUSINESS! WE APPRECIATE YOU.", footer_style))
 
     # Build PDF
     doc.build(story)
@@ -88,41 +96,35 @@ def create_pdf(name, phone, before_imgs, after_imgs):
 # --- Streamlit UI ---
 st.set_page_config(page_title="Pro Window Report", page_icon="🧽")
 
-# Inject some Dusty Blue CSS into the Streamlit Sidebar/Buttons
-st.markdown(f"""
+# Custom CSS for that Dusty Blue feel in the app itself
+st.markdown("""
     <style>
-    .stButton>button {{ background-color: #487087; color: white; border-radius: 5px; }}
-    .stTextInput>div>div>input {{ border-color: #487087; }}
+    .stButton>button { background-color: #487087; color: white; width: 100%; border-radius: 8px; height: 3em; font-weight: bold; }
+    header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🧽 Pro Window Washing Reports")
+st.title("🧽 Report Generator")
 
-with st.container():
-    col1, col2 = st.columns(2)
-    name = col1.text_input("Customer Name")
-    phone = col2.text_input("Customer Phone")
+name = st.text_input("Customer Name", placeholder="John Smith")
+phone = st.text_input("Customer Phone", placeholder="(555) 000-0000")
 
-st.divider()
+col1, col2 = st.columns(2)
+with col1:
+    before = st.file_uploader("Before Photos", accept_multiple_files=True)
+with col2:
+    after = st.file_uploader("After Photos", accept_multiple_files=True)
 
-col_a, col_b = st.columns(2)
-with col_a:
-    st.subheader("Before Photos")
-    before_files = st.file_uploader("Upload Before", accept_multiple_files=True, key="before")
-with col_b:
-    st.subheader("After Photos")
-    after_files = st.file_uploader("Upload After", accept_multiple_files=True, key="after")
-
-if st.button("✨ Create Professional PDF"):
+if st.button("GENERATE PROFESSIONAL PDF"):
     if name:
-        with st.spinner("Polishing the report..."):
-            pdf_data = create_pdf(name, phone, before_files, after_files)
-            st.success("Report Ready!")
+        with st.spinner("Processing images and generating report..."):
+            pdf_data = create_pdf(name, phone, before, after)
+            st.success("Report Generated!")
             st.download_button(
-                label="📥 Download Report",
+                label="📥 Download PDF Report",
                 data=pdf_data,
                 file_name=f"Report_{name.replace(' ', '_')}.pdf",
                 mime="application/pdf"
             )
     else:
-        st.warning("Please enter a customer name.")
+        st.error("Please enter a Customer Name to continue.")
