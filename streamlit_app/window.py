@@ -121,7 +121,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
 
     # Customer info box
     # customer_table = Table([
-    story.append(Paragraph(f"<b>Customer:</b> {name}", ParagraphStyle(
+    story.append(Paragraph(f"{name}", ParagraphStyle(
         'HeaderSub',
         parent=styles['Normal'],
         fontSize=11,
