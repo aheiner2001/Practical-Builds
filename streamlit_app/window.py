@@ -54,7 +54,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     story.append(Paragraph("SERVICE REPORT", title_s))
     story.append(Paragraph(f"Submitted: {submit_time} | {current_weather}", meta_s))
     
-    review_url = "https://www.google.com/search?q=Glide+Window+Cleaning+Reviews"
+    review_url = "https://share.google/KKCvRlDReYr8iJceZ"
     story.append(Paragraph(f"<b>Customer:</b> {name.upper()} | <b>Phone:</b> {phone}", info_s))
 
     # 2. Notes
