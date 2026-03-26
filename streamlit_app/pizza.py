@@ -35,29 +35,7 @@ st.markdown("""
         color: var(--ink);
         font-family: 'Inter', sans-serif;
     }
-    /* The Main Chat Console Container */
-    .chat-console {
-        background-color: #f4f1ea;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 2rem;
-    }
 
-    /* Individual Bubble Styling */
-    [data-testid="stChatMessage"] {
-        background-color: white !important;
-        border: 1px solid #e0ddd5 !important;
-        border-radius: 10px !important;
-        margin-bottom: 10px !important;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.01);
-    }
-
-    /* Make the Chat Input look integrated */
-    .stChatInputContainer {
-        padding-bottom: 10px !important;
-        background-color: transparent !important;
-    }
     h1, h2, h3 {
         font-family: 'Playfair Display', serif !important;
         color: var(--ink) !important;
@@ -130,31 +108,24 @@ with col3:
     # This is the JUMP LINK fix
     st.markdown('<a href="#tutorial-section" class="jump-link">Jump to tutorial videos ↓</a>', unsafe_allow_html=True)
 
-# 3. & 5. INTEGRATED CHAT CONSOLE
-st.write("### 💬 Pizza Assistant Console")
+# Chat Interface
+with st.container():
+    st.write("---")
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-# Create the "Console" wrapper
-with st.container(border=True):
-    # Scrollable area for messages
-    chat_placeholder = st.container(height=400)
-    
-    with chat_placeholder:
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-
-    # Input fixed to the bottom of the console
     if prompt := st.chat_input("Ask about pizza making..."):
-        # Add user message
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with chat_placeholder.chat_message("user"):
+        with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Add assistant response
-        with chat_placeholder.chat_message("assistant"):
+        with st.chat_message("assistant"):
             response = get_gemini_response(prompt, st.session_state.messages[:-1])
             st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
+    st.write("---")
+
 # Content Sections
 st.markdown("""
 <div class="pizza-card">
