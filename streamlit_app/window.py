@@ -24,7 +24,9 @@ def get_weather(city):
         geo_res = requests.get(geo_url).json()
         if not geo_res.get('results'): return "Weather: N/A"
         
-        lat, lon = geo_res['results'][0]['latitude'], geo_res['results'][0]['longitude']
+        # 40.0966° N is positive, 111.5707° W is negative
+        lat = 40.0966
+        lon = -111.5707
         weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&temperature_unit=fahrenheit"
         w_res = requests.get(weather_url).json()
         temp = w_res['current_weather']['temperature']
@@ -101,7 +103,7 @@ st.title("📄 Service Report Generator")
 
 c_meta1, c_meta2 = st.columns(2)
 with c_meta1: name = st.text_input("Customer Name")
-with c_meta2: city = st.text_input("Service City", value="Rexburg")
+
 
 phone = st.text_input("Customer Phone")
 notes = st.text_area("Job Notes & Observations")
