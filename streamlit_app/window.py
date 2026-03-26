@@ -113,7 +113,7 @@ with c1: before = st.file_uploader("Before Photos", accept_multiple_files=True)
 with c2: after = st.file_uploader("After Photos", accept_multiple_files=True)
 
 if st.button("GENERATE CLEAN PDF"):
-    if name and city:
+    
         with st.spinner("Processing..."):
             pdf = create_pdf(name, phone, notes, before, after, city)
             st.success("Report Ready!")
