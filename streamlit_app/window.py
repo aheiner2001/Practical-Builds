@@ -49,7 +49,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs):
     story.append(Paragraph("WINDOW WASHING REPORT", title_style))
     
     # --- FIXED REVIEW & SERVICE SECTION ---
-    review_url = "https://www.google.com/search?q=Glide+Window+Cleaning+Reviews"
+    review_url = "https://share.google/qJDmPYd7266QpvRys"
     
     service_text = f"""
     <b>Serviced by:</b> Aaron Heiner<br/>
@@ -179,7 +179,6 @@ if st.button("GENERATE PROFESSIONAL PDF"):
                 file_name=f"Report_{name.replace(' ', '_')}.pdf",
                 mime="application/pdf"
             )
-            st.divider()
-            display_pdf(pdf_data)
+     
     else:
         st.error("Please enter a Customer Name to continue.")
