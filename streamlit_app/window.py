@@ -121,7 +121,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
 
     # Customer info box
     # customer_table = Table([
-    story.append(Paragraph(f"{name}", ParagraphStyle(
+    story.append(Paragraph(f"For {name}", ParagraphStyle(
         'HeaderSub',
         parent=styles['Normal'],
         fontSize=11,
@@ -147,7 +147,15 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
 
     # --- NOTES ---
     if notes:
-        story.append(Paragraph("JOB NOTES", section_style))
+        story.append(Paragraph("JOB NOTES", ParagraphStyle(
+        'HeaderSub',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=ACCENT,
+        alignment=1,
+        spaceAfter=10,
+        fontName='Helvetica-Bold'
+    )))
 
         notes_table = Table([
             [Paragraph(notes.replace('\n', '<br/>'), info_style)]
@@ -167,7 +175,15 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         if not files:
             return
 
-        story.append(Paragraph(label, section_style))
+        story.append(Paragraph(label, ParagraphStyle(
+        'HeaderSub',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=ACCENT,
+        alignment=1,
+        spaceAfter=10,
+        fontName='Helvetica-Bold'
+    ))
 
         grid = []
         row = []
