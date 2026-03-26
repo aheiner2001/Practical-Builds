@@ -2,18 +2,20 @@ import streamlit as st
 import google.generativeai as genai
 
 # 1. SETUP & CONFIG
-st.set_page_config(page_title="Remy's Pizza Cheat Sheet", layout="wide", page_icon="🍕")
+st.set_page_config(page_title="Pizza Cheat Sheet", layout="wide")
 
 # Configure Gemini API
+# Make sure "GOOGLE_API_KEY" is set in your Streamlit Secrets
 try:
     GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
     genai.configure(api_key=GOOGLE_API_KEY)
-    # Using the current stable flash model
+    # Try the absolute model path
+    # Use the direct stable string for the 2.5 series
     model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
     st.error("API Key not found. Please add GOOGLE_API_KEY to your Streamlit Secrets.")
 
-# 2. CUSTOM CSS (The Visual Magic)
+# 2. INJECT YOUR CUSTOM CSS (Fonts, Colors, and Cards)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap');
@@ -26,8 +28,6 @@ st.markdown("""
       --accent: #c4a484;
       --border: #ece8e1;
       --link: #8b4513;
-      --chat-user: #f4eee7;
-      --chat-ai: #ffffff;
     }
 
     .stApp {
@@ -36,165 +36,151 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
 
-    /* Header Styling */
-    .pizza-header {
-        text-align: center;
-        padding: 2rem 0 1rem 0;
-    }
-
     h1, h2, h3 {
         font-family: 'Playfair Display', serif !important;
         color: var(--ink) !important;
     }
 
-    /* Card Styling */
+    .pizza-header {
+        text-align: center;
+        padding: 3rem 0 1rem 0;
+    }
+
     .pizza-card {
         background: var(--card-bg);
-        padding: 1.8rem;
+        padding: 2rem;
         border: 1px solid var(--border);
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        margin-bottom: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        margin-bottom: 2rem;
+        color: var(--ink);
     }
 
     .callout {
-      margin: 1rem 0;
-      padding: 1rem;
+      margin: 1.5rem 0;
+      padding: 1rem 1.5rem;
       background: #f9f6f1;
       border-left: 4px solid var(--accent);
       font-style: italic;
       color: var(--muted);
     }
 
-    /* Chat Styling */
-    [data-testid="stChatMessage"] {
-        border: 1px solid var(--border);
-        border-radius: 15px;
-        padding: 1rem;
-        margin-bottom: 0.5rem;
+    .jump-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      color: var(--link) !important;
+      text-decoration: underline;
+      cursor: pointer;
     }
 
-    /* Lightly tint user messages */
-    [data-testid="stChatMessageContent"]:has(div:contains("user")) {
-        background-color: var(--chat-user);
+    /* Fixed height for chat messages to match your UI */
+    .stChatMessage {
+        background-color: #ece8e1 !important;
+        border-radius: 15px !important;
     }
-
-    /* Buttons & Links */
-    .stButton>button {
-        border-radius: 20px;
-        border: 1px solid var(--accent);
-        background-color: transparent;
-        color: var(--ink);
-    }
-    
-    .stButton>button:hover {
-        background-color: var(--accent);
-        color: white;
-    }
-
 </style>
 """, unsafe_allow_html=True)
 
-# 3. CHAT LOGIC & SESSION STATE
+# 3. CHAT LOGIC
 if "messages" not in st.session_state:
     st.session_state.messages = [{
         "role": "assistant",
-        "content": "🍕 Ciao! I'm Remy's Pizza Bot. Need help with your dough hydration or sauce seasoning?"
+        "content": "🍕 Hi! I'm your Pizza Assistant! Ask me anything about dough, cheese, or bake times."
     }]
 
-def get_gemini_response(prompt):
-    # System context ensures the AI stays on topic and follows your personality requirements
-    system_context = (
-        "You are an expert New York Style Pizza Assistant. "
-        "Keep your answers helpful, concise, and focused on pizza making. "
-        "Context: The user is looking at Remy's Pizza Cheat Sheet. "
-        "Respond warmly but quickly."
-    )
-    
-    try:
-        # Combining history for context-aware chat
-        chat_session = model.start_chat(history=[])
-        full_query = f"{system_context}\n\nUser Question: {prompt}"
-        response = model.generate_content(full_query)
-        return response.text
-    except Exception as e:
-        return "I think the oven's out of wood! (Error connecting to Gemini API)."
+def get_gemini_response(prompt, chat_history):
+    # Pass the context to Gemini
+    context = "i am a oggie boogie bean boy"
+    response = model.generate_content(f"Answer this quesiton very promptly and quick using this contect:{context} here is the question: {prompt}")
+    return response.text
 
-# 4. PAGE LAYOUT
+# 4. PAGE CONTENT
 st.markdown('<div class="pizza-header"><span style="color:var(--accent); letter-spacing:0.3em; font-size:0.8rem; text-transform:uppercase;">Remy\'s</span><h1>Pizza Cheat Sheet</h1></div>', unsafe_allow_html=True)
 
-# Navigation Row
-nav_col1, nav_col2, nav_col3 = st.columns(3)
-with nav_col1:
-    st.link_button("📊 My Dough Stats", "https://aheiner2001.github.io/Machine-Learning/", use_container_width=True)
-with nav_col2:
-    st.link_button("✍️ Add Dough Stats", "https://docs.google.com/forms/...", use_container_width=True)
-with nav_col3:
-    st.link_button("🎥 Video Tutorials", "#tutorial-section", use_container_width=True)
+# Navigation / Links
+col1, col2, col3 = st.columns([1, 1, 1])
+with col1:
+    st.markdown('<a href="https://aheiner2001.github.io/Machine-Learning/" target="_blank" class="jump-link">My dough stats</a>', unsafe_allow_html=True)
+with col2:
+    st.markdown('<a href="https://docs.google.com/forms/d/e/1FAIpQLSfpMG-FE4jG8ExdcKj43wn1D63XO7GMSmVn7CGQh6pfiUz5Ug/viewform" target="_blank" class="jump-link">Add your dough stats</a>', unsafe_allow_html=True)
+with col3:
+    # This is the JUMP LINK fix
+    st.markdown('<a href="#tutorial-section" class="jump-link">Jump to tutorial videos ↓</a>', unsafe_allow_html=True)
 
-st.write("---")
+# Chat Interface
+with st.container():
+    st.write("---")
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-# 5. CHAT INTERFACE
-# Display chat history
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# Chat Input
-if prompt := st.chat_input("Ask about pizza..."):
-    # User Message
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    # Assistant Response
-    with st.chat_message("assistant"):
-        with st.spinner("Proofing the response..."):
-            response = get_gemini_response(prompt)
+    if prompt := st.chat_input("Ask about pizza making..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        with st.chat_message("assistant"):
+            response = get_gemini_response(prompt, st.session_state.messages[:-1])
             st.markdown(response)
-    st.session_state.messages.append({"role": "assistant", "content": response})
+            st.session_state.messages.append({"role": "assistant", "content": response})
+    st.write("---")
 
-st.write("---")
+# Content Sections
+st.markdown("""
+<div class="pizza-card">
+  <h2>Basic Dough Process</h2>
+  <ol>
+    <li>Make dough using <b><a href="https://doughguy.co/pages/dough" target="_blank">Dough Calculator</a></b>.</li>
+    <li>Cold ferment in the fridge for 2-5 days (3 days is optimal).</li>
+    <li>Remove dough and let sit at room temperature for <b>3-4 hours</b> before baking.</li>
+    <li>Follow dough stretching tutorial below.</li>
+    <li>Cook pizza for 6-7 min (Steel) or 7-8 min (Stone).</li>
+  </ol>
+  <div class="callout">
+    <strong>Pro Tip:</strong> Room-temperature dough stretches significantly easier and prevents "snap-back" while shaping.
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
-# 6. INFORMATION CARDS
-col_main, col_side = st.columns([2, 1])
+col_left, col_right = st.columns(2)
 
-with col_main:
+with col_left:
     st.markdown("""
     <div class="pizza-card">
-      <h2>Basic Dough Process</h2>
+      <h2>Equipment</h2>
+      <p>Ranked by crust quality:</p>
       <ol>
-        <li>Calculate ingredients using a dough tool.</li>
-        <li>Cold ferment in the fridge for <b>2-5 days</b> (3 days is the sweet spot).</li>
-        <li>Remove and sit at room temp for <b>3-4 hours</b> before stretching.</li>
-        <li>Bake at 550°F until the crust is charred and cheese is bubbly.</li>
+        <li><strong>Pizza Steel</strong></li>
+        <li><strong>Pizza Stone</strong></li>
+        <li><strong>Baking Sheet</strong> (Upside down)</li>
       </ol>
-      <div class="callout">
-        <strong>Pro Tip:</strong> Never use a rolling pin! It kills the bubbles in the crust. Use your knuckles to stretch.
-      </div>
+      <p><strong>Preheat:</strong> 550°F for 40-45 minutes.</p>
     </div>
     """, unsafe_allow_html=True)
 
-with col_side:
+with col_right:
     st.markdown("""
     <div class="pizza-card">
-      <h3>Equipment Rank</h3>
-      <ol>
-        <li><b>Steel:</b> Best conductivity.</li>
-        <li><b>Stone:</b> Classic & reliable.</li>
-        <li><b>Baking Sheet:</b> For beginners.</li>
-      </ol>
-      <p><small>Preheat for 45+ mins!</small></p>
+      <h2>Pizza Sauce</h2>
+      <h3>NY-Style Sauce (Recommended)</h3>
+      <ul>
+        <li>28 oz can crushed tomatoes</li>
+        <li>2 tsp salt, 1 tsp sugar</li>
+        <li>2 tsp oregano, 3 tsp basil</li>
+      </ul>
+      <p><small><em>Note: Blend briefly for a smooth texture.</em></small></p>
     </div>
     """, unsafe_allow_html=True)
 
-# 7. TUTORIALS
+# Target for the Jump Link
 st.markdown('<div id="tutorial-section"></div>', unsafe_allow_html=True)
 st.header("Tutorial Videos")
+
 v1, v2 = st.columns(2)
 with v1:
-    st.markdown(f'<iframe src="https://www.instagram.com/reel/DM3K4oouFIp/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true"></iframe>', unsafe_allow_html=True)
+    st.markdown(f'<iframe src="https://www.instagram.com/reel/DM3K4oouFIp/embed/" width="400" height="480" frameborder="0" scrolling="no" allowtransparency="true"></iframe>', unsafe_allow_html=True)
 with v2:
-    st.markdown(f'<iframe src="https://www.instagram.com/reel/DM5g1kbuvZG/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true"></iframe>', unsafe_allow_html=True)
+    st.markdown(f'<iframe src="https://www.instagram.com/reel/DM5g1kbuvZG/embed/" width="400" height="480" frameborder="0" scrolling="no" allowtransparency="true"></iframe>', unsafe_allow_html=True)
 
-st.markdown('<footer style="text-align:center; padding:4rem; color:var(--muted); font-size:0.8rem;">© 2026 Aaron Heiner</footer>', unsafe_allow_html=True)
+st.markdown('<footer style="text-align:center; padding:4rem; color:var(--muted); font-size:0.8rem;">© 2025 Aaron Heiner</footer>', unsafe_allow_html=True)
