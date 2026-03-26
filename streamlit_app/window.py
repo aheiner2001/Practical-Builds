@@ -191,10 +191,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         story.append(table)
 
     # --- IMAGES ---
-    add_imgs("BEFORE PHOTOS", before_imgs)
-    add_imgs("AFTER PHOTOS", after_imgs)
-
-    # --- REVIEW SECTION ---
+       # --- REVIEW SECTION ---
     review_url = "https://share.google/KKCvRlDReYr8iJceZ"
 
     story.append(Spacer(1, 0.4*inch))
@@ -209,6 +206,10 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
         """,
         info_style
     ))
+    add_imgs("BEFORE PHOTOS", before_imgs)
+    add_imgs("AFTER PHOTOS", after_imgs)
+
+ 
 
     # --- FOOTER ---
     story.append(Spacer(1, 0.3*inch))
