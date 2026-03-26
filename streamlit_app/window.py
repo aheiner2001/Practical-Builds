@@ -121,7 +121,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
 
     # Customer info box
     customer_table = Table([
-        [Paragraph(f"<b>Customer:</b> {name}", info_style),
+        [Paragraph(f"<b>Customer:</b> {name}"),
          Paragraph(f"<b>Phone:</b> {phone}", info_style)]
     ], colWidths=[3.4*inch, 3.4*inch])
 
