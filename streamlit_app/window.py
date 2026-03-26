@@ -9,6 +9,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Tabl
 from reportlab.lib.units import inch
 from io import BytesIO
 from PIL import Image as PILImage, ImageOps
+from reportlab.platypus import HRFlowable
 
 # --- Theme Setup ---
 NAVY = colors.HexColor("#1F3A5F")
@@ -176,7 +177,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     # --- NOTES ---
     if notes:
         story.append(Paragraph("JOB NOTES", header_style))
-        story.append(Spacer(1, 0.15*inch))  # adds space below
+        story.append(HRFlowable(width="100%", thickness=1, color=GREEN, spaceBefore=2, spaceAfter=6))
 
         notes_table = Table([
             [Paragraph(notes.replace('\n', '<br/>'), info_style)]
@@ -197,7 +198,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
             return
 
         story.append(Paragraph(label, header_style))
-        story.append(Spacer(1, 0.15*inch))  # adds space below
+        story.append(HRFlowable(width="100%", thickness=1, color=GREEN, spaceBefore=2, spaceAfter=6))
 
         grid = []
         row = []
