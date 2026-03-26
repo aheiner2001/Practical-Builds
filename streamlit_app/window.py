@@ -131,7 +131,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city):
     )))
 
     story.append(Paragraph(
-        f"{submit_time} • {city} • {current_weather}",
+        f"{submit_time}",
         subtitle_style
     ))
 
