@@ -27,6 +27,28 @@ st.markdown("""
 
   h1, h2, h3 { font-family: 'Syne', sans-serif; }
 
+  /* ── Always-visible sidebar toggle ── */
+  [data-testid="collapsedControl"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    position: fixed !important;
+    top: 0.5rem !important;
+    left: 0.5rem !important;
+    z-index: 99999 !important;
+    background: #fff !important;
+    border: 1px solid #e8e4de !important;
+    border-radius: 8px !important;
+    padding: 4px 8px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important;
+  }
+
+  /* Make sure the sidebar itself doesn't overlap the toggle button */
+  section[data-testid="stSidebar"] {
+    z-index: 9999 !important;
+  }
+
   .brand {
     font-family: 'Syne', sans-serif;
     font-size: 2.2rem;
@@ -168,6 +190,21 @@ st.markdown("""
     border-bottom: 2px solid #d4622a !important;
   }
 </style>
+
+<script>
+  // Periodically ensure the collapsed sidebar button stays visible
+  function ensureSidebarToggle() {
+    const toggle = window.parent.document.querySelector('[data-testid="collapsedControl"]');
+    if (toggle) {
+      toggle.style.display = 'flex';
+      toggle.style.visibility = 'visible';
+      toggle.style.opacity = '1';
+      toggle.style.pointerEvents = 'auto';
+    }
+  }
+  setInterval(ensureSidebarToggle, 500);
+  document.addEventListener('DOMContentLoaded', ensureSidebarToggle);
+</script>
 """, unsafe_allow_html=True)
 
 COURSE_COLORS = ["#d4622a", "#2a7dd4", "#2ad47a", "#d4c02a", "#9b2ad4", "#2ad4c0"]
@@ -286,7 +323,6 @@ def load_canvas_data(api_key, api_url, course_ids):
             course = canvas.get_course(int(cid.strip()))
             color = COURSE_COLORS[i % len(COURSE_COLORS)]
 
-            # Grades
             enrollment = None
             try:
                 enrollments = list(course.get_enrollments(user_id=user.id, type=['StudentEnrollment']))
@@ -315,7 +351,6 @@ def load_canvas_data(api_key, api_url, course_ids):
                 "total_points": total_points,
             })
 
-            # Assignments
             try:
                 assignments = course.get_assignments(bucket='unsubmitted', order_by='due_at')
                 for a in assignments:
@@ -337,7 +372,6 @@ def load_canvas_data(api_key, api_url, course_ids):
         except Exception as e:
             st.warning(f"Could not load course {cid}: {e}")
 
-    # Sort assignments by due date
     all_assignments.sort(key=lambda x: (x['due_date'] is None, x['due_date'] or datetime.max.replace(tzinfo=timezone.utc)))
     return user, courses_data, all_assignments
 
@@ -390,7 +424,6 @@ with tab1:
     if not all_assignments:
         st.success("🎉 No unsubmitted assignments found!")
     else:
-        # Filter
         filter_col1, filter_col2 = st.columns([2, 1])
         with filter_col1:
             search = st.text_input("Search assignments", placeholder="Filter by name...", label_visibility="collapsed")
@@ -480,7 +513,6 @@ with tab2:
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
-        # Points at stake chart
         st.markdown('<p class="section-title">Points at Stake (Unsubmitted)</p>', unsafe_allow_html=True)
         points_by_course = defaultdict(float)
         count_by_course = defaultdict(int)
@@ -521,14 +553,8 @@ with tab3:
 
     dated = [a for a in all_assignments if a['due_date'] is not None]
     if dated:
-        df_time = pd.DataFrame(dated)
-        df_time['due_str'] = df_time['due_date'].apply(lambda d: d.strftime("%b %d") if d else "")
-        df_time['urgency_color'] = df_time['days_until'].apply(
-            lambda d: "#c0390f" if d is not None and d <= 3 else ("#a07000" if d is not None and d <= 7 else "#2d7a2d")
-        )
-
         fig3 = go.Figure()
-        for i, a in enumerate(dated[:20]):  # show up to 20
+        for i, a in enumerate(dated[:20]):
             days = a['days_until'] if a['days_until'] is not None else 30
             clamp = max(0, min(days, 30))
             color = "#c0390f" if days <= 3 else ("#a07000" if days <= 7 else "#2d7a2d")
@@ -557,7 +583,6 @@ with tab3:
         )
         st.plotly_chart(fig3, use_container_width=True)
 
-    # Urgency breakdown donuts
     st.markdown('<p class="section-title">Urgency Breakdown</p>', unsafe_allow_html=True)
     u1, u2, u3 = st.columns(3)
     buckets = {
@@ -589,7 +614,7 @@ with tab4:
     )
 
     for course in courses_data:
-        current_grade = course.get('grade')
+        current_grade  = course.get('grade')
         points_earned  = course.get('points_earned')
         total_points   = course.get('total_points')
         color          = course['color']
@@ -600,8 +625,7 @@ with tab4:
         ]
         total_remaining_pts = sum(a['points'] for a in course_assignments)
 
-        # ── Calculate needed score ──────────────────────────────────────────
-        pct_needed   = None
+        pct_needed    = None
         points_needed = None
         if points_earned is not None and total_points is not None and total_points > 0 and total_remaining_pts > 0:
             new_possible  = total_points + total_remaining_pts
@@ -639,11 +663,10 @@ with tab4:
         elif not course_assignments:
             st.markdown('<p style="color:#aaa;font-size:0.85rem;padding-bottom:0.5rem;">No unsubmitted assignments with point values found.</p>', unsafe_allow_html=True)
         else:
-            # Progress bar showing how hard you need to work
             if pct_needed is not None:
-                clamped      = min(pct_needed, 100)
-                bar_color    = "#c0390f" if pct_needed > 95 else ("#a07000" if pct_needed > 75 else "#2d7a2d")
-                pts_str      = f"You need to earn <b>{max(points_needed,0):.1f}</b> out of <b>{total_remaining_pts:.0f}</b> remaining points." if points_needed is not None else ""
+                clamped   = min(pct_needed, 100)
+                bar_color = "#c0390f" if pct_needed > 95 else ("#a07000" if pct_needed > 75 else "#2d7a2d")
+                pts_str   = f"You need to earn <b>{max(points_needed,0):.1f}</b> out of <b>{total_remaining_pts:.0f}</b> remaining points." if points_needed is not None else ""
                 st.markdown(f"""
                 <div style="margin-bottom:1rem;">
                   <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#999;margin-bottom:4px;">
