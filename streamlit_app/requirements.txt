@@ -23,3 +23,7 @@ Pillow
 requests
 pytz
 
+streamlit
+tensorflow
+numpy
+Pillow
