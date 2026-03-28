@@ -4,6 +4,7 @@ import streamlit as st
 from st_supabase_connection import SupabaseConnection
 st.write("hellow, me biggy bag")
 st.write("This is cool because this updates so fast so that i am able to make some really cool things")
+st.number_input()
 # Initialize connection.
 conn = st.connection("supabase",type=SupabaseConnection)
 
