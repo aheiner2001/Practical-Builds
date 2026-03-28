@@ -11,4 +11,4 @@ rows = conn.table("test").select("*").execute()
 
 # Print results.
 for row in rows.data:
-    st.write(f"{row['']} has a :{row['']}:")
+    st.write(row)
