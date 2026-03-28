@@ -128,17 +128,7 @@ IMAGE_SIZE = (100, 100)
 @st.cache_resource
 def load_model():
     model_path = os.path.join(os.path.dirname(__file__), "road_sign_model.h5")
-```
 
-`__file__` always points to where the script itself is, so this will correctly look for `road_sign_model.h5` **in the same folder as `street_signs.py`** regardless of what directory Streamlit runs from.
-
-Your folder should look like:
-```
-streamlit_app/
-└── image_classifcation/
-    ├── street_signs.py
-    ├── road_sign_model.h5   ← same folder
-    └── requirements.txt
     if not os.path.exists(model_path):
         return None, "no_file"
     try:
