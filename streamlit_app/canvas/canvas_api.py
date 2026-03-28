@@ -201,14 +201,20 @@ def get_grade_color(score):
     if score >= 60: return "#c0390f"
     return "#8b0000"
 
-# ─── Sidebar: Credentials ──────────────────────────────────────────────────────
+# ─── Sidebar ──────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown('<p class="brand">canvas<span>.</span></p>', unsafe_allow_html=True)
     st.markdown('<p class="greeting">Student Dashboard</p>', unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
-    api_key = st.text_input("API Key", type="password", placeholder="Your Canvas API key")
-    api_url = st.text_input("Canvas URL", value="https://byui.instructure.com/", placeholder="https://byui.instructure.com/")
+    # Load API key from Streamlit secrets
+    api_key = st.secrets.get("CANVAS_API_KEY", "")
+    api_url = st.secrets.get("CANVAS_URL", "https://byui.instructure.com/")
+
+    if not api_key:
+        st.error("Add CANVAS_API_KEY to your Streamlit secrets.")
+    else:
+        st.markdown('<p style="font-size:0.78rem;color:#2d7a2d;">🔒 API key loaded from secrets</p>', unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown("**Course IDs** (comma separated)")
@@ -216,14 +222,11 @@ with st.sidebar:
 
     load_btn = st.button("Load Dashboard", use_container_width=True)
 
-    st.markdown("---")
-    st.markdown('<p style="font-size:0.72rem;color:#bbb;letter-spacing:1px;">Your API key is never stored.</p>', unsafe_allow_html=True)
-
 # ─── Main ──────────────────────────────────────────────────────────────────────
 if not api_key or not load_btn:
     # Landing state
     st.markdown('<p class="brand" style="font-size:3rem;">canvas<span style="color:#d4622a">.</span></p>', unsafe_allow_html=True)
-    st.markdown('<p style="font-size:1.1rem;color:#888;max-width:480px;margin-top:0.5rem;">Enter your Canvas API key in the sidebar to load your assignments, grades, and deadlines.</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-size:1.1rem;color:#888;max-width:480px;margin-top:0.5rem;">Click Load Dashboard in the sidebar to get started.</p>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
