@@ -7,7 +7,7 @@ from st_supabase_connection import SupabaseConnection
 conn = st.connection("supabase",type=SupabaseConnection)
 
 # Perform query.
-rows = conn.table("test").select("*").execute()
+rows = conn.table("questions").select("*").execute()
 
 # Print results.
 for row in rows.data:
