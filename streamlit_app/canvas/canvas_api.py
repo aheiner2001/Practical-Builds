@@ -201,32 +201,59 @@ def get_grade_color(score):
     if score >= 60: return "#c0390f"
     return "#8b0000"
 
+# ─── Fetch all active courses ─────────────────────────────────────────────────
+@st.cache_data(ttl=600, show_spinner=False)
+def fetch_all_courses(api_key, api_url):
+    canvas = Canvas(api_url, api_key)
+    user = canvas.get_current_user()
+    courses = user.get_courses(enrollment_state='active', include=['term'])
+    result = []
+    for c in courses:
+        try:
+            result.append({"id": c.id, "name": c.name})
+        except:
+            pass
+    result.sort(key=lambda x: x['name'])
+    return result
+
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
+api_key = st.secrets.get("CANVAS_API_KEY", "")
+api_url = st.secrets.get("CANVAS_URL", "https://byui.instructure.com/")
+
 with st.sidebar:
     st.markdown('<p class="brand">canvas<span>.</span></p>', unsafe_allow_html=True)
     st.markdown('<p class="greeting">Student Dashboard</p>', unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Load API key from Streamlit secrets
-    api_key = st.secrets.get("CANVAS_API_KEY", "")
-    api_url = st.secrets.get("CANVAS_URL", "https://byui.instructure.com/")
-
     if not api_key:
-        st.error("Add CANVAS_API_KEY to your Streamlit secrets.")
-    else:
-        st.markdown('<p style="font-size:0.78rem;color:#2d7a2d;">🔒 API key loaded from secrets</p>', unsafe_allow_html=True)
+        st.error("Add `CANVAS_API_KEY` to your Streamlit secrets.")
+        st.stop()
+
+    st.markdown('<p style="font-size:0.75rem;color:#2d7a2d;margin-bottom:1rem;">🔒 API key loaded from secrets</p>', unsafe_allow_html=True)
+
+    with st.spinner("Fetching your courses..."):
+        try:
+            all_courses = fetch_all_courses(api_key, api_url)
+        except Exception as e:
+            st.error(f"Could not connect to Canvas: {e}")
+            st.stop()
+
+    st.markdown("**Select courses to show:**")
+    selected_ids = []
+    for c in all_courses:
+        if st.checkbox(c['name'], value=False, key=f"course_{c['id']}"):
+            selected_ids.append(str(c['id']))
 
     st.markdown("---")
-    st.markdown("**Course IDs** (comma separated)")
-    course_ids_input = st.text_input("", value="404060, 403442, 406222", label_visibility="collapsed")
-
     load_btn = st.button("Load Dashboard", use_container_width=True)
 
 # ─── Main ──────────────────────────────────────────────────────────────────────
-if not api_key or not load_btn:
-    # Landing state
+if not load_btn or not selected_ids:
     st.markdown('<p class="brand" style="font-size:3rem;">canvas<span style="color:#d4622a">.</span></p>', unsafe_allow_html=True)
-    st.markdown('<p style="font-size:1.1rem;color:#888;max-width:480px;margin-top:0.5rem;">Click Load Dashboard in the sidebar to get started.</p>', unsafe_allow_html=True)
+    if not selected_ids:
+        st.markdown('<p style="font-size:1.1rem;color:#888;max-width:480px;margin-top:0.5rem;">Check the courses you want in the sidebar, then click <b>Load Dashboard</b>.</p>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<p style="font-size:1.1rem;color:#888;max-width:480px;margin-top:0.5rem;">{len(selected_ids)} course(s) selected. Click <b>Load Dashboard</b>.</p>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
@@ -271,12 +298,20 @@ def load_canvas_data(api_key, api_url, course_ids):
             if enrollment and hasattr(enrollment, 'grades'):
                 grade = enrollment.grades.get('current_score')
 
+            points_earned = None
+            total_points = None
+            if enrollment and hasattr(enrollment, 'grades'):
+                points_earned = enrollment.grades.get('current_points')
+                total_points = enrollment.grades.get('total_points_possible') or enrollment.grades.get('final_points')
+
             courses_data.append({
                 "id": cid.strip(),
                 "name": course.name,
                 "short": course.name.split()[0],
                 "color": color,
                 "grade": grade,
+                "points_earned": points_earned,
+                "total_points": total_points,
             })
 
             # Assignments
@@ -305,11 +340,9 @@ def load_canvas_data(api_key, api_url, course_ids):
     all_assignments.sort(key=lambda x: (x['due_date'] is None, x['due_date'] or datetime.max.replace(tzinfo=timezone.utc)))
     return user, courses_data, all_assignments
 
-course_ids = [c.strip() for c in course_ids_input.split(",") if c.strip()]
-
 with st.spinner("Loading your Canvas data..."):
     try:
-        user, courses_data, all_assignments = load_canvas_data(api_key, api_url, tuple(course_ids))
+        user, courses_data, all_assignments = load_canvas_data(api_key, api_url, tuple(selected_ids))
     except Exception as e:
         st.error(f"❌ Could not connect to Canvas: {e}")
         st.stop()
@@ -349,7 +382,7 @@ for col, label, value, sub, accent in [
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ─── Tabs ──────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs(["📅  Assignments", "📊  Grades", "🔥  Urgency"])
+tab1, tab2, tab3, tab4 = st.tabs(["📅  Assignments", "📊  Grades", "🔥  Urgency", "🎯  Goal Tracker"])
 
 # ══ Tab 1: Assignments ════════════════════════════════════════════════════════
 with tab1:
@@ -542,3 +575,108 @@ with tab3:
               <div style="font-size:0.78rem;color:#999;">{label.split(None,1)[1]}</div>
             </div>
             """, unsafe_allow_html=True)
+
+# ══ Tab 4: Goal Tracker ═══════════════════════════════════════════════════════
+with tab4:
+    TARGET = 90.0
+    st.markdown('<p class="section-title">🎯 90% Goal Tracker</p>', unsafe_allow_html=True)
+    st.markdown(
+        '<p style="font-size:0.85rem;color:#888;margin-bottom:1.5rem;">'
+        'See which unsubmitted assignments you need to complete and what average score'
+        ' you need to reach 90% in each course.</p>',
+        unsafe_allow_html=True
+    )
+
+    for course in courses_data:
+        current_grade = course.get('grade')
+        points_earned  = course.get('points_earned')
+        total_points   = course.get('total_points')
+        color          = course['color']
+
+        course_assignments = [
+            a for a in all_assignments
+            if a['course'] == course['name'] and a['points'] and a['points'] > 0
+        ]
+        total_remaining_pts = sum(a['points'] for a in course_assignments)
+
+        # ── Calculate needed score ──────────────────────────────────────────
+        pct_needed   = None
+        points_needed = None
+        if points_earned is not None and total_points is not None and total_points > 0 and total_remaining_pts > 0:
+            new_possible  = total_points + total_remaining_pts
+            points_needed = (TARGET / 100) * new_possible - points_earned
+            pct_needed    = (points_needed / total_remaining_pts) * 100
+
+        already_at_90 = current_grade is not None and current_grade >= TARGET
+        impossible    = pct_needed is not None and pct_needed > 100
+
+        grade_str = f"{current_grade:.1f}%" if current_grade is not None else "N/A"
+
+        if already_at_90:
+            status_html = '<span class="due-badge badge-later">✓ At 90%+</span>'
+        elif impossible:
+            status_html = '<span class="due-badge badge-urgent">⚠ Needs near-perfect scores</span>'
+        elif pct_needed is not None:
+            status_html = f'<span class="due-badge badge-soon">Need {pct_needed:.0f}% avg on remaining</span>'
+        else:
+            status_html = '<span class="due-badge badge-none">Insufficient data</span>'
+
+        st.markdown(f"""
+        <div style="background:#fff;border-radius:16px;padding:1.4rem 1.6rem;
+                    border:1px solid #e8e4de;border-left:5px solid {color};margin-bottom:1.2rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;">
+            <div>
+              <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;">{course['name']}</span>
+              <span style="font-size:0.82rem;color:#999;margin-left:0.8rem;">Current: <b>{grade_str}</b></span>
+            </div>
+            {status_html}
+          </div>
+        """, unsafe_allow_html=True)
+
+        if already_at_90:
+            st.markdown('<p style="color:#2d7a2d;font-size:0.88rem;padding-bottom:0.5rem;">🎉 You\'re already at 90% or above — keep it up!</p>', unsafe_allow_html=True)
+        elif not course_assignments:
+            st.markdown('<p style="color:#aaa;font-size:0.85rem;padding-bottom:0.5rem;">No unsubmitted assignments with point values found.</p>', unsafe_allow_html=True)
+        else:
+            # Progress bar showing how hard you need to work
+            if pct_needed is not None:
+                clamped      = min(pct_needed, 100)
+                bar_color    = "#c0390f" if pct_needed > 95 else ("#a07000" if pct_needed > 75 else "#2d7a2d")
+                pts_str      = f"You need to earn <b>{max(points_needed,0):.1f}</b> out of <b>{total_remaining_pts:.0f}</b> remaining points." if points_needed is not None else ""
+                st.markdown(f"""
+                <div style="margin-bottom:1rem;">
+                  <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#999;margin-bottom:4px;">
+                    <span>Required average on remaining assignments</span>
+                    <span style="font-weight:700;color:{bar_color}">{pct_needed:.1f}%</span>
+                  </div>
+                  <div style="background:#f0ece4;border-radius:4px;height:10px;">
+                    <div style="width:{clamped:.1f}%;background:{bar_color};height:10px;border-radius:4px;"></div>
+                  </div>
+                  <p style="font-size:0.78rem;color:#999;margin-top:0.4rem;">{pts_str}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+            st.markdown('<p style="font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;color:#bbb;margin-bottom:0.5rem;">Assignments to complete</p>', unsafe_allow_html=True)
+
+            sorted_assignments = sorted(
+                course_assignments,
+                key=lambda x: (x['due_date'] is None, x['due_date'] or datetime.max.replace(tzinfo=timezone.utc))
+            )
+
+            for a in sorted_assignments:
+                badge_class, badge_text = urgency_badge(a['days_until'])
+                due_str = a['due_date'].strftime("%b %d") if a['due_date'] else "No date"
+                pts     = int(a['points'])
+                pct_of  = (a['points'] / total_remaining_pts * 100) if total_remaining_pts > 0 else 0
+                st.markdown(f"""
+                <div class="assignment-row" style="margin-bottom:0.35rem;">
+                  <div style="width:8px;height:36px;border-radius:3px;background:{color};flex-shrink:0;"></div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:0.88rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{a['name']}</div>
+                    <div style="font-size:0.75rem;color:#999;">Due {due_str} &nbsp;·&nbsp; <b>{pts} pts</b> &nbsp;·&nbsp; {pct_of:.1f}% of remaining</div>
+                  </div>
+                  <span class="due-badge {badge_class}">{badge_text}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
