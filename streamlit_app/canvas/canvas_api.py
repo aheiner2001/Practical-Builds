@@ -11,6 +11,7 @@ st.set_page_config(
     page_title="Canvas Dashboard",
     page_icon="📚",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 # ─── CSS ───────────────────────────────────────────────────────────────────────
