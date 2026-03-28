@@ -1,4 +1,3 @@
-streamlit
-tensorflow
-numpy
-Pillow
+streamlit>=1.32.0
+anthropic>=0.25.0
+Pillow>=10.0.0
