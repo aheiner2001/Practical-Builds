@@ -124,7 +124,7 @@ with col_main:
     (60, "Deep fat burning"),
     (72, "Extended fast")
 ]
-    cp_html = "".join([f"<div class='dot' style='left:{(hrs/user['target_hours'])*75}%; background:{'#0081ff' if my_hours>=hrs else '#e9ecef'};'></div><div class='dot-label' style='left:{(hrs/user['target_hours'])*75}%;'>{lab}</div>" for hrs, lab in checkpoints if (hrs/user['target_hours'])*100 <= 100])
+    cp_html = "".join([f"<div class='dot' style='left:{(hrs/user['target_hours'])*50}%; background:{'#0081ff' if my_hours>=hrs else '#e9ecef'};'></div><div class='dot-label' style='left:{(hrs/user['target_hours'])*50}%;'>{lab}</div>" for hrs, lab in checkpoints if (hrs/user['target_hours'])*100 <= 100])
 
     st.markdown(f"<div class='benefit-bar-bg'><div class='benefit-bar-fill' style='width:{prog_pct}%;'></div>{cp_html}</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
