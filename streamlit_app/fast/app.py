@@ -188,7 +188,7 @@ with col_side:
         st.rerun()
     if c3.button("🗑️ Delete", use_container_width=True, type="primary"):
     # Instead of showing the button immediately, we flip a switch
-    st.session_state.delete_confirm = True
+        st.session_state.delete_confirm = True
 
 # 2. Check the "switch" in session state to show the second button
     if st.session_state.delete_confirm:
