@@ -120,7 +120,7 @@ with col_main:
     (6,  "Post-meal"),
     (12, "Carb use"),
     (20, "Ketosis"),
-    (30, "Fat burn),
+    (30, "Fat burn"),
     (36, "Autophagy"),
     (48, "Ketosis stable"),
     (60, "Deep ketosis"),
