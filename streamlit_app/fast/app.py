@@ -187,10 +187,11 @@ with col_side:
         st.session_state.user_data = None
         st.rerun()
     if c3.button("🗑️ Delete", use_container_width=True, type="primary"):
+        if st.button("Confirm Permanent Delete"):
     # 1. Remove the record from Supabase
-        supabase.table("fasting_groups").delete().eq("id", user['id']).execute()
-        st.session_state.user_data = None
-        st.rerun()
+            supabase.table("fasting_groups").delete().eq("id", user['id']).execute()
+            st.session_state.user_data = None
+            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 # Tick clock
