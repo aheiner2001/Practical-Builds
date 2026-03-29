@@ -69,10 +69,10 @@ st.markdown("""
 /* Progress bar milestones */
 .progress-container {
     position: relative;
-    height: 12px;
+    height: 14px;
     background:#e6e9ef;
     border-radius:6px;
-    margin:20px 0;
+    margin:20px 0 40px 0;
 }
 
 .progress-fill {
@@ -84,9 +84,9 @@ st.markdown("""
 
 .dot {
     position:absolute;
-    top:-6px;
-    width:16px;
-    height:16px;
+    top:-7px;
+    width:18px;
+    height:18px;
     border-radius:50%;
     border:3px solid white;
     background:#dfe3eb;
@@ -100,12 +100,30 @@ st.markdown("""
 
 .dot-label {
     position:absolute;
-    top:20px;
+    top:22px;
     font-size:0.75rem;
     font-weight:600;
     transform:translateX(-50%);
     color:#495057;
     white-space:nowrap;
+}
+
+/* Buttons */
+.stButton>button {
+    width:100%;
+    padding:0.5rem 0.75rem;
+    font-weight:bold;
+    border-radius:8px;
+}
+
+#restart-btn {
+    background:#ff7f50;
+    color:white;
+}
+
+#logout-btn {
+    background:#495057;
+    color:white;
 }
 
 /* Chat */
@@ -258,7 +276,7 @@ with col1:
 with col2:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
 
-    # START / RESTART / LOGOUT
+    # START / RESTART / LOGOUT buttons nicely styled
     if not user["start_time"]:
         if st.button("▶️ Start Fast"):
             now_iso = datetime.utcnow().isoformat()
@@ -268,12 +286,12 @@ with col2:
     else:
         col_restart,col_logout = st.columns([1,1])
         with col_restart:
-            if st.button("🔄 Restart Fast"):
+            if st.button("🔄 Restart Fast", key="restart"):
                 supabase.table("fasting_groups").update({"start_time":None}).eq("id",user["id"]).execute()
                 st.session_state.user_data["start_time"] = None
                 st.rerun()
         with col_logout:
-            if st.button("Logout"):
+            if st.button("Logout", key="logout"):
                 st.session_state.user_data = None
                 st.rerun()
 
@@ -314,7 +332,7 @@ with col2:
             st.rerun()
 
     if not user["start_time"]:
-        if st.button("Logout"):
+        if st.button("Logout", key="logout2"):
             st.session_state.user_data = None
             st.rerun()
 
