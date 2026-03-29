@@ -118,7 +118,6 @@ with col_main:
     checkpoints = [
     
     (12, "Carb Burn"),
-    (24, "Carbs mostly used up"),
     (30, "Fat Burn"),
     (48, "ketosis"),
     (60, "Deep fat burning"),
