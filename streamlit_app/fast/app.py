@@ -180,14 +180,15 @@ with col_side:
     st.write("---")
     if 'delete_confirm' not in st.session_state:
         st.session_state.delete_confirm = False
+    if 'restart_confirm' not in st.session_state:
+        st.session_state.restart_confirm = False
     c1, c2 ,c3= st.columns(3)
     if c1.button("🔄 Restart", use_container_width=True): 
         new_ts = datetime.now().isoformat() 
         supabase.table("fasting_groups").update({"start_time": new_ts}).eq("id", user['id']).execute() 
         st.rerun()
     if c2.button("Log Out", use_container_width=True):
-        st.session_state.user_data = None
-        st.rerun()
+        st.session_state.restart_confirm = True
     if c3.button("🗑️ Delete", use_container_width=True, type="primary"):
     # Instead of showing the button immediately, we flip a switch
         st.session_state.delete_confirm = True
@@ -205,6 +206,18 @@ with col_side:
         
         if col_b.button("❌ Cancel", use_container_width=True):
             st.session_state.delete_confirm = False # Close the confirmation
+            st.rerun()
+    if st.session_state.restart_confirm:
+        st.warning("You will be logged out!")
+        col_a, col_b = st.columns(2)
+    
+        if col_a.button("✅ Yes, Restart", use_container_width=True, type="primary"):
+            st.session_state.user_data = None
+            st.session_state.restart_confirm = False # Reset the switch
+            st.rerun()
+        
+        if col_b.button("❌ Cancel", use_container_width=True):
+            st.session_state.restart_confirm = False # Close the confirmation
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
