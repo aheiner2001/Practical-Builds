@@ -181,18 +181,9 @@ with col_side:
     if 'delete_confirm' not in st.session_state:
         st.session_state.delete_confirm = False
     c1, c2 ,c3= st.columns(3)
-    if c1.button("🔄 Restart", use_container_width=True):
-    # 1. Prepare the new timestamp
-        new_ts = datetime.now().isoformat()
-    
-    # 2. Update the local session state IMMEDIATELY 
-    # (Assuming your user data is stored in st.session_state.user_data)
-        if 'user_data' in st.session_state:
-            st.session_state.user_data['start_time'] = new_ts
-
-        supabase.table("fasting_groups").update({"start_time": new_ts}).eq("id", user['id']).execute()
-    
-    # 4. Rerun to refresh all calculations/timers on the page
+    if c1.button("🔄 Restart", use_container_width=True): 
+        new_ts = datetime.now().isoformat() 
+        supabase.table("fasting_groups").update({"start_time": new_ts}).eq("id", user['id']).execute() 
         st.rerun()
     if c2.button("Log Out", use_container_width=True):
         st.session_state.user_data = None
