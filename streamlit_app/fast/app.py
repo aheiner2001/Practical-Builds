@@ -183,7 +183,7 @@ with col_side:
     msgs = supabase.table("fasting_messages").select("*").eq("group_code", user['group_code']).order("created_at", desc=True).limit(5).execute().data
     
     # 2. Display Messages
-    chat_container = st.container(height=200, border=False)
+    chat_container = st.container(height=500, border=False)
     with chat_container:
         for msg in reversed(msgs):
             st.markdown(f"""
