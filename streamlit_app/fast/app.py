@@ -115,7 +115,7 @@ with col_main:
 
     
     # Benefit Checklist Bar
-checkpoints = [
+    checkpoints = [
     
     (12, "Carb Burn"),
     (24, "Carbs mostly used up"),
