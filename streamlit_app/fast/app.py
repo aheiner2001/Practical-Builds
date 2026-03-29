@@ -184,12 +184,14 @@ with col_side:
         st.session_state.restart_confirm = False
     c1, c2 ,c3= st.columns(3)
     if c1.button("🔄 Restart", use_container_width=True): 
+        st.session_state.delete_confirm = False
         st.session_state.restart_confirm = True
     if c2.button("Log Out", use_container_width=True):
         st.session_state.user_data = None 
         st.rerun()
     if c3.button("🗑️ Delete", use_container_width=True, type="primary"):
     # Instead of showing the button immediately, we flip a switch
+        st.session_state.restart_confirm = False
         st.session_state.delete_confirm = True
 
 # 2. Check the "switch" in session state to show the second button
@@ -208,7 +210,7 @@ with col_side:
             st.session_state.delete_confirm = False # Close the confirmation
             st.rerun()
     if st.session_state.restart_confirm:
-        st.session_state.delete_confirm = False
+        
         st.warning("You will be logged out to ensure time displays properly")
         col_a, col_b = st.columns(2)
     
