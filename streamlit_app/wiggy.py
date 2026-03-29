@@ -375,7 +375,7 @@ def weather_info(code):
 @st.cache_data(show_spinner=False, ttl=3600)
 def fetch_weather():
     today = pd.Timestamp.today().normalize()
-    end   = today + pd.Timedelta(days=20)
+    end   = today + pd.Timedelta(days=15)  # Open-Meteo allows max ~16 days ahead
 
     # Core fields first — always supported
     core_fields = [
@@ -508,7 +508,7 @@ def score_color(s):
 st.markdown("""
 <div class="header-banner">
   <p class="header-title">🚗 WiggyWash</p>
-  <p class="header-sub">3-Week Weather Intelligence &nbsp;·&nbsp; Provo, UT &nbsp;·&nbsp; Live Forecast</p>
+  <p class="header-sub">16-Day Weather Intelligence &nbsp;·&nbsp; Provo, UT &nbsp;·&nbsp; Live Forecast</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -533,8 +533,8 @@ weather_df['wash_score'] = weather_df.apply(wash_score, axis=1)
 weather_df['day_num'] = weather_df['date'].dt.dayofweek
 weather_df['day_name'] = weather_df['date'].dt.day_name()
 
-# Limit to 21 days
-weather_df = weather_df.head(21).reset_index(drop=True)
+# Limit to available days (up to 16)
+weather_df = weather_df.head(16).reset_index(drop=True)
 
 # ─────────────────────────────────────────────
 # SUMMARY METRICS
@@ -565,7 +565,7 @@ st.markdown(f"""
 <div class="metrics-strip">
   <div class="metric-card">
     <div class="metric-icon">🗓️</div>
-    <div class="metric-val">21</div>
+    <div class="metric-val">{len(weather_df)}</div>
     <div class="metric-lbl">Days Forecasted</div>
   </div>
   <div class="metric-card">
@@ -720,14 +720,17 @@ def render_week(week_df, label, date_range_str):
 # ─────────────────────────────────────────────
 week1 = weather_df.iloc[0:7]
 week2 = weather_df.iloc[7:14]
-week3 = weather_df.iloc[14:21]
+week3 = weather_df.iloc[14:]
 
 def week_range(df):
-    return f"{df.iloc[0]['date'].strftime('%-m/%-d')} – {df.iloc[-1]['date'].strftime('%-m/%-d')}"
+    if df.empty:
+        return ""
+    return f"{df.iloc[0]['date'].strftime('%-m/%-d')} - {df.iloc[-1]['date'].strftime('%-m/%-d')}"
 
 render_week(week1, "WEEK 1", week_range(week1))
 render_week(week2, "WEEK 2", week_range(week2))
-render_week(week3, "WEEK 3", week_range(week3))
+if not week3.empty:
+    render_week(week3, "WEEK 3", week_range(week3))
 
 # ─────────────────────────────────────────────
 # CHARTS
