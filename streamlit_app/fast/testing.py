@@ -15,17 +15,18 @@ if "user_data" not in st.session_state:
     st.session_state.user_data = None
 
 # --- PAGE ---
-st.set_page_config(layout="wide", page_title="Fasting")
+st.set_page_config(layout="wide", page_title="Fasting Tracker")
 
 # --- STYLE ---
 st.markdown("""
 <style>
-.stApp { background:#f7f9fc; }
+.stApp { background:#f7f9fc; font-family:sans-serif; }
 
 .card {
     background:white;
     padding:18px;
     border-radius:12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .group {
@@ -35,6 +36,7 @@ st.markdown("""
     border-radius:12px;
     text-align:center;
     margin-bottom:15px;
+    font-weight:bold;
 }
 
 .circle {
@@ -64,11 +66,23 @@ st.markdown("""
     font-weight:bold;
 }
 
-.chat {
+.chat-container {
+    max-height:250px;
+    overflow-y:auto;
+    padding-right:5px;
+}
+
+.chat-message {
     background:#eef2f7;
     padding:8px;
     border-radius:8px;
     margin-bottom:6px;
+}
+
+.chat-user {
+    font-weight:bold;
+    color:#3a86ff;
+    margin-bottom:2px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -79,8 +93,8 @@ if not st.session_state.user_data:
 
     with st.form("login"):
         name = st.text_input("Name").upper()
-        code = st.text_input("Code").upper()
-        goal = st.selectbox("Goal", [48,72,120])
+        code = st.text_input("Group Code").upper()
+        goal = st.selectbox("Goal (hours)", [48,72,120])
 
         if st.form_submit_button("Enter"):
             res = supabase.table("fasting_groups")\
@@ -95,10 +109,9 @@ if not st.session_state.user_data:
                 ins = supabase.table("fasting_groups").insert({
                     "user_name":name,
                     "group_code":code,
-                    "start_time":None,   # ✅ NOT STARTED
+                    "start_time":None,
                     "target_hours":goal
                 }).execute()
-
                 st.session_state.user_data = ins.data[0]
 
             st.rerun()
@@ -112,37 +125,53 @@ members = supabase.table("fasting_groups")\
     .eq("group_code",user["group_code"])\
     .execute().data
 
-# --- TIME ---
 def get_hours(start):
     if not start:
         return 0
-
     start_dt = datetime.fromisoformat(start.replace("Z","+00:00"))
     now_dt = datetime.utcnow()
-
     if start_dt.tzinfo:
         start_dt = start_dt.replace(tzinfo=None)
-
     return max(0,(now_dt-start_dt).total_seconds()/3600)
 
 my_hours = get_hours(user["start_time"])
 progress = min(100, my_hours/user["target_hours"]*100) if user["start_time"] else 0
 group_total = sum(get_hours(m["start_time"]) for m in members)
 
-# --- UI ---
-st.markdown(f"<div class='group'><h3>{group_total:.1f} hrs group</h3></div>", unsafe_allow_html=True)
+def get_recommendation(h):
+    if h < 16:
+        return "Hydrate well. No supplements needed."
+    elif h < 24:
+        return "Start electrolytes if active or fatigued."
+    elif h < 48:
+        return "Electrolytes REQUIRED. 1 pack morning + 1 later."
+    else:
+        return "Long fast. Monitor closely."
 
-col1,col2 = st.columns([1.4,1])
+def electrolyte_plan(h):
+    if h < 16:
+        return "💧 Water only"
+    elif h < 24:
+        return "⚡ Optional electrolytes"
+    elif h < 30:
+        return "⚡ 1 pack morning + 1 later"
+    elif h < 48:
+        return "⚡ 2 packs daily"
+    else:
+        return "⚡ 2–3 packs daily (more if active)"
+
+# --- UI ---
+st.markdown(f"<div class='group'>{group_total:.1f} hrs group total</div>", unsafe_allow_html=True)
+
+col1, col2 = st.columns([1.4,1])
 
 # --- LEFT ---
 with col1:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
 
     if user["start_time"]:
-        # TIMER
         conic = f"conic-gradient(#3a86ff {progress}%, #e6e9ef {progress}%)"
         h,m,s = int(my_hours), int((my_hours*60)%60), int((my_hours*3600)%60)
-
         st.markdown(f"""
         <div class='circle' style='background:{conic};'>
             <div class='inner'>
@@ -151,67 +180,75 @@ with col1:
             </div>
         </div>
         """, unsafe_allow_html=True)
-
         st.progress(progress/100)
 
-        # CHECKPOINTS
+        # CHECKPOINTS BELOW TIMER
         st.write("**Milestones**")
         checkpoints = [(12,"Sugar"),(18,"Fat Burn"),(24,"Ketosis"),(48,"Autophagy"),(72,"Repair")]
         cols = st.columns(len(checkpoints))
-
         for i,(hrs,label) in enumerate(checkpoints):
             with cols[i]:
                 if my_hours >= hrs:
                     st.success(label)
                 else:
                     st.caption(label)
-
     else:
         st.info("Fast not started yet")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
+    # Family
+    st.subheader("👥 Family")
+    for m in members:
+        h_m = get_hours(m["start_time"])
+        st.caption(f"{m['user_name']} • {h_m:.1f}/{m['target_hours']} hrs")
+        st.progress(min(1.0,h_m/m["target_hours"]))
+
 # --- RIGHT ---
 with col2:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
 
-    # START BUTTON
+    # START / RESTART
     if not user["start_time"]:
         if st.button("▶️ Start Fast"):
             now_iso = datetime.utcnow().isoformat()
-
-            supabase.table("fasting_groups").update({
-                "start_time":now_iso
-            }).eq("id",user["id"]).execute()
-
+            supabase.table("fasting_groups").update({"start_time":now_iso}).eq("id",user["id"]).execute()
             st.session_state.user_data["start_time"] = now_iso
             st.rerun()
-
     else:
         if st.button("Restart Fast"):
-            supabase.table("fasting_groups").update({
-                "start_time":None
-            }).eq("id",user["id"]).execute()
-
+            supabase.table("fasting_groups").update({"start_time":None}).eq("id",user["id"]).execute()
             st.session_state.user_data["start_time"] = None
             st.rerun()
 
     st.divider()
 
-    # CHAT
-    st.subheader("💬 Chat")
+    # Recommendations
+    st.subheader("🧠 Recommendation")
+    st.info(get_recommendation(my_hours))
+    st.subheader("💧 Electrolytes")
+    st.warning(electrolyte_plan(my_hours))
+    st.caption("After 24–30h: 1 pack early + 1 later. Repeat after 48h.")
 
+    st.divider()
+
+    # Chat scrollable
+    st.subheader("💬 Chat")
+    chat_container = st.container()
+    chat_html = "<div class='chat-container'>"
     msgs = supabase.table("fasting_messages")\
         .select("*")\
         .eq("group_code",user["group_code"])\
         .order("created_at",desc=True)\
-        .limit(5)\
+        .limit(20)\
         .execute().data
 
     for msg in reversed(msgs):
-        st.markdown(f"<div class='chat'><b>{msg['user_name']}</b><br>{msg['message_text']}</div>", unsafe_allow_html=True)
+        chat_html += f"<div class='chat-message'><div class='chat-user'>{msg['user_name']}</div>{msg['message_text']}</div>"
+    chat_html += "</div>"
+    st.markdown(chat_html, unsafe_allow_html=True)
 
-    with st.form("chat", clear_on_submit=True):
+    with st.form("chat_form", clear_on_submit=True):
         text = st.text_input("Message")
         if st.form_submit_button("Send") and text:
             supabase.table("fasting_messages").insert({
