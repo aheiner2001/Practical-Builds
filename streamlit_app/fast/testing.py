@@ -2,25 +2,24 @@ import streamlit as st
 from supabase import create_client, Client
 from datetime import datetime
 import time
+import math
 
 # --- SUPABASE ---
-supabase: Client = create_client(
-    st.secrets["SUPABASE_URL"],
-    st.secrets["SUPABASE_KEY"]
-)
+supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
-# --- STATE ---
+# --- SESSION STATE ---
 if "user_data" not in st.session_state:
     st.session_state.user_data = None
 
-# --- PAGE ---
+# --- PAGE CONFIG ---
 st.set_page_config(layout="wide", page_title="Fasting Tracker")
 
-# --- STYLE ---
+# --- STYLING ---
 st.markdown("""
 <style>
 .stApp { background:#f7f9fc; font-family:sans-serif; }
 
+/* Card */
 .card {
     background:white;
     padding:18px;
@@ -28,6 +27,7 @@ st.markdown("""
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
+/* Group header */
 .group {
     background:linear-gradient(135deg,#1f3c88,#3a86ff);
     color:white;
@@ -38,6 +38,7 @@ st.markdown("""
     font-weight:bold;
 }
 
+/* Circle timer */
 .circle {
     width:200px;
     height:200px;
@@ -65,6 +66,49 @@ st.markdown("""
     font-weight:bold;
 }
 
+/* Progress bar milestones */
+.progress-container {
+    position: relative;
+    height: 12px;
+    background:#e6e9ef;
+    border-radius:6px;
+    margin:20px 0;
+}
+
+.progress-fill {
+    height:100%;
+    background:#3a86ff;
+    border-radius:6px;
+    transition: width 0.5s;
+}
+
+.dot {
+    position:absolute;
+    top:-6px;
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    border:3px solid white;
+    background:#dfe3eb;
+    transform:translateX(-50%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.dot.active {
+    background:#3a86ff;
+}
+
+.dot-label {
+    position:absolute;
+    top:20px;
+    font-size:0.75rem;
+    font-weight:600;
+    transform:translateX(-50%);
+    color:#495057;
+    white-space:nowrap;
+}
+
+/* Chat */
 .chat-container {
     max-height:250px;
     overflow-y:auto;
@@ -108,7 +152,7 @@ if not st.session_state.user_data:
                 ins = supabase.table("fasting_groups").insert({
                     "user_name":name,
                     "group_code":code,
-                    "start_time":None,  # ✅ NULL allowed
+                    "start_time":None,  # Fast not started yet
                     "target_hours":goal
                 }).execute()
                 st.session_state.user_data = ins.data[0]
@@ -137,27 +181,28 @@ my_hours = get_hours(user["start_time"])
 progress = min(100, my_hours/user["target_hours"]*100) if user["start_time"] else 0
 group_total = sum(get_hours(m.get("start_time")) for m in members)
 
+# --- RECOMMENDATIONS ---
 def get_recommendation(h):
     if h < 16:
         return "Hydrate well. No supplements needed."
     elif h < 24:
-        return "Start electrolytes if active or fatigued."
+        return "Moderate fast. Electrolytes recommended if active or fatigued."
     elif h < 48:
-        return "Electrolytes REQUIRED. 1 pack morning + 1 later."
+        return "Extended fast. Take 1 pack of electrolytes in the morning and 1 in the evening."
     else:
-        return "Long fast. Monitor closely."
+        return "Long fast. Take 2 packs electrolytes per day, more if active. Monitor sodium/potassium closely."
 
 def electrolyte_plan(h):
     if h < 16:
         return "💧 Water only"
     elif h < 24:
-        return "⚡ Optional electrolytes"
+        return "⚡ Optional electrolytes (if needed)"
     elif h < 30:
-        return "⚡ 1 pack morning + 1 later"
+        return "⚡ 1 pack morning + 1 pack evening"
     elif h < 48:
-        return "⚡ 2 packs daily"
+        return "⚡ 2 packs per day (1 morning + 1 evening)"
     else:
-        return "⚡ 2–3 packs daily (more if active)"
+        return "⚡ 2–3 packs per day, depending on activity level"
 
 # --- UI ---
 st.markdown(f"<div class='group'>{group_total:.1f} hrs group total</div>", unsafe_allow_html=True)
@@ -169,6 +214,7 @@ with col1:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
 
     if user["start_time"]:
+        # Circle timer
         conic = f"conic-gradient(#3a86ff {progress}%, #e6e9ef {progress}%)"
         h,m,s = int(my_hours), int((my_hours*60)%60), int((my_hours*3600)%60)
         st.markdown(f"""
@@ -179,25 +225,30 @@ with col1:
             </div>
         </div>
         """, unsafe_allow_html=True)
-        st.progress(progress/100)
 
-        # CHECKPOINTS BELOW TIMER
-        st.write("**Milestones**")
-        checkpoints = [(12,"Sugar"),(18,"Fat Burn"),(24,"Ketosis"),(48,"Autophagy"),(72,"Repair")]
-        cols = st.columns(len(checkpoints))
-        for i,(hrs,label) in enumerate(checkpoints):
-            with cols[i]:
-                if my_hours >= hrs:
-                    st.success(label)
-                else:
-                    st.caption(label)
+        # Progress bar with milestones
+        st.markdown("<div class='progress-container'>", unsafe_allow_html=True)
+        st.markdown(f"<div class='progress-fill' style='width:{progress}%;'></div>", unsafe_allow_html=True)
+
+        # Checkpoints
+        checkpoints = [(12,"Sugar"),(18,"Fat Burn"),(24,"Ketosis"),(48,"Autophagy"),(72,"Cellular Repair")]
+        for hrs,label in checkpoints:
+            left_pct = min(100, hrs/user['target_hours']*100)
+            active_class = "active" if my_hours >= hrs else ""
+            st.markdown(f"""
+            <div class='dot {active_class}' style='left:{left_pct}%;'></div>
+            <div class='dot-label' style='left:{left_pct}%;'>{label}</div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
     else:
         st.info("Fast not started yet")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Family
-    st.subheader("👥 Family")
+    st.subheader("👥 Family Members")
     for m in members:
         h_m = get_hours(m.get("start_time"))
         st.caption(f"{m['user_name']} • {h_m:.1f}/{m['target_hours']} hrs")
@@ -207,7 +258,7 @@ with col1:
 with col2:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
 
-    # START / RESTART
+    # START / RESTART / LOGOUT
     if not user["start_time"]:
         if st.button("▶️ Start Fast"):
             now_iso = datetime.utcnow().isoformat()
@@ -215,7 +266,6 @@ with col2:
             st.session_state.user_data["start_time"] = now_iso
             st.rerun()
     else:
-        # Buttons next to each other
         col_restart,col_logout = st.columns([1,1])
         with col_restart:
             if st.button("🔄 Restart Fast"):
@@ -232,13 +282,13 @@ with col2:
     # Recommendations
     st.subheader("🧠 Recommendation")
     st.info(get_recommendation(my_hours))
+
     st.subheader("💧 Electrolytes")
     st.warning(electrolyte_plan(my_hours))
-    st.caption("After 24–30h: 1 pack early + 1 later. Repeat after 48h.")
 
     st.divider()
 
-    # Chat scrollable
+    # Chat
     st.subheader("💬 Chat")
     chat_html = "<div class='chat-container'>"
     msgs = supabase.table("fasting_messages")\
@@ -263,7 +313,6 @@ with col2:
             }).execute()
             st.rerun()
 
-    # If fast not started, still allow logout
     if not user["start_time"]:
         if st.button("Logout"):
             st.session_state.user_data = None
