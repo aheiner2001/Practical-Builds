@@ -19,11 +19,7 @@ st.set_page_config(page_title="Fast", page_icon="💧", layout="wide")
 
 st.markdown("""
     <style>
-    /* Change the focus border color of all input/select boxes to Blue */
-    .stTextInput div[data-baseweb="input"], 
-    .stSelectbox div[data-baseweb="select"] {
-        border-color: #0081ff !important;
-    }
+  
 
     /* Change the cursor and highlight color to Blue */
     :root {
