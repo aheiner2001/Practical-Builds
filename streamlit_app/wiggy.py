@@ -218,7 +218,75 @@ h1, h2, h3 {
     border-radius: 4px;
 }
 
+/* ── Hourly toggle button ── */
+div[data-testid="stButton"] > button {
+    background: #0a111d !important;
+    color: #3a5878 !important;
+    border: 1px solid #1a2d45 !important;
+    border-top: none !important;
+    border-radius: 0 0 10px 10px !important;
+    font-family: 'Barlow Condensed', sans-serif !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 2px !important;
+    padding: 4px 0 !important;
+    margin-top: -2px !important;
+    transition: color 0.15s, background 0.15s !important;
+}
+div[data-testid="stButton"] > button:hover {
+    background: #0d1a2e !important;
+    color: #00d4ff !important;
+    border-color: #2a4060 !important;
+}
+
+/* ── Hourly panel ── */
+.hourly-panel {
+    background: linear-gradient(180deg, #0d1829 0%, #080f1a 100%);
+    border: 1px solid #1e3050;
+    border-top: 3px solid #00d4ff;
+    border-radius: 0 0 14px 14px;
+    padding: 24px 28px 20px;
+    margin-top: -4px;
+    margin-bottom: 28px;
+    animation: slideDown 0.2s ease-out;
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.hourly-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 3px;
+    color: #00d4ff;
+    margin-bottom: 16px;
+}
+.hourly-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: #1e3050 transparent;
+}
+.hour-chip {
+    flex: 0 0 auto;
+    background: #0a1422;
+    border: 1px solid #1a2d45;
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+    min-width: 72px;
+}
+.hour-chip.business-hour { border-color: #2a4060; }
+.hc-time  { font-family:'Barlow Condensed',sans-serif; font-size:0.72rem; color:#3a5070; letter-spacing:1px; }
+.hc-icon  { font-size:1.3rem; line-height:1.4; }
+.hc-temp  { font-family:'Bebas Neue',sans-serif; font-size:1.15rem; color:#e0e8f5; }
+.hc-feels { font-size:0.6rem; color:#2a4060; font-family:'Barlow Condensed',sans-serif; }
+.hc-wind  { font-size:0.62rem; color:#5a7090; font-family:'Barlow Condensed',sans-serif; margin-top:3px; }
+.hc-rain  { font-size:0.62rem; color:#3a7bd5; font-family:'Barlow Condensed',sans-serif; }
+
 div[data-testid="stSpinner"] > div { border-top-color: #00d4ff !important; }
+
 
 /* Legend row */
 .legend-row {
@@ -466,6 +534,49 @@ def fetch_air_quality():
 
 
 # ─────────────────────────────────────────────
+# HOURLY FETCH
+# ─────────────────────────────────────────────
+@st.cache_data(show_spinner=False, ttl=3600)
+def fetch_hourly(date_str: str):
+    """Fetch hourly data for a single day (date_str = 'YYYY-MM-DD')."""
+    params = {
+        'latitude': LAT, 'longitude': LON,
+        'start_date': date_str,
+        'end_date':   date_str,
+        'hourly': [
+            'temperature_2m','apparent_temperature',
+            'precipitation_probability','precipitation',
+            'wind_speed_10m','wind_gusts_10m',
+            'weather_code','uv_index','relative_humidity_2m',
+        ],
+        'timezone': TZ,
+        'temperature_unit': 'fahrenheit',
+        'precipitation_unit': 'inch',
+        'wind_speed_unit': 'mph',
+    }
+    r = requests.get('https://api.open-meteo.com/v1/forecast', params=params, timeout=15)
+    resp = r.json()
+    if 'hourly' not in resp:
+        return pd.DataFrame()
+    h = resp['hourly']
+    df = pd.DataFrame({
+        'time':        pd.to_datetime(h['time']),
+        'temp_f':      h['temperature_2m'],
+        'feels_f':     h['apparent_temperature'],
+        'precip_pct':  h['precipitation_probability'],
+        'precip_in':   h['precipitation'],
+        'wind_mph':    h['wind_speed_10m'],
+        'gust_mph':    h['wind_gusts_10m'],
+        'weather_code':h['weather_code'],
+        'uv':          h['uv_index'],
+        'humidity':    h['relative_humidity_2m'],
+    })
+    df['hour'] = df['time'].dt.hour
+    df['hour_label'] = df['time'].dt.strftime('%-I %p')
+    return df
+
+
+# ─────────────────────────────────────────────
 # WASH SCORE
 # ─────────────────────────────────────────────
 def wash_score(row):
@@ -622,6 +733,8 @@ def render_week(week_df, label, date_range_str):
     for i, (_, row) in enumerate(week_df.iterrows()):
         is_today  = row['date'].date() == today_ts.date()
         is_sunday = row['day_num'] == 6
+        date_str  = row['date'].strftime('%Y-%m-%d')
+        selected  = st.session_state.get('selected_day') == date_str
 
         icon, cond = weather_info(row['weather_code'])
         events     = get_events(row['date'])
@@ -668,13 +781,10 @@ def render_week(week_df, label, date_range_str):
             )
             event_html = f'<div class="event-stack">{badges}</div>'
 
-        # Wash score bar
-        score_bar_width = sc
         score_bg = f"background: linear-gradient(90deg, {sc_col}33 0%, transparent 100%); border-left: 3px solid {sc_col};"
-
         today_tag = '<div class="today-tag">TODAY</div>' if is_today else ""
+        selected_style = "border-color: #00d4ff; border-bottom: none; border-radius: 12px 12px 0 0;" if selected else ""
         card_cls  = "today-card" if is_today else ("weekend-card" if is_sunday else "")
-
         pills_html = "".join(pills)
 
         if is_sunday:
@@ -706,7 +816,7 @@ def render_week(week_df, label, date_range_str):
 
         with cols[i]:
             st.markdown(f"""
-            <div class="day-card {card_cls}">
+            <div class="day-card {card_cls}" style="{selected_style}">
               {today_tag}
               <div class="day-name">{row['day_name'][:3].upper()}</div>
               <div class="day-date">{row['date'].strftime('%-m/%-d/%y')}</div>
@@ -714,10 +824,115 @@ def render_week(week_df, label, date_range_str):
             </div>
             """, unsafe_allow_html=True)
 
+            if not is_sunday:
+                btn_label = "▲ CLOSE" if selected else "▼ HOURLY"
+                btn_style = "border-top: none;" if selected else ""
+                if st.button(btn_label, key=f"btn_{date_str}",
+                             use_container_width=True):
+                    if selected:
+                        st.session_state['selected_day'] = None
+                    else:
+                        st.session_state['selected_day'] = date_str
+                    st.rerun()
+
+
+def render_hourly_panel(date_str: str, weather_row: pd.Series):
+    """Render the expanded hourly detail panel for a selected day."""
+    with st.spinner("Loading hourly forecast…"):
+        hourly = fetch_hourly(date_str)
+
+    if hourly.empty:
+        st.warning("Hourly data not available for this date.")
+        return
+
+    day_label = weather_row['date'].strftime('%A, %B %-d')
+    icon, cond = weather_info(weather_row['weather_code'])
+
+    # ── Hourly chips ──
+    chips_html = ""
+    for _, hr in hourly.iterrows():
+        h_icon, _ = weather_info(hr['weather_code'])
+        is_biz = 8 <= hr['hour'] <= 18
+        biz_cls = "business-hour" if is_biz else ""
+        rain_html = f'<div class="hc-rain">🌧 {int(hr["precip_pct"])}%</div>' if (hr['precip_pct'] or 0) >= 20 else ""
+        chips_html += f"""
+        <div class="hour-chip {biz_cls}">
+          <div class="hc-time">{hr['hour_label']}</div>
+          <div class="hc-icon">{h_icon}</div>
+          <div class="hc-temp">{int(hr['temp_f'])}°</div>
+          <div class="hc-feels">Feels {int(hr['feels_f'])}°</div>
+          <div class="hc-wind">💨 {int(hr['wind_mph'])}mph</div>
+          {rain_html}
+        </div>
+        """
+
+    st.markdown(f"""
+    <div class="hourly-panel">
+      <div class="hourly-title">{icon} {day_label} — HOURLY BREAKDOWN</div>
+      <div class="hourly-row">{chips_html}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Hourly chart ──
+    biz_hours = hourly[(hourly['hour'] >= 6) & (hourly['hour'] <= 20)]
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 5), facecolor='#080b12')
+    fig.subplots_adjust(hspace=0.45)
+
+    xs = range(len(biz_hours))
+    xlbls = biz_hours['hour_label'].tolist()
+
+    # Temp + feels like
+    ax1.set_facecolor('#0d1420')
+    ax1.fill_between(list(xs), biz_hours['feels_f'].values, biz_hours['temp_f'].values,
+                     alpha=0.15, color='#ff8c42')
+    ax1.plot(list(xs), biz_hours['temp_f'].values, color='#ff8c42', lw=2, marker='o', ms=4, label='Temp °F')
+    ax1.plot(list(xs), biz_hours['feels_f'].values, color='#ffd700', lw=1.5, ls='--', marker='', label='Feels Like °F')
+    ax1b = ax1.twinx()
+    ax1b.bar(list(xs), biz_hours['precip_pct'].fillna(0).values, color='#3a7bd5', alpha=0.3, width=0.6)
+    ax1b.set_ylabel('Rain %', color='#3a7bd5', fontsize=8)
+    ax1b.tick_params(colors='#3a7bd5', labelsize=7)
+    ax1b.set_ylim(0, 200)
+    ax1b.spines['right'].set_edgecolor('#1a2535')
+    ax1.set_xticks(list(xs)); ax1.set_xticklabels(xlbls, fontsize=8, color='#556677')
+    ax1.set_ylabel('Temperature °F', color='#8899bb', fontsize=9)
+    ax1.set_title(f'Hourly Temperature & Rain Probability', color='#00d4ff', fontsize=10, loc='left', pad=6)
+    ax1.tick_params(colors='#3a4d66')
+    for sp in ax1.spines.values(): sp.set_edgecolor('#1a2535')
+    ax1.grid(axis='y', color='#1a2535', lw=0.6)
+    ax1.legend(loc='upper right', fontsize=7, framealpha=0.1, labelcolor='#8899bb', edgecolor='#1a2535')
+
+    # Wind + humidity
+    ax2.set_facecolor('#0d1420')
+    ax2.bar(list(xs), biz_hours['wind_mph'].values, color='#a78bfa', alpha=0.8, width=0.4, label='Wind mph')
+    ax2.bar([x + 0.4 for x in xs], biz_hours['gust_mph'].values, color='#f472b6', alpha=0.5, width=0.4, label='Gust mph')
+    ax2b = ax2.twinx()
+    ax2b.plot(list(xs), biz_hours['humidity'].values, color='#38bdf8', lw=1.5, ls=':', marker='', label='Humidity %')
+    ax2b.set_ylabel('Humidity %', color='#38bdf8', fontsize=8)
+    ax2b.tick_params(colors='#38bdf8', labelsize=7)
+    ax2b.set_ylim(0, 150)
+    ax2b.spines['right'].set_edgecolor('#1a2535')
+    ax2.set_xticks(list(xs)); ax2.set_xticklabels(xlbls, fontsize=8, color='#556677')
+    ax2.set_ylabel('Wind Speed (mph)', color='#8899bb', fontsize=9)
+    ax2.set_title('Hourly Wind, Gusts & Humidity', color='#00d4ff', fontsize=10, loc='left', pad=6)
+    ax2.tick_params(colors='#3a4d66')
+    for sp in ax2.spines.values(): sp.set_edgecolor('#1a2535')
+    ax2.grid(axis='y', color='#1a2535', lw=0.6)
+    lines1, labels1 = ax2.get_legend_handles_labels()
+    lines2, labels2 = ax2b.get_legend_handles_labels()
+    ax2.legend(lines1+lines2, labels1+labels2, loc='upper right', fontsize=7,
+               framealpha=0.1, labelcolor='#8899bb', edgecolor='#1a2535')
+
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close(fig)
+
 
 # ─────────────────────────────────────────────
-# SPLIT INTO 3 WEEKS
+# SPLIT INTO WEEKS & RENDER WITH HOURLY
 # ─────────────────────────────────────────────
+if 'selected_day' not in st.session_state:
+    st.session_state['selected_day'] = None
+
 week1 = weather_df.iloc[0:7]
 week2 = weather_df.iloc[7:14]
 week3 = weather_df.iloc[14:]
@@ -727,10 +942,20 @@ def week_range(df):
         return ""
     return f"{df.iloc[0]['date'].strftime('%-m/%-d')} - {df.iloc[-1]['date'].strftime('%-m/%-d')}"
 
-render_week(week1, "WEEK 1", week_range(week1))
-render_week(week2, "WEEK 2", week_range(week2))
+def render_week_with_hourly(week_df, label, date_range_str):
+    render_week(week_df, label, date_range_str)
+    sel = st.session_state.get('selected_day')
+    if sel:
+        week_dates = week_df['date'].dt.strftime('%Y-%m-%d').tolist()
+        if sel in week_dates:
+            match_rows = weather_df[weather_df['date'].dt.strftime('%Y-%m-%d') == sel]
+            if not match_rows.empty:
+                render_hourly_panel(sel, match_rows.iloc[0])
+
+render_week_with_hourly(week1, "WEEK 1", week_range(week1))
+render_week_with_hourly(week2, "WEEK 2", week_range(week2))
 if not week3.empty:
-    render_week(week3, "WEEK 3", week_range(week3))
+    render_week_with_hourly(week3, "WEEK 3", week_range(week3))
 
 # ─────────────────────────────────────────────
 # CHARTS
