@@ -79,11 +79,11 @@ if st.session_state.user_data is None:
                 if st.form_submit_button("Start Fasting"):
                     # Upsert to Supabase
                     data = {
-                        "user_name": u_name, 
-                        "group_code": u_group.upper(), 
-                        "start_time": datetime.now().isoformat(),
-                        "target_hours": u_target
-                    }
+    "user_name": u_name.strip().upper(), 
+    "group_code": u_group.strip().upper(), 
+    "start_time": datetime.now().isoformat(),
+    "target_hours": u_target
+}
                     res = supabase.table("fasting_groups").upsert(data, on_conflict="user_name, group_code").execute()
                     st.session_state.user_data = res.data[0]
                     st.rerun()
