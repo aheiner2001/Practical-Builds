@@ -4,244 +4,186 @@ import time
 import random
 
 # --- 1. CONNECTION ---
-try:
-    url = st.secrets["SUPABASE_URL"]
-    key = st.secrets["SUPABASE_KEY"]
-    supabase: Client = create_client(url, key)
-except Exception:
-    st.error("Check your .streamlit/secrets.toml for SUPABASE_URL and SUPABASE_KEY!")
-    st.stop()
+supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
-# --- 2. IMAGE FACTORY (Uploader) ---
-st.set_page_config(page_title="Dixit Family", page_icon="🎨", layout="wide")
+# --- 2. IMAGE FACTORY (Multi-Upload) ---
+st.set_page_config(page_title="Dixit Pro", layout="wide")
+with st.expander("⬆️ Upload New Cards"):
+    files = st.file_uploader("Images", type=['png', 'jpg'], accept_multiple_files=True)
+    if st.button("Upload All"):
+        for f in files:
+            fname = f"{int(time.time())}_{f.name}"
+            supabase.storage.from_('dixit_images').upload(fname, f.read())
+            url = supabase.storage.from_('dixit_images').get_public_url(fname)
+            supabase.table("dixit_pool").insert({"url": url}).execute()
+        st.success("Uploaded!")
+        st.rerun()
 
-# --- 2. IMAGE FACTORY (Multi-Upload Version) ---
-st.title("🎨 Dixit Image Factory")
-with st.expander("⬆️ Add New Cards to the Game Pool"):
-    # 1. Added 'accept_multiple_files=True'
-    uploaded_files = st.file_uploader(
-        "Upload surreal/abstract images", 
-        type=['png', 'jpg', 'jpeg'], 
-        accept_multiple_files=True
-    )
-    
-    if st.button("Upload All to Database"):
-        if uploaded_files:
-            success_count = 0
-            progress_bar = st.progress(0)
-            
-            # 2. Loop through every file in the list
-            for i, uploaded_file in enumerate(uploaded_files):
-                filename = f"{int(time.time())}_{i}_{uploaded_file.name}"
-                try:
-                    # Upload file to Storage
-                    supabase.storage.from_('dixit_images').upload(filename, uploaded_file.read())
-                    public_url = supabase.storage.from_('dixit_images').get_public_url(filename)
-                    
-                    # Save URL to Image Pool Table
-                    supabase.table("dixit_pool").insert({"url": public_url}).execute()
-                    
-                    success_count += 1
-                    # Update progress bar
-                    progress_bar.progress((i + 1) / len(uploaded_files))
-                except Exception as e:
-                    st.error(f"Failed to upload {uploaded_file.name}: {e}")
-            
-            st.success(f"Successfully added {success_count} cards to the deck!")
-            time.sleep(2)
-            st.rerun()
-        else:
-            st.error("Please select at least one file.")
-
-st.divider()
-
-# --- 3. SESSION STATE & LOGIN ---
+# --- 3. LOGIN ---
 if 'player_name' not in st.session_state:
     st.session_state.player_name = None
 
 if not st.session_state.player_name:
     with st.form("login"):
-        name = st.text_input("Your Name").strip().upper()
-        group = st.text_input("Family Group Code").strip().upper()
-        if st.form_submit_button("Join Game"):
-            if name and group:
-                st.session_state.player_name = name
-                st.session_state.group_code = group
-                st.rerun()
+        name = st.text_input("Name").upper().strip()
+        group = st.text_input("Group Code").upper().strip()
+        if st.form_submit_button("Join"):
+            st.session_state.player_name, st.session_state.group_code = name, group
+            st.rerun()
     st.stop()
 
-# --- 4. SHARED GAME DATA ---
 player = st.session_state.player_name
 group = st.session_state.group_code
 
-# Fetch or Init Game State
-game_res = supabase.table("dixit_games").select("*").eq("group_code", group).execute()
+# --- 4. GAME STATE ENGINE ---
+game_res = supabase.table("dixit_games").select("*").eq("group_code", group).single().execute()
 if not game_res.data:
     supabase.table("dixit_games").insert({"group_code": group}).execute()
     st.rerun()
+game = game_res.data
 
-game = game_res.data[0]
-phase = game['phase']
-submissions = game['submissions'] or {}
-votes = game['votes'] or {}
+# Helper: Refill player hands and handle Discard Pile
+def manage_decks(current_game):
+    pool = [r['url'] for r in supabase.table("dixit_pool").select("url").execute().data]
+    discard = current_game['discard_pile'] or []
+    decks = current_game['player_decks'] or {}
+    order = current_game['player_order'] or []
+    
+    # Available = Pool - Discard - Cards currently in hands
+    in_hands = [card for h in decks.values() for card in h]
+    available = [c for c in pool if c not in discard and c not in in_hands]
+    
+    # If not enough cards, recycle discard pile
+    if len(available) < (len(order) * 6):
+        supabase.table("dixit_games").update({"discard_pile": []}).eq("group_code", group).execute()
+        available = [c for c in pool if c not in in_hands]
 
-# Fetch All Cards in Pool
-all_cards = [row['url'] for row in supabase.table("dixit_pool").select("url").execute().data]
-
-# --- 5. DECK GENERATION (No Duplicates Logic) ---
-# We use the group_code to seed a master shuffle so players get unique cards
-random.seed(group)
-master_deck = all_cards.copy()
-random.shuffle(master_deck)
-
-# We use a simple hash of the player's name to give them a consistent slice of the deck
-player_hash = sum(ord(char) for char in player) % 10
-start_idx = (player_hash * 6) % max(1, len(master_deck) - 6)
-my_hand = master_deck[start_idx : start_idx + 6]
-
-# --- 6. GAME UI ---
-st.sidebar.title("🎮 Dixit Game")
-st.sidebar.write(f"**Player:** {player}")
-st.sidebar.write(f"**Group:** {group}")
-st.sidebar.write(f"**Phase:** {phase}")
-
-if st.sidebar.button("🚪 Log Out"):
-    st.session_state.player_name = None
-    st.rerun()
+    random.shuffle(available)
+    updated = False
+    for p in order:
+        hand = decks.get(p, [])
+        while len(hand) < 6 and available:
+            hand.append(available.pop(0))
+            updated = True
+        decks[p] = hand
+    
+    if updated:
+        supabase.table("dixit_games").update({"player_decks": decks}).eq("group_code", group).execute()
 
 # --- PHASE: LOBBY ---
-if phase == "LOBBY":
-    st.header("🏠 Game Lobby")
-    st.write("Waiting for the family to gather. Once everyone is ready, start the round!")
-    if st.button("🚀 Start Round", type="primary"):
+if game['phase'] == "LOBBY":
+    st.header("Lobby")
+    current_order = game['player_order'] or []
+    if player not in current_order:
+        current_order.append(player)
+        supabase.table("dixit_games").update({"player_order": current_order}).eq("group_code", group).execute()
+    
+    st.write("Players joined in order:")
+    for p in current_order: st.write(f"👤 {p}")
+    
+    if st.button("🚀 Start Game"):
+        manage_decks(game)
+        # Determine Storyteller by order
+        st_id = current_order[0]
+        supabase.table("dixit_games").update({"phase": "STORYTELLING", "storyteller_id": st_id, "round_number": 0}).eq("group_code", group).execute()
+        st.rerun()
+
+# --- PHASE: STORYTELLING / SUBMITTING / VOTING ---
+else:
+    my_hand = (game['player_decks'] or {}).get(player, [])
+    st.sidebar.write(f"Turn: {game['storyteller_id']}")
+    st.sidebar.write(f"Round: {game['round_number'] + 1}")
+
+    if game['phase'] == "STORYTELLING":
+        if player == game['storyteller_id']:
+            st.header("You are the Storyteller!")
+            cols = st.columns(3)
+            for i, img in enumerate(my_hand):
+                with cols[i%3]:
+                    st.image(img)
+                    if st.button(f"Pick Card {i+1}", key=f"s{i}"):
+                        clue = st.text_input("Description:")
+                        if st.button("Submit"):
+                            # Remove from hand, add to submissions
+                            my_hand.remove(img)
+                            new_decks = game['player_decks']; new_decks[player] = my_hand
+                            new_subs = {player: img}
+                            supabase.table("dixit_games").update({
+                                "clue": clue, "phase": "SUBMITTING", 
+                                "submissions": new_subs, "player_decks": new_decks
+                            }).eq("group_code", group).execute()
+                            st.rerun()
+        else: st.info(f"Waiting for {game['storyteller_id']}...")
+
+    elif game['phase'] == "SUBMITTING":
+        st.header(f"Clue: {game['clue']}")
+        if player not in game['submissions']:
+            cols = st.columns(3)
+            for i, img in enumerate(my_hand):
+                with cols[i%3]:
+                    st.image(img)
+                    if st.button(f"Trick with this {i+1}", key=f"d{i}"):
+                        my_hand.remove(img)
+                        new_decks = game['player_decks']; new_decks[player] = my_hand
+                        new_subs = game['submissions']; new_subs[player] = img
+                        supabase.table("dixit_games").update({
+                            "submissions": new_subs, "player_decks": new_decks
+                        }).eq("group_code", group).execute()
+                        st.rerun()
+        else:
+            if len(game['submissions']) >= len(game['player_order']):
+                if st.button("Everyone ready? Move to Voting"):
+                    supabase.table("dixit_games").update({"phase": "VOTING"}).eq("group_code", group).execute()
+                    st.rerun()
+            else: st.write("Waiting for others...")
+
+    elif game['phase'] == "VOTING":
+        st.header(f"Vote! Clue: {game['clue']}")
+        if player != game['storyteller_id'] and player not in (game['votes'] or {}):
+            all_imgs = list(game['submissions'].values())
+            random.shuffle(all_imgs)
+            cols = st.columns(3)
+            for i, img in enumerate(all_imgs):
+                with cols[i%3]:
+                    st.image(img)
+                    if img != game['submissions'][player]:
+                        if st.button(f"Vote {i+1}", key=f"v{i}"):
+                            v = game['votes'] or {}; v[player] = img
+                            supabase.table("dixit_games").update({"votes": v}).eq("group_code", group).execute()
+                            st.rerun()
+        elif len(game['votes'] or {}) >= (len(game['player_order']) - 1):
+            if st.button("See Results"):
+                supabase.table("dixit_games").update({"phase": "RESULTS"}).eq("group_code", group).execute()
+                st.rerun()
+
+    elif game['phase'] == "RESULTS":
+        st.header("Results")
+        st_card = game['submissions'][game['storyteller_id']]
+        st.image(st_card, width=300, caption="The real card")
+        
+        if player == game['storyteller_id']:
+            if st.button("Next Round"):
+                # 1. Add used cards to discard pile
+                new_discard = (game['discard_pile'] or []) + list(game['submissions'].values())
+                # 2. Increment round and rotate storyteller
+                new_round = game['round_number'] + 1
+                next_st = game['player_order'][new_round % len(game['player_order'])]
+                
+                supabase.table("dixit_games").update({
+                    "phase": "STORYTELLING", "storyteller_id": next_st, 
+                    "round_number": new_round, "discard_pile": new_discard,
+                    "submissions": {}, "votes": {}, "clue": None
+                }).eq("group_code", group).execute()
+                
+                # Refill hands
+                manage_decks(game)
+                st.rerun()
+
+    if st.sidebar.button("EXIT & RESET GAME"):
         supabase.table("dixit_games").update({
-            "phase": "STORYTELLING",
-            "storyteller_id": player,
-            "submissions": {},
-            "votes": {},
-            "clue": None
+            "phase": "LOBBY", "player_order": [], "player_decks": {}, "discard_pile": []
         }).eq("group_code", group).execute()
         st.rerun()
 
-# --- PHASE: STORYTELLING ---
-elif phase == "STORYTELLING":
-    if player == game['storyteller_id']:
-        st.header("🌟 You are the Storyteller!")
-        st.write("Choose a card from your hand and give it a cryptic description.")
-        
-        cols = st.columns(3)
-        for i, img in enumerate(my_hand):
-            with cols[i % 3]:
-                st.image(img, use_container_width=True)
-                if st.button(f"Select Card {i+1}", key=f"story_sel_{i}"):
-                    st.session_state.selected_card = img
-        
-        if 'selected_card' in st.session_state:
-            st.divider()
-            st.image(st.session_state.selected_card, width=200, caption="Your choice")
-            clue = st.text_input("Enter your clue (word or sentence):")
-            if st.button("Submit Clue") and clue:
-                submissions[player] = st.session_state.selected_card
-                supabase.table("dixit_games").update({
-                    "clue": clue,
-                    "phase": "SUBMITTING",
-                    "submissions": submissions
-                }).eq("group_code", group).execute()
-                del st.session_state.selected_card
-                st.rerun()
-    else:
-        st.header("⏳ Waiting for Storyteller")
-        st.info(f"**{game['storyteller_id']}** is picking a card and writing a clue...")
-
-# --- PHASE: SUBMITTING ---
-elif phase == "SUBMITTING":
-    st.header(f"📝 The Clue is: '{game['clue']}'")
-    
-    if player in submissions:
-        st.success("You've submitted your decoy! Waiting for the others...")
-    else:
-        st.write("Pick a card from your hand to TRICK others into thinking it's the Storyteller's card.")
-        cols = st.columns(3)
-        for i, img in enumerate(my_hand):
-            with cols[i % 3]:
-                st.image(img, use_container_width=True)
-                if st.button(f"Submit Card {i+1}", key=f"decoy_sub_{i}"):
-                    submissions[player] = img
-                    supabase.table("dixit_games").update({"submissions": submissions}).eq("group_code", group).execute()
-                    st.rerun()
-    
-    # Storyteller can advance the game once there are enough decoys
-    if player == game['storyteller_id'] and len(submissions) > 1:
-        if st.button("Everybody in? Start Voting"):
-            supabase.table("dixit_games").update({"phase": "VOTING"}).eq("group_code", group).execute()
-            st.rerun()
-
-# --- PHASE: VOTING ---
-elif phase == "VOTING":
-    st.header(f"🗳️ Vote! Clue: '{game['clue']}'")
-    
-    if player == game['storyteller_id']:
-        st.info("Storytellers can't vote. Watch the results come in!")
-    elif player in votes:
-        st.success("Vote recorded. Waiting for results...")
-    else:
-        # Shuffle submitted images so position doesn't give away the storyteller
-        all_subs = list(submissions.values())
-        random.seed(group + game['clue']) # Shuffled same for everyone
-        random.shuffle(all_subs)
-        
-        st.write("Which card do you think belongs to the storyteller?")
-        cols = st.columns(3)
-        for i, img in enumerate(all_subs):
-            # Players shouldn't be able to vote for their own decoy
-            if img == submissions.get(player):
-                with cols[i % 3]:
-                    st.image(img, use_container_width=True, caption="Your Decoy")
-                    st.button("Cannot Vote", disabled=True, key=f"vote_dis_{i}")
-            else:
-                with cols[i % 3]:
-                    st.image(img, use_container_width=True)
-                    if st.button(f"Vote Card {i+1}", key=f"vote_btn_{i}"):
-                        votes[player] = img
-                        supabase.table("dixit_games").update({"votes": votes}).eq("group_code", group).execute()
-                        st.rerun()
-
-    if player == game['storyteller_id'] and len(votes) >= 1:
-        if st.button("Close Voting & Show Results"):
-            supabase.table("dixit_games").update({"phase": "RESULTS"}).eq("group_code", group).execute()
-            st.rerun()
-
-# --- PHASE: RESULTS ---
-elif phase == "RESULTS":
-    st.header("🏆 Results")
-    storyteller_card = submissions.get(game['storyteller_id'])
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image(storyteller_card, width=300, caption="The Correct Card")
-    
-    with col2:
-        st.subheader("Votes:")
-        for voter, card_voted in votes.items():
-            result = "🎯 SUCCESS" if card_voted == storyteller_card else "❌ FOOLED"
-            st.write(f"**{voter}**: {result}")
-
-    st.divider()
-    
-    # Only the host/storyteller can reset the game
-    if player == game['storyteller_id']:
-        st.warning("Host Controls")
-        if st.button("🔄 Restart & Exit to Lobby", type="primary"):
-            supabase.table("dixit_games").update({
-                "phase": "LOBBY",
-                "clue": None,
-                "submissions": {},
-                "votes": {},
-                "storyteller_id": None
-            }).eq("group_code", group).execute()
-            st.rerun()
-
-# --- 7. GLOBAL REFRESH ---
-# Auto-sync every 3 seconds so everyone sees phase changes
 time.sleep(3)
 st.rerun()
