@@ -161,7 +161,7 @@ h1, h2, h3 {
 .ev-payday    { background: #1a2e1a; color: #4ade80; border: 1px solid #22863a; }
 .ev-school    { background: #1a2535; color: #60a5fa; border: 1px solid #2563eb; }
 .ev-seasonal  { background: #2e1e10; color: #fb923c; border: 1px solid #c2410c; }
-.ev-other     { background: #1e1e2e; color: #a5b4fc; border: 1px solid #4338ca; }
+.ev-poststorm { background: #1a2e20; color: #34d399; border: 1px solid #059669; }
 
 /* Sunday closed */
 .closed-label {
@@ -644,6 +644,37 @@ weather_df['wash_score'] = weather_df.apply(wash_score, axis=1)
 weather_df['day_num'] = weather_df['date'].dt.dayofweek
 weather_df['day_name'] = weather_df['date'].dt.day_name()
 
+# ── Post-storm rush flags ──
+# A day is a "post-storm bounce" if the previous day had meaningful rain OR snow.
+# We look at actual precip inches (not just probability) so it has to have actually rained/snowed.
+weather_df['prev_precip_in'] = weather_df['precip_in'].shift(1).fillna(0)
+weather_df['prev_snow_in']   = weather_df['snow_in'].shift(1).fillna(0)
+weather_df['prev_precip_pct']= weather_df['precip_pct'].shift(1).fillna(0)
+
+def post_storm_label(row):
+    """Return a badge label if the day before was a storm, else None."""
+    prev_rain = row['prev_precip_in'] or 0
+    prev_snow = row['prev_snow_in'] or 0
+    prev_pct  = row['prev_precip_pct'] or 0
+    if prev_snow >= 0.5:
+        return f"🚗 Post-Snow Rush ({prev_snow:.1f}\")"
+    if prev_rain >= 0.25:
+        return f"🚗 Post-Rain Rush ({prev_rain:.2f}\")"
+    if prev_pct >= 60 and prev_rain >= 0.05:
+        return "🚗 Post-Storm Rush"
+    return None
+
+weather_df['post_storm_badge'] = weather_df.apply(post_storm_label, axis=1)
+
+# Also boost wash score for post-storm days (people rush in after a mess)
+def boost_score(row):
+    s = row['wash_score']
+    if row['post_storm_badge']:
+        s = min(100, s + 15)
+    return s
+
+weather_df['wash_score'] = weather_df.apply(boost_score, axis=1)
+
 # Limit to available days (up to 16)
 weather_df = weather_df.head(16).reset_index(drop=True)
 
@@ -667,6 +698,9 @@ for _, row in open_days.iterrows():
         alerts.append(f"🌪️ High dust event on {row['day_name'][:3]} {row['date'].strftime('%-m/%-d')} — cars will re-soil quickly")
     if (row['snow_in'] or 0) >= 1:
         alerts.append(f"❄️ Significant snow {row['snow_in']:.1f}\" on {row['day_name'][:3]} {row['date'].strftime('%-m/%-d')} — post-storm rush likely next day")
+    if row.get('post_storm_badge'):
+        badge = row['post_storm_badge']
+        alerts.append(f"📈 {badge} expected on {row['day_name'][:3]} {row['date'].strftime('%-m/%-d')} — consider extra staffing")
 
 if alerts:
     for a in alerts[:3]:
@@ -774,10 +808,14 @@ def render_week(week_df, label, date_range_str):
 
         # Event badges HTML
         event_html = ""
-        if events:
+        all_badges = list(events[:4])
+        post_storm = row.get('post_storm_badge')
+        if post_storm:
+            all_badges.insert(0, (post_storm, "ev-poststorm"))  # show first — most operationally relevant
+        if all_badges:
             badges = "".join(
                 f'<div class="event-badge {cls}">{name}</div>'
-                for name, cls in events[:4]
+                for name, cls in all_badges[:5]
             )
             event_html = f'<div class="event-stack">{badges}</div>'
 
@@ -1133,6 +1171,9 @@ st.markdown('<div class="week-label">📅 UPCOMING CALENDAR EVENTS</div>', unsaf
 all_events = []
 for _, row in weather_df.iterrows():
     evs = get_events(row['date'])
+    # Prepend post-storm badge if present
+    if row.get('post_storm_badge'):
+        evs = [(row['post_storm_badge'], 'ev-poststorm')] + evs
     for name, cls in evs:
         all_events.append({
             'Date': row['date'].strftime('%A, %b %-d'),
