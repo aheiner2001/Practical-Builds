@@ -116,13 +116,12 @@ with col_main:
     
     # Benefit Checklist Bar
     checkpoints = [
-    
-    (12, "Carb Burn"),
-    (20, "Fat Burn"),
-        
-    (48, "ketosis"),
-    (60, "Deep fat burning"),
-    (72, "Extended fast")
+    (12, "Glycogen use"),
+    (18, "Glycogen low"),
+    (24, "Glycogen depleted"),
+    (36, "Fat + ketones dominant"),
+    (48, "Ketosis"),
+    (72, "Deep fasting")
 ]
     cp_html = "".join([f"<div class='dot' style='left:{(hrs/user['target_hours'])*50}%; background:{'#0081ff' if my_hours>=hrs else '#e9ecef'};'></div><div class='dot-label' style='left:{(hrs/user['target_hours'])*50}%;'>{lab}</div>" for hrs, lab in checkpoints if (hrs/user['target_hours'])*100 <= 100])
 
