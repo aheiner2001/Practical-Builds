@@ -119,6 +119,7 @@ with col_main:
     
     (12, "Carb Burn"),
     (30, "Fat Burn"),
+        
     (48, "ketosis"),
     (60, "Deep fat burning"),
     (72, "Extended fast")
