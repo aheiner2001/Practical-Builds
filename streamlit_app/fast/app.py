@@ -189,5 +189,5 @@ with col_side:
     st.markdown("</div>", unsafe_allow_html=True)
 
 # Tick clock
-time.sleep(1)
+time.sleep(5)
 st.rerun()
