@@ -187,6 +187,8 @@ with col_side:
         st.session_state.delete_confirm = False
         st.session_state.restart_confirm = True
     if c2.button("Log Out", use_container_width=True):
+        st.session_state.restart_confirm = False
+        st.session_state.delete_confirm = False
         st.session_state.user_data = None 
         st.rerun()
     if c3.button("🗑️ Delete", use_container_width=True, type="primary"):
@@ -196,7 +198,6 @@ with col_side:
 
 # 2. Check the "switch" in session state to show the second button
     if st.session_state.delete_confirm:
-        st.session_state.restart_confirm = False
         st.warning("⚠️ This is permanent!")
         col_a, col_b = st.columns(2)
     
