@@ -178,6 +178,8 @@ with col_side:
 
     # Controls
     st.write("---")
+    if 'delete_confirm' not in st.session_state:
+        st.session_state.delete_confirm = False
     c1, c2 ,c3= st.columns(3)
     if c1.button("🔄 Restart", use_container_width=True):
         new_ts = datetime.now().isoformat()
