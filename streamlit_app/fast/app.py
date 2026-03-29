@@ -213,6 +213,7 @@ with col_side:
         if col_a.button("✅ Yes, Restart", use_container_width=True, type="primary"):
             new_ts = datetime.now().isoformat() 
             supabase.table("fasting_groups").update({"start_time": new_ts}).eq("id", user['id']).execute() 
+            st.session_state.restart_confirm = False
             st.session_state.user_data = None 
             st.rerun()
         
