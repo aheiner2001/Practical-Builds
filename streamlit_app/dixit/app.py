@@ -15,25 +15,43 @@ except Exception:
 # --- 2. IMAGE FACTORY (Uploader) ---
 st.set_page_config(page_title="Dixit Family", page_icon="🎨", layout="wide")
 
+# --- 2. IMAGE FACTORY (Multi-Upload Version) ---
 st.title("🎨 Dixit Image Factory")
-with st.expander("⬆️ Add New Cards to the Game Pool (Anyone can add!)"):
-    uploaded_file = st.file_uploader("Upload a surreal/abstract image", type=['png', 'jpg', 'jpeg'])
-    if st.button("Upload to Database"):
-        if uploaded_file:
-            filename = f"{int(time.time())}_{uploaded_file.name}"
-            try:
-                # 1. Upload file to Storage
-                supabase.storage.from_('dixit_images').upload(filename, uploaded_file.read())
-                public_url = supabase.storage.from_('dixit_images').get_public_url(filename)
-                # 2. Save URL to Image Pool Table
-                supabase.table("dixit_pool").insert({"url": public_url}).execute()
-                st.success("Card added to the deck successfully!")
-                time.sleep(1)
-                st.rerun()
-            except Exception as e:
-                st.error(f"Upload failed: {e}")
+with st.expander("⬆️ Add New Cards to the Game Pool"):
+    # 1. Added 'accept_multiple_files=True'
+    uploaded_files = st.file_uploader(
+        "Upload surreal/abstract images", 
+        type=['png', 'jpg', 'jpeg'], 
+        accept_multiple_files=True
+    )
+    
+    if st.button("Upload All to Database"):
+        if uploaded_files:
+            success_count = 0
+            progress_bar = st.progress(0)
+            
+            # 2. Loop through every file in the list
+            for i, uploaded_file in enumerate(uploaded_files):
+                filename = f"{int(time.time())}_{i}_{uploaded_file.name}"
+                try:
+                    # Upload file to Storage
+                    supabase.storage.from_('dixit_images').upload(filename, uploaded_file.read())
+                    public_url = supabase.storage.from_('dixit_images').get_public_url(filename)
+                    
+                    # Save URL to Image Pool Table
+                    supabase.table("dixit_pool").insert({"url": public_url}).execute()
+                    
+                    success_count += 1
+                    # Update progress bar
+                    progress_bar.progress((i + 1) / len(uploaded_files))
+                except Exception as e:
+                    st.error(f"Failed to upload {uploaded_file.name}: {e}")
+            
+            st.success(f"Successfully added {success_count} cards to the deck!")
+            time.sleep(2)
+            st.rerun()
         else:
-            st.error("Please select a file first.")
+            st.error("Please select at least one file.")
 
 st.divider()
 
