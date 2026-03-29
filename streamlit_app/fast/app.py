@@ -117,7 +117,7 @@ with col_main:
     # Benefit Checklist Bar
     
     checkpoints = [
-    (0,  "START"),
+    (0,  "Start"),
     (6,  "Post-meal"),
     (12, "Carb use"),
     (20, "Ketosis"),
