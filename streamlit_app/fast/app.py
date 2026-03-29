@@ -132,7 +132,7 @@ with col_main:
 
     st.markdown(f"<div class='benefit-bar-bg'><div class='benefit-bar-fill' style='width:{prog_pct}%;'></div>{cp_html}</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
-    
+    st.markdown("<div style='padding: 30px 0;'></div>", unsafe_allow_html=True)
     Electrolyte = [
     (0,  "Drink water"),
     (12, "½ packet"),
@@ -142,7 +142,8 @@ with col_main:
     (60, "1 packet"),
     (72, "1 packet")
 ]
-    st.markdown("##### Electrolyte Intake Checkpoints, Spread intake until next checkpoint (6g packets) ")
+    st.markdown("##### Electrolyte Intake Checkpoints")
+    st.caption("Spread intake until next checkpoint (6g packets)")
     cp_html = "".join([f"<div class='dot' style='left:{(hrs/user['target_hours'])*90}%; background:{'#0081ff' if my_hours>=hrs else '#e9ecef'};'></div><div class='dot-label' style='left:{(hrs/user['target_hours'])*90}%;'>{lab}</div>" for hrs, lab in Electrolyte if (hrs/user['target_hours'])*100 <= 100])
 
     st.markdown(f"<div class='benefit-bar-bg'><div class='benefit-bar-fill' style='width:{prog_pct}%;'></div>{cp_html}</div>", unsafe_allow_html=True)
