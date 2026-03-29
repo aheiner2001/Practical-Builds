@@ -1,17 +1,26 @@
 import streamlit as st
-import time
+from supabase import create_client, Client
 from datetime import datetime, timedelta
+import time
+import collections
 
-# --- 1. INITIALIZE SESSION STATE ---
-if 'start_time_obj' not in st.session_state:
-    st.session_state.start_time_obj = None
-if 'fast_target_h' not in st.session_state:
-    st.session_state.fast_target_h = 48 
+# --- 1. INITIALIZE SUPABASE ---
+# Make sure these are in your .streamlit/secrets.toml
+try:
+    url = st.secrets["SUPABASE_URL"]
+    key = st.secrets["SUPABASE_KEY"]
+    supabase: Client = create_client(url, key)
+except Exception:
+    st.error("Please configure Supabase secrets to use the family features.")
+    st.stop()
 
-# --- PAGE CONFIG ---
-st.set_page_config(page_title="FlowFast Tracker", page_icon="💧", layout="wide")
+# --- 2. SESSION STATE ---
+if 'user_data' not in st.session_state:
+    st.session_state.user_data = None
 
-# --- 2. CUSTOM THEME ---
+# --- 3. PAGE CONFIG & STYLING ---
+st.set_page_config(page_title="Family FlowFast", page_icon="💧", layout="wide")
+
 st.markdown("""
     <style>
     .stApp { background-color: white; }
@@ -19,7 +28,7 @@ st.markdown("""
     
     .dashboard-container {
         display: grid;
-        grid-template-areas: "progress progress" "stages steps" "timeline timeline";
+        grid-template-areas: "progress progress" "stages steps" "family family";
         grid-template-columns: 1fr 2fr;
         grid-gap: 30px;
     }
@@ -37,10 +46,8 @@ st.markdown("""
         content: ""; position: absolute; width: 170px; height: 170px; 
         background-color: white; border-radius: 50%;
     }
-    .stopwatch-display { 
-        z-index: 10; text-align: center; font-family: 'Courier New', Courier, monospace; 
-    }
-    .time-digits { font-size: 2.2rem; font-weight: bold; color: #044389; display: block; }
+    .stopwatch-display { z-index: 10; text-align: center; }
+    .time-digits { font-size: 2.2rem; font-weight: bold; color: #044389; display: block; font-family: monospace; }
     .time-label { font-size: 0.8rem; color: #b56576; letter-spacing: 2px; text-transform: uppercase; }
 
     /* Stepper */
@@ -52,107 +59,124 @@ st.markdown("""
         color: white; z-index: 2; font-weight: bold;
     }
     .active-step { background: #0081ff; box-shadow: 0 0 15px rgba(0,129,255,0.5); transform: scale(1.1); }
+    
+    /* Family Section */
+    .family-card { background: #f7fbff; padding: 20px; border-radius: 15px; border: 1px solid #e1e7ec; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. SIDEBAR CONTROLS ---
-st.sidebar.header("Fast Setup")
-selected_h = st.sidebar.select_slider("Select Target (Hours)", options=[48, 72, 120])
+# --- 4. LOGIN / JOIN LOGIC ---
+if st.session_state.user_data is None:
+    st.markdown("<h1 class='main-header'>FlowFast Family</h1>", unsafe_allow_html=True)
+    with st.container():
+        col_l, col_r = st.columns(2)
+        with col_l:
+            st.subheader("Join a Fast")
+            with st.form("login_form"):
+                u_name = st.text_input("Your Name")
+                u_group = st.text_input("Group/Family Code")
+                u_target = st.selectbox("Goal (Hours)", [48, 72, 120])
+                if st.form_submit_button("Start Fasting"):
+                    # Upsert to Supabase
+                    data = {
+                        "user_name": u_name, 
+                        "group_code": u_group.upper(), 
+                        "start_time": datetime.now().isoformat(),
+                        "target_hours": u_target
+                    }
+                    res = supabase.table("fasting_groups").upsert(data, on_conflict="user_name, group_code").execute()
+                    st.session_state.user_data = res.data[0]
+                    st.rerun()
+        with col_r:
+            st.info("👋 **How it works:** Enter a name and a shared family code. You'll see everyone else using the same code below your timer!")
+    st.stop()
 
-if st.sidebar.button("▶ Start Fast"):
-    st.session_state.start_time_obj = datetime.now()
-    st.session_state.fast_target_h = selected_h
-    st.rerun()
+# --- 5. DASHBOARD CALCULATIONS ---
+user = st.session_state.user_data
+start_time = datetime.fromisoformat(user['start_time'])
+now = datetime.now().astimezone() # Ensure timezone awareness
+diff = now - start_time
+total_seconds = int(diff.total_seconds())
 
-if st.sidebar.button("⏹ Reset"):
-    st.session_state.start_time_obj = None
-    st.rerun()
+# HH:MM:SS for Stopwatch
+hours = total_seconds // 3600
+minutes = (total_seconds % 3600) // 60
+seconds = total_seconds % 60
+stopwatch_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-# --- 4. STOPWATCH CALCULATIONS ---
-is_active = st.session_state.start_time_obj is not None
-hours_passed = 0
-progress_pct = 0
-target_h = st.session_state.fast_target_h
-stopwatch_str = "00:00:00"
+hours_passed = total_seconds / 3600
+target_h = user['target_hours']
+progress_pct = min(100.0, (hours_passed / target_h) * 100)
 
-if is_active:
-    diff = datetime.now() - st.session_state.start_time_obj
-    total_seconds = int(diff.total_seconds())
-    
-    # Format as HH:MM:SS
-    hours = total_seconds // 3600
-    minutes = (total_seconds % 3600) // 60
-    seconds = total_seconds % 60
-    stopwatch_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-    
-    hours_passed = total_seconds / 3600
-    progress_pct = min(100.0, (hours_passed / target_h) * 100)
-
-# --- 5. RENDER UI ---
-st.markdown("<h1 class='main-header'>FlowFast Tracker</h1>", unsafe_allow_html=True)
+# --- 6. RENDER DASHBOARD ---
+st.markdown(f"<h1 class='main-header'>{user['group_code']} DASHBOARD</h1>", unsafe_allow_html=True)
 st.markdown("<div class='dashboard-container'>", unsafe_allow_html=True)
 
-# TOP PROGRESS BAR
+# TOP PROGRESS
 st.markdown(f"""
     <div style='grid-area: progress;'>
-        <div class='p-bar-bg'>
-            <div class='p-bar-fill' style='width:{progress_pct}%; background:#0081ff;'></div>
-        </div>
+        <div class='p-bar-bg'><div class='p-bar-fill' style='width:{progress_pct}%; background:#0081ff;'></div></div>
     </div>
 """, unsafe_allow_html=True)
 
-# LEFT CIRCLE & STOPWATCH
+# LEFT CIRCLE
 conic = f"conic-gradient(#0081ff {progress_pct}%, #e8dab2 {progress_pct}%)"
 st.markdown(f"""
     <div style='grid-area: stages; display:flex; flex-direction:column; align-items:center;'>
         <div class='progress-circle' style='background:{conic};'>
             <div class='stopwatch-display'>
                 <span class='time-digits'>{stopwatch_str}</span>
-                <span class='time-label'>Elapsed</span>
+                <span class='time-label'>Your Fast</span>
             </div>
         </div>
-        <div style='margin-top:15px; font-weight:bold; color:#676f54;'>{progress_pct:.1f}% Toward {target_h}H Goal</div>
+        <div style='margin-top:10px; font-weight:bold; color:#676f54;'>{user['user_name']}</div>
     </div>
 """, unsafe_allow_html=True)
 
-# RIGHT STEPPER & TARGET
+# RIGHT STEPPER
 steps_html = ""
 for h in [48, 72, 120]:
-    status_class = "active-step" if h == target_h else ""
-    steps_html += f"<div class='step {status_class}'>{h}</div>"
+    active = "active-step" if h == target_h else ""
+    steps_html += f"<div class='step {active}'>{h}</div>"
 
 st.markdown(f"""
     <div style='grid-area: steps;'>
-        <div style='font-weight:bold; margin-bottom:10px; color:#044389;'>TARGET MILESTONE</div>
-        <div class='stepper'>
-            <div class='step-line'></div>
-            {steps_html}
-        </div>
-        <div style='background:#7cafc4; color:white; padding:15px; border-radius:10px; margin-top:20px;'>
-            <strong>Fasting Stage:</strong><br>
-            { "Autophagy" if hours_passed > 16 else "Ketosis" if hours_passed > 12 else "Sugar Burning" }
+        <div style='font-weight:bold; color:#044389;'>MY TARGET</div>
+        <div class='stepper'><div class='step-line'></div>{steps_html}</div>
+        <div style='background:#7cafc4; color:white; padding:15px; border-radius:10px;'>
+            <strong>Recommendation:</strong><br>
+            { "Take 1 full electrolyte pack" if hours_passed > 36 else "Take 1/2 electrolyte pack" if hours_passed > 12 else "Drink water" }
         </div>
     </div>
 """, unsafe_allow_html=True)
 
-# BOTTOM RECOMMENDATIONS
-st.markdown("<div style='grid-area: timeline;'>", unsafe_allow_html=True)
-st.write("---")
-if is_active:
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("⚡ Electrolytes")
-        if hours_passed < 12: st.info("Drink plain water for now.")
-        elif 12 <= hours_passed < 36: st.warning("Take 1/2 pack now, 1/2 later.")
-        else: st.error("Take 1 FULL pack now, 1 FULL pack later.")
-    with col2:
-        st.subheader("🥣 Refeeding")
-        if (target_h - hours_passed) < 3: st.success("Prepare bone broth and easy proteins!")
-        else: st.info("Stay focused. Too early for food prep.")
+# --- 7. FAMILY SECTION (BOTTOM) ---
+st.markdown("<div style='grid-area: family;' class='family-card'>", unsafe_allow_html=True)
+st.subheader("👥 Current Group Members")
+
+# Fetch all in same group
+members = supabase.table("fasting_groups").select("*").eq("group_code", user['group_code']).execute()
+
+for m in members.data:
+    m_start = datetime.fromisoformat(m['start_time'])
+    m_diff = now - m_start
+    m_hours = m_diff.total_seconds() / 3600
+    m_prog = min(1.0, m_hours / m['target_hours'])
+    
+    col_n, col_p = st.columns([1, 4])
+    with col_n:
+        st.write(f"**{m['user_name']}**")
+    with col_p:
+        st.progress(m_prog)
+        st.caption(f"{m_hours:.1f} hrs / {m['target_hours']} hrs")
+
 st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 6. TICK THE CLOCK ---
-if is_active and progress_pct < 100:
-    time.sleep(1) # Refresh every second for the stopwatch effect
+# --- 8. HEARTBEAT ---
+if st.sidebar.button("Log Out"):
+    st.session_state.user_data = None
     st.rerun()
+
+time.sleep(1)
+st.rerun()
