@@ -36,6 +36,7 @@ st.markdown("""
     padding:18px;
     border-radius:12px;
     text-align:center;
+    margin-bottom:15px;
 }
 
 .circle {
@@ -84,8 +85,11 @@ if not st.session_state.user_data:
         goal = st.selectbox("Goal", [48,72,120])
 
         if st.form_submit_button("Enter"):
-            res = supabase.table("fasting_groups").select("*")\
-                .eq("user_name",name).eq("group_code",code).execute()
+            res = supabase.table("fasting_groups")\
+                .select("*")\
+                .eq("user_name",name)\
+                .eq("group_code",code)\
+                .execute()
 
             if res.data:
                 st.session_state.user_data = res.data[0]
@@ -106,11 +110,13 @@ if not st.session_state.user_data:
 user = st.session_state.user_data
 
 members = supabase.table("fasting_groups")\
-    .select("*").eq("group_code",user["group_code"]).execute().data
+    .select("*")\
+    .eq("group_code",user["group_code"])\
+    .execute().data
 
-# --- FIXED TIME FUNCTION ---
+# --- TIME FIX ---
 def get_hours(start):
-    start_dt = datetime.fromisoformat(start.replace("Z", "+00:00"))
+    start_dt = datetime.fromisoformat(start.replace("Z","+00:00"))
     now_dt = datetime.utcnow()
 
     if start_dt.tzinfo is not None:
@@ -131,9 +137,9 @@ def get_recommendation(h):
     elif h < 48:
         return "Electrolytes REQUIRED. 1 pack morning + 1 later."
     elif h < 96:
-        return "Increase sodium intake. Stay consistent daily."
+        return "Increase sodium intake daily."
     else:
-        return "Long fast. Careful monitoring + consistent electrolytes."
+        return "Long fast. Monitor closely."
 
 def electrolyte_plan(h):
     if h < 16:
@@ -141,14 +147,14 @@ def electrolyte_plan(h):
     elif h < 24:
         return "⚡ Optional electrolytes"
     elif h < 30:
-        return "⚡ 1 pack morning, 1 later"
+        return "⚡ 1 pack morning + 1 later"
     elif h < 48:
         return "⚡ 2 packs daily"
     else:
         return "⚡ 2–3 packs daily (more if active)"
 
 # --- UI ---
-st.markdown(f"<div class='group'><h3>{group_total:.1f} hrs group</h3></div>", unsafe_allow_html=True)
+st.markdown(f"<div class='group'><h3>{group_total:.1f} hrs group total</h3></div>", unsafe_allow_html=True)
 
 col1,col2 = st.columns([1.4,1])
 
@@ -171,8 +177,29 @@ with col1:
 
     st.progress(progress/100)
 
+    # ✅ CHECKPOINTS BELOW TIMER
+    st.write("**Milestones**")
+
+    checkpoints = [
+        (12,"Sugar Burn"),
+        (18,"Fat Burn"),
+        (24,"Ketosis"),
+        (48,"Autophagy"),
+        (72,"Repair")
+    ]
+
+    cols = st.columns(len(checkpoints))
+
+    for i,(hrs,label) in enumerate(checkpoints):
+        with cols[i]:
+            if my_hours >= hrs:
+                st.success(f"{label}\n{hrs}h")
+            else:
+                st.caption(f"{label}\n{hrs}h")
+
     st.markdown("</div>", unsafe_allow_html=True)
 
+    # --- FAMILY ---
     st.subheader("👥 Family")
     for m in members:
         h = get_hours(m["start_time"])
@@ -190,6 +217,31 @@ with col2:
     st.warning(electrolyte_plan(my_hours))
 
     st.caption("After 24–30h: 1 pack early + 1 later. Repeat after 48h (more if active).")
+
+    st.divider()
+
+    # --- CHAT ---
+    st.subheader("💬 Chat")
+
+    msgs = supabase.table("fasting_messages")\
+        .select("*")\
+        .eq("group_code",user["group_code"])\
+        .order("created_at",desc=True)\
+        .limit(5)\
+        .execute().data
+
+    for msg in reversed(msgs):
+        st.markdown(f"<div class='chat'><b>{msg['user_name']}</b><br>{msg['message_text']}</div>", unsafe_allow_html=True)
+
+    with st.form("chat", clear_on_submit=True):
+        text = st.text_input("Message")
+        if st.form_submit_button("Send") and text:
+            supabase.table("fasting_messages").insert({
+                "user_name":user["user_name"],
+                "group_code":user["group_code"],
+                "message_text":text
+            }).execute()
+            st.rerun()
 
     st.divider()
 
