@@ -117,13 +117,17 @@ with col_main:
     # Benefit Checklist Bar
     
     checkpoints = [
+    (6,  "Post-meal"),
     (12, "Carb use"),
-    (20, "Ketosis begins"),
-    (36, "Autophagy increases"),
+    (20, "Ketosis"),
+    (30, "Fat burn),
+    (36, "Autophagy"),
+    (48, "Ketosis stable"),
     (60, "Deep ketosis"),
+    (72, "Extended fast")
 ]
 
-    cp_html = "".join([f"<div class='dot' style='left:{(hrs/user['target_hours'])*50}%; background:{'#0081ff' if my_hours>=hrs else '#e9ecef'};'></div><div class='dot-label' style='left:{(hrs/user['target_hours'])*50}%;'>{lab}</div>" for hrs, lab in checkpoints if (hrs/user['target_hours'])*100 <= 200])
+    cp_html = "".join([f"<div class='dot' style='left:{(hrs/user['target_hours'])*90}%; background:{'#0081ff' if my_hours>=hrs else '#e9ecef'};'></div><div class='dot-label' style='left:{(hrs/user['target_hours'])*90}%;'>{lab}</div>" for hrs, lab in checkpoints if (hrs/user['target_hours'])*100 <= 100])
 
     st.markdown(f"<div class='benefit-bar-bg'><div class='benefit-bar-fill' style='width:{prog_pct}%;'></div>{cp_html}</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
