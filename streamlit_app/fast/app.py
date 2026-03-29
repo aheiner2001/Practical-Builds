@@ -148,7 +148,7 @@ with col_main:
 
     st.markdown(f"<div class='benefit-bar-bg'><div class='benefit-bar-fill' style='width:{prog_pct}%;'></div>{cp_html}</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
-
+    st.markdown("<div style='padding: 30px 0;'></div>", unsafe_allow_html=True)
     # Family Progress Bars
     st.write("#### 👥 Family Members")
     for member in all_members:
