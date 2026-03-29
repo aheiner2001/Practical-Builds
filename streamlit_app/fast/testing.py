@@ -44,14 +44,15 @@ st.markdown("""
 .benefit-bar-bg { height: 8px; background: #e9ecef; border-radius: 4px; position: relative; margin: 45px 0 20px 0; }
 .benefit-bar-fill { height: 100%; background: #0081ff; border-radius: 4px; transition: width 0.5s; }
 .dot { position: absolute; top: -6px; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.dot-label { position: absolute; top: 25px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; transform: translateX(-40%); color: #495057; }
+.dot-label { position: absolute; top: 25px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; color: #495057; transform: translateX(-50%); }
 
 /* Cards & Chat */
 .feature-card { background: white; padding: 25px; border-radius: 15px; border: 1px solid #dee2e6; height: 100%; }
+.chat-container { max-height: 250px; overflow-y: auto; padding-right: 5px; }
 .chat-bubble { background: #f1f3f5; padding: 10px 15px; border-radius: 15px; margin-bottom: 8px; border-bottom-left-radius: 2px; }
 .chat-user { font-size: 0.7rem; font-weight: bold; color: #0081ff; text-transform: uppercase; margin-bottom: 2px; }
 .chat-text { font-size: 0.9rem; color: #343a40; }
-.button-container { display:flex; gap:10px; margin-top:10px; }
+.button-container { display:flex; gap:10px; margin-top:10px; justify-content:space-between; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -77,7 +78,7 @@ if not st.session_state.user_data:
 # --- 4. DATA & MATH ---
 user = st.session_state.user_data
 all_members = supabase.table("fasting_groups").select("*").eq("group_code", user['group_code']).execute().data
-now = datetime.now(timezone.utc)  # make tz-aware to fix subtraction errors
+now = datetime.now(timezone.utc)  # tz-aware
 
 def get_hours(start):
     if not start: return 0
@@ -88,21 +89,7 @@ my_hours = get_hours(user['start_time'])
 group_total = sum(get_hours(m['start_time']) for m in all_members)
 prog_pct = min(100.0, (my_hours / user['target_hours']) * 100)
 
-# --- ELECTROLYTES & RECOMMENDATION ---
-def get_recommendation(h):
-    if h < 16: return "Hydrate well. No supplements needed if well-nourished."
-    elif h < 24: return "Moderate fast: Electrolytes recommended if active or fatigued."
-    elif h < 48: return "Extended fast: Take 1 electrolyte pack in the early morning and 1 pack in the late evening."
-    else: return "Long fast: Take 2 electrolyte packs per day, 1 early + 1 late; increase if physically active. Monitor sodium/potassium closely."
-
-def electrolyte_plan(h):
-    if h < 16: return "💧 Water only"
-    elif h < 24: return "⚡ Optional electrolytes if needed"
-    elif h < 30: return "⚡ 1 pack morning + 1 pack evening"
-    elif h < 48: return "⚡ 2 packs/day (1 morning + 1 evening)"
-    else: return "⚡ 2–3 packs/day depending on activity level"
-
-# --- 5. RENDER UI ---
+# --- 5. UI ---
 st.markdown(f"""
 <div class='group-impact-card'>
     <div style='font-size:0.8rem; letter-spacing:1px; opacity:0.8;'>{user['group_code']} COLLECTIVE STREAK</div>
@@ -128,11 +115,12 @@ with col_main:
     </div>
     """, unsafe_allow_html=True)
 
-    # Milestone Benefit Bar
+    # Milestone Benefit Bar (even spacing)
     checkpoints = [(12, "Sugar End"), (18, "Fat Burn"), (24, "Ketosis"), (48, "Autophagy"), (72, "Cellular Repair")]
     cp_html = ""
+    max_target = max(user['target_hours'], max([c[0] for c in checkpoints]))
     for hrs, label in checkpoints:
-        left = min(100, (hrs / user['target_hours'])*100)
+        left = min(100, (hrs / max_target) * 100)
         color = "#0081ff" if my_hours >= hrs else "#e9ecef"
         cp_html += f"<div class='dot' style='left:{left}%; background:{color}'></div>"
         cp_html += f"<div class='dot-label' style='left:{left}%;'>{label}</div>"
@@ -151,26 +139,13 @@ with col_main:
 # --- RIGHT PANEL ---
 with col_side:
     st.markdown("<div class='feature-card'>", unsafe_allow_html=True)
-    
-    # Hunger Forecast (simple sine wave)
-    hunger_val = 50 + 35 * math.sin((my_hours - 4) * (math.pi / 6)) if my_hours > 0 else 0
-    st.subheader("📉 Hunger Forecast")
-    st.progress(min(1.0, max(0.0, hunger_val/100)))
-    st.caption(f"Wave Intensity: **{'PEAK' if hunger_val > 70 else 'LOW'}**. Remember, it passes in ~15 mins!")
-    st.write("---")
-    
-    # Recommendations
-    st.subheader("🧠 Recommendation")
-    st.info(get_recommendation(my_hours))
-    st.subheader("💧 Electrolytes")
-    st.warning(electrolyte_plan(my_hours))
-    st.write("---")
-    
-    # LIVE FAMILY CHAT
+
+    # Scrollable Chat
     st.subheader("💬 Family Chat")
     msgs = supabase.table("fasting_messages").select("*").eq("group_code", user['group_code']).order("created_at", desc=True).limit(20).execute().data
     chat_container = st.container()
     with chat_container:
+        st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
         for msg in reversed(msgs):
             st.markdown(f"""
                 <div class='chat-bubble'>
@@ -178,6 +153,7 @@ with col_side:
                     <div class='chat-text'>{msg['message_text']}</div>
                 </div>
             """, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with st.form("chat_form", clear_on_submit=True):
         new_msg = st.text_input("Send encouragement...", placeholder="You got this!")
@@ -189,7 +165,7 @@ with col_side:
             }).execute()
             st.rerun()
 
-    # START / RESTART / LOGOUT BUTTONS
+    # Buttons
     st.write("---")
     c1, c2 = st.columns([1,1])
     with c1:
