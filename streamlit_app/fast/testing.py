@@ -2,7 +2,6 @@ import streamlit as st
 from supabase import create_client, Client
 from datetime import datetime
 import time
-import math
 
 # --- SUPABASE ---
 supabase: Client = create_client(
@@ -109,7 +108,7 @@ if not st.session_state.user_data:
                 ins = supabase.table("fasting_groups").insert({
                     "user_name":name,
                     "group_code":code,
-                    "start_time":None,
+                    "start_time":None,  # ✅ NULL allowed
                     "target_hours":goal
                 }).execute()
                 st.session_state.user_data = ins.data[0]
@@ -136,7 +135,7 @@ def get_hours(start):
 
 my_hours = get_hours(user["start_time"])
 progress = min(100, my_hours/user["target_hours"]*100) if user["start_time"] else 0
-group_total = sum(get_hours(m["start_time"]) for m in members)
+group_total = sum(get_hours(m.get("start_time")) for m in members)
 
 def get_recommendation(h):
     if h < 16:
@@ -200,9 +199,9 @@ with col1:
     # Family
     st.subheader("👥 Family")
     for m in members:
-        h_m = get_hours(m["start_time"])
+        h_m = get_hours(m.get("start_time"))
         st.caption(f"{m['user_name']} • {h_m:.1f}/{m['target_hours']} hrs")
-        st.progress(min(1.0,h_m/m["target_hours"]))
+        st.progress(min(1.0,h_m/m["target_hours"] if m.get("start_time") else 0))
 
 # --- RIGHT ---
 with col2:
@@ -216,10 +215,17 @@ with col2:
             st.session_state.user_data["start_time"] = now_iso
             st.rerun()
     else:
-        if st.button("Restart Fast"):
-            supabase.table("fasting_groups").update({"start_time":None}).eq("id",user["id"]).execute()
-            st.session_state.user_data["start_time"] = None
-            st.rerun()
+        # Buttons next to each other
+        col_restart,col_logout = st.columns([1,1])
+        with col_restart:
+            if st.button("🔄 Restart Fast"):
+                supabase.table("fasting_groups").update({"start_time":None}).eq("id",user["id"]).execute()
+                st.session_state.user_data["start_time"] = None
+                st.rerun()
+        with col_logout:
+            if st.button("Logout"):
+                st.session_state.user_data = None
+                st.rerun()
 
     st.divider()
 
@@ -234,7 +240,6 @@ with col2:
 
     # Chat scrollable
     st.subheader("💬 Chat")
-    chat_container = st.container()
     chat_html = "<div class='chat-container'>"
     msgs = supabase.table("fasting_messages")\
         .select("*")\
@@ -258,9 +263,11 @@ with col2:
             }).execute()
             st.rerun()
 
-    if st.button("Logout"):
-        st.session_state.user_data = None
-        st.rerun()
+    # If fast not started, still allow logout
+    if not user["start_time"]:
+        if st.button("Logout"):
+            st.session_state.user_data = None
+            st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
 
