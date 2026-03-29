@@ -376,37 +376,58 @@ def weather_info(code):
 def fetch_weather():
     today = pd.Timestamp.today().normalize()
     end   = today + pd.Timedelta(days=20)
+
+    # Core fields first — always supported
+    core_fields = [
+        'temperature_2m_max','temperature_2m_min',
+        'precipitation_sum','wind_speed_10m_max',
+        'wind_gusts_10m_max','weather_code','snowfall_sum',
+        'uv_index_max','precipitation_probability_max',
+    ]
     params = {
         'latitude': LAT, 'longitude': LON,
         'start_date': today.strftime('%Y-%m-%d'),
         'end_date':   end.strftime('%Y-%m-%d'),
-        'daily': [
-            'temperature_2m_max','temperature_2m_min',
-            'precipitation_sum','wind_speed_10m_max',
-            'wind_gusts_10m_max','weather_code','snowfall_sum',
-            'uv_index_max','precipitation_probability_max',
-            'sunshine_duration',
-        ],
+        'daily': core_fields,
         'timezone': TZ,
         'temperature_unit': 'fahrenheit',
         'precipitation_unit': 'inch',
         'wind_speed_unit': 'mph',
     }
     r = requests.get('https://api.open-meteo.com/v1/forecast', params=params, timeout=15)
-    w = r.json()['daily']
+    resp = r.json()
+
+    if 'daily' not in resp:
+        error_msg = resp.get('reason', resp.get('error', str(resp)))
+        raise RuntimeError(f"Open-Meteo API error: {error_msg}")
+
+    w = resp['daily']
+    n = len(w['time'])
+
+    # Try sunshine_duration as a second optional request
+    sunshine_hrs = [0] * n
+    try:
+        r2 = requests.get('https://api.open-meteo.com/v1/forecast', params={
+            **params, 'daily': ['sunshine_duration']
+        }, timeout=10)
+        r2_data = r2.json()
+        if 'daily' in r2_data and 'sunshine_duration' in r2_data['daily']:
+            sunshine_hrs = [x/3600 if x else 0 for x in r2_data['daily']['sunshine_duration']]
+    except Exception:
+        pass  # sunshine is purely cosmetic, skip silently
 
     df = pd.DataFrame({
-        'date': pd.to_datetime(w['time']),
-        'temp_high_f': w['temperature_2m_max'],
-        'temp_low_f':  w['temperature_2m_min'],
-        'precip_in':   w['precipitation_sum'],
-        'wind_mph':    w['wind_speed_10m_max'],
-        'gust_mph':    w.get('wind_gusts_10m_max', [None]*len(w['time'])),
+        'date':         pd.to_datetime(w['time']),
+        'temp_high_f':  w['temperature_2m_max'],
+        'temp_low_f':   w['temperature_2m_min'],
+        'precip_in':    w['precipitation_sum'],
+        'wind_mph':     w['wind_speed_10m_max'],
+        'gust_mph':     w.get('wind_gusts_10m_max',              [None]*n),
         'weather_code': w['weather_code'],
-        'snow_in':     w['snowfall_sum'],
-        'uv_index':    w.get('uv_index_max', [0]*len(w['time'])),
-        'precip_pct':  w.get('precipitation_probability_max', [0]*len(w['time'])),
-        'sunshine_hrs': [x/3600 if x else 0 for x in w.get('sunshine_duration', [0]*len(w['time']))],
+        'snow_in':      w['snowfall_sum'],
+        'uv_index':     w.get('uv_index_max',                    [0]*n),
+        'precip_pct':   w.get('precipitation_probability_max',   [0]*n),
+        'sunshine_hrs': sunshine_hrs,
     })
     return df
 
