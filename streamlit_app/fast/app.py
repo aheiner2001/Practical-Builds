@@ -173,12 +173,8 @@ with col_main:
         st.progress(m_p)
 
 with col_side:
-    # Hunger Forecast
-    st.markdown("<div class='feature-card'>", unsafe_allow_html=True)
-    st.subheader("📉 Hunger Forecast")
-    st.progress(min(1.0, max(0.0, hunger_val/100)))
-    st.caption(f"Wave Intensity: **{'PEAK' if hunger_val > 70 else 'LOW'}**. Remember, it passes in 15 mins!")
-    st.write("---")
+    #  Forecast
+   
     
     # LIVE FAMILY CHAT
     st.subheader("💬 Family Chat")
