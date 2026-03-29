@@ -178,12 +178,17 @@ with col_side:
 
     # Controls
     st.write("---")
-    c1, c2 = st.columns(2)
+    c1, c2 ,c3= st.columns(3)
     if c1.button("🔄 Restart", use_container_width=True):
         new_ts = datetime.now().isoformat()
         supabase.table("fasting_groups").update({"start_time": new_ts}).eq("id", user['id']).execute()
         st.rerun()
     if c2.button("Log Out", use_container_width=True):
+        st.session_state.user_data = None
+        st.rerun()
+    if c3.button("🗑️ Delete", use_container_width=True, type="primary"):
+    # 1. Remove the record from Supabase
+        supabase.table("fasting_groups").delete().eq("id", user['id']).execute()
         st.session_state.user_data = None
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
