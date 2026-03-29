@@ -180,7 +180,7 @@ with col_side:
     st.subheader("💬 Family Chat")
     
     # 1. Fetch Messages
-    msgs = supabase.table("fasting_messages").select("*").eq("group_code", user['group_code']).order("created_at", desc=True).limit(5).execute().data
+    msgs = supabase.table("fasting_messages").select("*").eq("group_code", user['group_code']).order("created_at", desc=True).limit(50).execute().data
     
     # 2. Display Messages
     chat_container = st.container(height=500, border=True)
