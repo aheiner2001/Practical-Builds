@@ -57,7 +57,7 @@ st.markdown("""
 
 # --- 3. LOGIN ---
 if not st.session_state.user_data:
-    st.markdown("<h1 class='main-header'>Hell/h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='main-header'>Hell</h1>", unsafe_allow_html=True)
     with st.form("login_form"):
         name = st.text_input("First Name").strip().upper()
         code = st.text_input("Family Group Code").strip().upper()
