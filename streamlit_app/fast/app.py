@@ -194,6 +194,7 @@ with col_side:
 
 # 2. Check the "switch" in session state to show the second button
     if st.session_state.delete_confirm:
+        st.session_state.restart_confirm = False
         st.warning("⚠️ This is permanent!")
         col_a, col_b = st.columns(2)
     
@@ -207,6 +208,7 @@ with col_side:
             st.session_state.delete_confirm = False # Close the confirmation
             st.rerun()
     if st.session_state.restart_confirm:
+        st.session_state.delete_confirm = False
         st.warning("You will be logged out to ensure time displays properly")
         col_a, col_b = st.columns(2)
     
