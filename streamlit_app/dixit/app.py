@@ -9,17 +9,23 @@ supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABAS
 # --- 2. IMAGE UPLOADER (Before Login) ---
 st.title("🎨 Dixit Image Factory")
 with st.expander("⬆️ Add New Cards to the Game Pool"):
-    uploaded_file = st.file_input("Upload a surreal/abstract image", type=['png', 'jpg', 'jpeg'])
+    # Changed from file_input to file_uploader
+    uploaded_file = st.file_uploader("Upload a surreal/abstract image", type=['png', 'jpg', 'jpeg'])
+    
     if st.button("Upload to Database"):
         if uploaded_file:
             filename = f"{int(time.time())}_{uploaded_file.name}"
             # 1. Upload to Supabase Storage
-            res = supabase.storage.from_('dixit_images').upload(filename, uploaded_file.read())
-            # 2. Get Public URL
-            url = supabase.storage.from_('dixit_images').get_public_url(filename)
-            # 3. Save to Image Pool
-            supabase.table("dixit_pool").insert({"url": url}).execute()
-            st.success("Card added to the deck!")
+            try:
+                supabase.storage.from_('dixit_images').upload(filename, uploaded_file.read())
+                url = supabase.storage.from_('dixit_images').get_public_url(filename)
+                # 2. Save to Image Pool
+                supabase.table("dixit_pool").insert({"url": url}).execute()
+                st.success("Card added to the deck!")
+                time.sleep(1)
+                st.rerun()
+            except Exception as e:
+                st.error(f"Upload failed: {e}")
         else:
             st.error("Select a file first.")
 
