@@ -18,18 +18,12 @@ if 'user_data' not in st.session_state:
     st.session_state.user_data = None
 
 # --- 2. PAGE CONFIG ---
-st.set_page_config(
-    page_title="Fasting Tracker",
-    page_icon="💧",
-    layout="wide"
-)
+st.set_page_config(page_title="Fasting Tracker", page_icon="💧", layout="wide")
 
 # --- 3. STYLING ---
 st.markdown("""
 <style>
-.stApp {
-    background: #f6f8fb;
-}
+.stApp { background: #f6f8fb; }
 
 /* Header */
 .main-header {
@@ -37,7 +31,6 @@ st.markdown("""
     font-size: 2.4rem;
     font-weight: 800;
     color: #1f3c88;
-    margin-bottom: 10px;
 }
 
 /* Cards */
@@ -121,7 +114,7 @@ st.markdown("""
     top: 24px;
     font-size: 0.7rem;
     color: #5c677d;
-    transform: translateX(-40%);
+    transform: translateX(-50%);
 }
 
 /* Chat */
@@ -152,8 +145,8 @@ if not st.session_state.user_data:
         name = st.text_input("First Name").strip().upper()
         code = st.text_input("Family Code").strip().upper()
 
-        # ✅ ADDED 24 HOURS HERE
-        goal = st.selectbox("Fast Goal (Hours)", [24, 48, 72, 120])
+        # ✅ ONLY THESE OPTIONS (no 24)
+        goal = st.selectbox("Fast Goal (Hours)", [48, 72, 120])
 
         if st.form_submit_button("Enter"):
             if name and code:
@@ -181,6 +174,7 @@ if not st.session_state.user_data:
 
 # --- 5. DATA ---
 user = st.session_state.user_data
+
 members = supabase.table("fasting_groups") \
     .select("*") \
     .eq("group_code", user['group_code']) \
@@ -216,7 +210,7 @@ with col1:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
 
     # Timer
-    conic = f"conic-gradient(#3a86ff {progress}%, #e6e9ef {progress}%)"
+    conic = f"conic-gradient(#3a86ff {progress:.1f}%, #e6e9ef {progress:.1f}%)"
     h, m, s = int(my_hours), int((my_hours*60)%60), int((my_hours*3600)%60)
 
     st.markdown(f"""
@@ -228,24 +222,26 @@ with col1:
     </div>
     """, unsafe_allow_html=True)
 
-    # Timeline
+    # --- FIXED TIMELINE ---
     checkpoints = [12, 18, 24, 48, 72]
     labels = ["Sugar", "Fat Burn", "Ketosis", "Autophagy", "Repair"]
 
-    dots = ""
+    dot_html = ""
     for hrs, label in zip(checkpoints, labels):
-        pos = (hrs / user['target_hours']) * 100
-        if pos <= 100:
+        percent = (hrs / user['target_hours']) * 100
+
+        if percent <= 100:
             color = "#3a86ff" if my_hours >= hrs else "#dfe3eb"
-            dots += f"""
-            <div class='dot' style='left:{pos}%; background:{color};'></div>
-            <div class='dot-label' style='left:{pos}%;'>{label}</div>
+
+            dot_html += f"""
+            <div class="dot" style="left:{percent:.1f}%; background:{color};"></div>
+            <div class="dot-label" style="left:{percent:.1f}%;">{label}</div>
             """
 
     st.markdown(f"""
-    <div class='bar-bg'>
-        <div class='bar-fill' style='width:{progress}%;'></div>
-        {dots}
+    <div class="bar-bg">
+        <div class="bar-fill" style="width:{progress:.1f}%;"></div>
+        {dot_html}
     </div>
     """, unsafe_allow_html=True)
 
