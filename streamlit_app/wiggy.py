@@ -854,24 +854,78 @@ def render_hourly_panel(date_str: str, weather_row: pd.Series):
         h_icon, _ = weather_info(hr['weather_code'])
         is_biz = 8 <= hr['hour'] <= 18
         biz_cls = "business-hour" if is_biz else ""
-        rain_html = f'<div class="hc-rain">🌧 {int(hr["precip_pct"])}%</div>' if (hr['precip_pct'] or 0) >= 20 else ""
-        chips_html += f"""
-        <div class="hour-chip {biz_cls}">
-          <div class="hc-time">{hr['hour_label']}</div>
-          <div class="hc-icon">{h_icon}</div>
-          <div class="hc-temp">{int(hr['temp_f'])}°</div>
-          <div class="hc-feels">Feels {int(hr['feels_f'])}°</div>
-          <div class="hc-wind">💨 {int(hr['wind_mph'])}mph</div>
-          {rain_html}
-        </div>
-        """
+        rain_html = f'<div class="hc-rain">&#127783; {int(hr["precip_pct"])}%</div>' if (hr['precip_pct'] or 0) >= 20 else ""
+        chips_html += (
+            f'<div class="hour-chip {biz_cls}">'
+            f'<div class="hc-time">{hr["hour_label"]}</div>'
+            f'<div class="hc-icon">{h_icon}</div>'
+            f'<div class="hc-temp">{int(hr["temp_f"])}&#176;</div>'
+            f'<div class="hc-feels">Feels {int(hr["feels_f"])}&#176;</div>'
+            f'<div class="hc-wind">&#128168; {int(hr["wind_mph"])}mph</div>'
+            f'{rain_html}'
+            f'</div>'
+        )
 
-    st.markdown(f"""
-    <div class="hourly-panel">
-      <div class="hourly-title">{icon} {day_label} — HOURLY BREAKDOWN</div>
+    import streamlit.components.v1 as components
+    components.html(f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{ background: #0a1220; font-family: 'Barlow Condensed', sans-serif; padding: 0; }}
+    .panel {{
+        background: linear-gradient(180deg, #0d1829 0%, #080f1a 100%);
+        border: 1px solid #1e3050;
+        border-top: 3px solid #00d4ff;
+        border-radius: 12px;
+        padding: 20px 20px 16px;
+    }}
+    .panel-title {{
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.2rem;
+        letter-spacing: 3px;
+        color: #00d4ff;
+        margin-bottom: 14px;
+    }}
+    .hourly-row {{
+        display: flex;
+        gap: 7px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-width: thin;
+        scrollbar-color: #1e3050 transparent;
+    }}
+    .hourly-row::-webkit-scrollbar {{ height: 4px; }}
+    .hourly-row::-webkit-scrollbar-track {{ background: transparent; }}
+    .hourly-row::-webkit-scrollbar-thumb {{ background: #1e3050; border-radius: 2px; }}
+    .hour-chip {{
+        flex: 0 0 auto;
+        background: #0a1422;
+        border: 1px solid #1a2d45;
+        border-radius: 10px;
+        padding: 10px 10px 8px;
+        text-align: center;
+        min-width: 68px;
+    }}
+    .hour-chip.business-hour {{ border-color: #2a4060; background: #0c1830; }}
+    .hc-time  {{ font-size: 0.68rem; color: #3a5070; letter-spacing: 1px; margin-bottom: 4px; }}
+    .hc-icon  {{ font-size: 1.25rem; line-height: 1.4; }}
+    .hc-temp  {{ font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: #e0e8f5; }}
+    .hc-feels {{ font-size: 0.58rem; color: #2a4060; margin-bottom: 2px; }}
+    .hc-wind  {{ font-size: 0.6rem; color: #5a7090; margin-top: 3px; }}
+    .hc-rain  {{ font-size: 0.6rem; color: #3a7bd5; margin-top: 2px; }}
+    </style>
+    </head>
+    <body>
+    <div class="panel">
+      <div class="panel-title">{icon} {day_label} &mdash; HOURLY BREAKDOWN</div>
       <div class="hourly-row">{chips_html}</div>
     </div>
-    """, unsafe_allow_html=True)
+    </body>
+    </html>
+    """, height=220, scrolling=False)
 
     # ── Hourly chart ──
     biz_hours = hourly[(hourly['hour'] >= 6) & (hourly['hour'] <= 20)]
