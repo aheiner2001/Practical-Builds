@@ -15,7 +15,7 @@ if 'user_data' not in st.session_state:
     st.session_state.user_data = None
 
 # --- 2. STYLING ---
-st.set_page_config(page_title="FlowFast Family", page_icon="💧", layout="wide")
+st.set_page_config(page_title="Fast", page_icon="💧", layout="wide")
 
 st.markdown("""
     <style>
