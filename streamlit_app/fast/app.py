@@ -207,7 +207,7 @@ with col_side:
             st.session_state.delete_confirm = False # Close the confirmation
             st.rerun()
     if st.session_state.restart_confirm:
-        st.warning("You will be logged out!")
+        st.warning("You will be logged out to ensure time displays properly")
         col_a, col_b = st.columns(2)
     
         if col_a.button("✅ Yes, Restart", use_container_width=True, type="primary"):
