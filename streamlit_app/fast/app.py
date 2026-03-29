@@ -187,10 +187,22 @@ with col_side:
         st.session_state.user_data = None
         st.rerun()
     if c3.button("🗑️ Delete", use_container_width=True, type="primary"):
-        if st.button("Confirm Permanent Delete"):
-    # 1. Remove the record from Supabase
+    # Instead of showing the button immediately, we flip a switch
+    st.session_state.delete_confirm = True
+
+# 2. Check the "switch" in session state to show the second button
+    if st.session_state.delete_confirm:
+        st.warning("⚠️ This is permanent!")
+        col_a, col_b = st.columns(2)
+    
+        if col_a.button("✅ Yes, Delete", use_container_width=True, type="primary"):
             supabase.table("fasting_groups").delete().eq("id", user['id']).execute()
             st.session_state.user_data = None
+            st.session_state.delete_confirm = False # Reset the switch
+            st.rerun()
+        
+        if col_b.button("❌ Cancel", use_container_width=True):
+            st.session_state.delete_confirm = False # Close the confirmation
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
