@@ -1,0 +1,14 @@
+streamlit
+
+numpy
+pandas
+scikit-learn
+xgboost
+matplotlib
+plotly
+google-generativeai
+requests
+fpdf
+Pillow
+reportlab
+pytz
