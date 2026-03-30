@@ -281,7 +281,7 @@ st.markdown("")
 if st.button("GENERATE REPORT PDF", use_container_width=True, type="primary"):
     if name:
         with st.spinner("Building your report..."):
-            # Build snippet messages
+            # Build snippet messages (closing always pinned to end)
             snippets = []
             if use_simple:
                 snippets.append(f"Thank you {name}, everything looks great.")
@@ -291,11 +291,12 @@ if st.button("GENERATE REPORT PDF", use_container_width=True, type="primary"):
                 snippets.append("A few windows had bad hard water stains, we did the best we could. We used hard water removal and it looks a ton better.")
             if use_damage:
                 snippets.append("We added pictures of some windows that had a gas leak.")
-            if use_closing:
-                snippets.append(f"Have a wonderful day! Enjoy your windows, {name}!")
 
-            # Combine snippets with any manual notes
+            # Manual notes sit after snippets; closing always last
             all_parts = snippets + ([notes.strip()] if notes.strip() else [])
+            if use_closing:
+                all_parts.append(f"Have a wonderful day! Enjoy your windows, {name}!")
+
             final_notes = "  ".join(all_parts)
 
             pdf = create_pdf(name, phone, final_notes, before, after, city, crew_member)
