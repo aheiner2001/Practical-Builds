@@ -140,7 +140,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city, crew_member=""
     story.append(Paragraph("My-T-Brite", title_style))
     story.append(Paragraph("SERVICE REPORT", service_tag_style))
     story.append(Paragraph(submit_time, subtitle_style))
-    story.append(Paragraph(f"Customer: {name}", customer_style))
+    story.append(Paragraph(f"{name}", customer_style))
 
     # --- DIVIDER ---
     story.append(HRFlowable(width="100%", thickness=1.5, color=NAVY, spaceBefore=0, spaceAfter=16))
