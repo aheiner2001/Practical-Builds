@@ -140,7 +140,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city, crew_member=""
     story.append(Paragraph("My-T-Brite", title_style))
     story.append(Paragraph("SERVICE REPORT", service_tag_style))
     story.append(Paragraph(submit_time, subtitle_style))
-    story.append(Paragraph(f"{name}", customer_style))
+    story.append(Paragraph(f"Customer: {name}", customer_style))
 
     # --- DIVIDER ---
     story.append(HRFlowable(width="100%", thickness=1.5, color=NAVY, spaceBefore=0, spaceAfter=16))
@@ -257,6 +257,15 @@ with col_phone:
 
 crew_member = st.text_input("Crew Member (optional)", placeholder="e.g. Jake")
 
+st.markdown("**Quick Message Snippets**")
+st.caption("Check any that apply — they'll be added to the notes automatically.")
+
+use_simple = st.checkbox("✅ Simple / Thank you")
+use_trash = st.checkbox("🗑️ Trash pickup")
+use_hardwater = st.checkbox("💧 Hard water stains")
+use_damage = st.checkbox("🪟 Window Pane Damage (pictures added)")
+use_closing = st.checkbox("👋 Closing message")
+
 notes = st.text_area("Job Notes & Observations", height=120)
 
 city = "Rexburg"
@@ -272,7 +281,24 @@ st.markdown("")
 if st.button("GENERATE REPORT PDF", use_container_width=True, type="primary"):
     if name:
         with st.spinner("Building your report..."):
-            pdf = create_pdf(name, phone, notes, before, after, city, crew_member)
+            # Build snippet messages
+            snippets = []
+            if use_simple:
+                snippets.append(f"Thank you {name}, everything looks great.")
+            if use_trash:
+                snippets.append("We were able to pick up a bit of trash around the house that we saw.")
+            if use_hardwater:
+                snippets.append("A few windows had bad hard water stains, we did the best we could. We used hard water removal and it looks a ton better.")
+            if use_damage:
+                snippets.append("We added pictures of some windows that had a gas leak.")
+            if use_closing:
+                snippets.append(f"Have a wonderful day! Enjoy your windows, {name}!")
+
+            # Combine snippets with any manual notes
+            all_parts = snippets + ([notes.strip()] if notes.strip() else [])
+            final_notes = "  ".join(all_parts)
+
+            pdf = create_pdf(name, phone, final_notes, before, after, city, crew_member)
             st.download_button(
                 "📥 Download PDF",
                 pdf,
