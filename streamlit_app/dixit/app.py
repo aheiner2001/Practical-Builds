@@ -3,6 +3,7 @@ from supabase import create_client, Client
 import time
 import random
 import re
+import os
 # --- MUST be first Streamlit call ---
 st.set_page_config(page_title="Dixit Pro", layout="wide", page_icon="🎨")
 
@@ -22,6 +23,7 @@ except Exception:
 
 
 # --- 2. IMAGE FACTORY (Admin only, shown at top) ---
+# --- 2. IMAGE FACTORY (Admin only, shown at top) ---
 st.title("🎨 Dixit Pro")
 
 with st.expander("⬆️ Admin: Add Cards to the Pool"):
@@ -31,31 +33,71 @@ with st.expander("⬆️ Admin: Add Cards to the Pool"):
         accept_multiple_files=True,
         key="uploader",
     )
+
+    # --- PROGRESS PLACEHOLDERS (Keep these outside the button logic but inside expander) ---
+    progress_placeholder = st.empty()
+    status_text_placeholder = st.empty()
+
     if st.button("Upload All to Deck"):
         if uploaded_files:
+            total_files = len(uploaded_files)
             count = 0
+            
+            # Initialize the progress bar at 0%
+            progress_bar = progress_placeholder.progress(0)
+
             for i, f in enumerate(uploaded_files):
-                # --- NEW SANITIZATION BLOCK ---
-                # 1. Start with the original name
+                # --- SANITIZATION BLOCK (Fixes InvalidKey Error) ---
+                # 1. Get the original filename (e.g., "Screenshot PM.png")
                 raw_filename = f.name
                 
-                # 2. Use Regex to remove anything that isn't alphanumeric, period, hyphen, or underscore
-                # (This removes spaces, PM/AM symbols, special quotes, etc.)
-                clean_filename = re.sub(r'[^a-zA-Z0-9.\-_]', '', raw_filename)
+                # 2. Split into base name and extension (e.g., "Screenshot PM", ".png")
+                filename_base, file_extension = os.path.splitext(raw_filename)
+
+                # 3. Clean only the base name by removing special characters, spaces, punctuation
+                # This keeps only A-Z, a-z, 0-9, periods (.), hyphens (-), and underscores (_).
+                clean_base = re.sub(r'[^a-zA-Z0-9.\-_]', '', filename_base)
                 
-                # 3. Create the final unique Supabase key using the sanitized name
+                # 4. Create the final clean filename (e.g., "ScreenshotPM.png")
+                clean_filename = f"{clean_base}{file_extension}"
+
+                # 5. Create the final unique Supabase key (e.g., "1774835289_0_ScreenshotPM.png")
+                # Since 'f.read()' can only be done once, we'll assign it to a variable.
+                file_content = f.read()
+                
                 fname = f"{int(time.time())}_{i}_{clean_filename}"
-                # -------------------------------
+                # ---------------------------------------------------
+
+                # --- PROGRESS UPDATE BLOCK ---
+                # Update the status text below the progress bar
+                current_num = i + 1
+                status_text_placeholder.text(f"Processing ({current_num}/{total_files}): {raw_filename}")
                 
+                percentage_complete = current_num / total_files
+                progress_bar.progress(percentage_complete)
+                # -----------------------------
+
                 try:
-                    supabase.storage.from_("dixit_images").upload(fname, f.read())
+                    # Supabase Upload (uses sterilized unique filename)
+                    supabase.storage.from_("dixit_images").upload(fname, file_content)
+                    # Supabase Public URL
                     public_url = supabase.storage.from_("dixit_images").get_public_url(fname)
+                    # Supabase DB Insert
                     supabase.table("dixit_pool").insert({"url": public_url}).execute()
                     count += 1
                 except Exception as e:
-                    st.warning(f"Failed to upload {f.name}: {e}")
-            st.success(f"Added {count} cards!")
-            time.sleep(1)
+                    st.warning(f"Failed to upload {raw_filename}: {e}")
+
+            # --- Final Status Cleanup ---
+            # Remove the status text
+            status_text_placeholder.empty()
+            # Full progress bar visual confirmation
+            progress_bar.progress(1.0)
+            
+            # Show final success message (count might be less than total if some failed)
+            st.success(f"Added {count} cards successfully out of {total_files} selected!")
+            
+            time.sleep(2) # Give them a second to read the success
             st.rerun()
         else:
             st.warning("No files selected.")
