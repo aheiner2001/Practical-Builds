@@ -18,27 +18,56 @@ except Exception:
 # --- 2. IMAGE FACTORY (Admin only, shown at top) ---
 st.title("🎨 Dixit Pro")
 
-with st.expander("⬆️ Admin: Add Cards to the Pool"):
+# --- 2. IMAGE FACTORY (Admin only, shown at top) ---
+st.title("🎨 Dixit Pro")
+
+with st.expander("⬆️ Add Cards to the Pool"):
     uploaded_files = st.file_uploader(
         "Upload surreal images",
         type=["png", "jpg", "jpeg"],
         accept_multiple_files=True,
         key="uploader",
     )
+
+    # Placeholders for the status elements (progress bar and text)
+    progress_placeholder = st.empty()
+    status_text_placeholder = st.empty()
+
     if st.button("Upload All to Deck"):
         if uploaded_files:
+            total_files = len(uploaded_files)
             count = 0
+            
+            # Initialize the progress bar at 0%
+            progress_bar = progress_placeholder.progress(0)
+
             for i, f in enumerate(uploaded_files):
+                # Update the status text below the progress bar
+                status_text_placeholder.text(f"Processing ({i+1}/{total_files}): {f.name}")
+                
                 fname = f"{int(time.time())}_{i}_{f.name}"
                 try:
+                    # Supabase Upload
                     supabase.storage.from_("dixit_images").upload(fname, f.read())
+                    # Supabase Public URL
                     public_url = supabase.storage.from_("dixit_images").get_public_url(fname)
+                    # Supabase DB Insert
                     supabase.table("dixit_pool").insert({"url": public_url}).execute()
                     count += 1
                 except Exception as e:
                     st.warning(f"Failed to upload {f.name}: {e}")
-            st.success(f"Added {count} cards!")
-            time.sleep(1)
+                
+                # Calculate and update the progress bar
+                percentage_complete = (i + 1) / total_files
+                progress_bar.progress(percentage_complete)
+
+            # --- Final Status Cleanup ---
+            # Remove the status text
+            status_text_placeholder.empty()
+            # Show final success message (using count which might be less than total if some failed)
+            st.success(f"Added {count} cards successfully out of {total_files} selected!")
+            
+            time.sleep(2) # Give them a second to read the success
             st.rerun()
         else:
             st.warning("No files selected.")
