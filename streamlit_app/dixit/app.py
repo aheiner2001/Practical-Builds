@@ -16,7 +16,7 @@ except Exception:
     st.stop()
 
 # --- 2. IMAGE FACTORY (Admin only, shown at top) ---
-st.title("🎨 Dixit Pro")
+
 
 # --- 2. IMAGE FACTORY (Admin only, shown at top) ---
 st.title("🎨 Dixit Pro")
