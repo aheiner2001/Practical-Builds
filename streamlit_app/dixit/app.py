@@ -2,7 +2,7 @@ import streamlit as st
 from supabase import create_client, Client
 import time
 import random
-
+import re
 # --- MUST be first Streamlit call ---
 st.set_page_config(page_title="Dixit Pro", layout="wide", page_icon="🎨")
 
