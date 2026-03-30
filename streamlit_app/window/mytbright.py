@@ -19,6 +19,9 @@ ACCENT = colors.HexColor("#448AFF")
 GREEN = colors.HexColor("#1F3A5F")
 CTA_BORDER = colors.HexColor("#1F3A5F")
 
+import os
+LOGO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logo.png")
+
 
 def get_weather(city):
     try:
@@ -137,10 +140,31 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city, crew_member=""
     )
 
     # --- HEADER BLOCK ---
-    story.append(Paragraph("My-T-Brite", title_style))
-    story.append(Paragraph("SERVICE REPORT", service_tag_style))
+    # Logo + title side by side
+    if os.path.exists(LOGO_PATH):
+        logo_img = Image(LOGO_PATH, width=1.6*inch, height=0.6*inch)
+    else:
+        logo_img = Paragraph("My-T-Brite", title_style)
+
+    header_title = Paragraph(
+        "<b>My-T-Brite</b><br/><font size=9 color='#448AFF'>SERVICE REPORT</font>",
+        ParagraphStyle('HdrTitle', parent=styles['Normal'], fontSize=18,
+                       textColor=NAVY, alignment=0, fontName='Helvetica-Bold', leading=22)
+    )
+
+    header_table = Table(
+        [[logo_img, header_title]],
+        colWidths=[1.8*inch, 5.0*inch]
+    )
+    header_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+    ]))
+    story.append(header_table)
     story.append(Paragraph(submit_time, subtitle_style))
-    story.append(Paragraph(f"{name}", customer_style))
+    story.append(Paragraph(f"Customer: {name}", customer_style))
 
     # --- DIVIDER ---
     story.append(HRFlowable(width="100%", thickness=1.5, color=NAVY, spaceBefore=0, spaceAfter=16))
@@ -231,7 +255,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city, crew_member=""
         story.append(Spacer(1, 0.25 * inch))
 
     # --- IMAGES ---
-    add_imgs("BEFORE – FEATURED PHOTOS (see Below)", before_imgs)
+    add_imgs("BEFORE – FEATURED PHOTOS", before_imgs)
     add_imgs("AFTER – FEATURED PHOTOS", after_imgs)
 
     # --- FOOTER ---
@@ -246,7 +270,13 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city, crew_member=""
 # --- STREAMLIT UI ---
 st.set_page_config(page_title="My-T-Brite Report Generator", layout="centered")
 
-st.title("📄 Service Report Generator")
+import os as _os
+_logo = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "logo.png")
+if _os.path.exists(_logo):
+    st.image(_logo, width=220)
+else:
+    st.title("My-T-Brite")
+st.subheader("Service Report Generator")
 st.markdown("---")
 
 col_name, col_phone = st.columns(2)
