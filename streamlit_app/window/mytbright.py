@@ -231,7 +231,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city, crew_member=""
         story.append(Spacer(1, 0.25 * inch))
 
     # --- IMAGES ---
-    add_imgs("BEFORE – FEATURED PHOTOS", before_imgs)
+    add_imgs("BEFORE – FEATURED PHOTOS (see Below)", before_imgs)
     add_imgs("AFTER – FEATURED PHOTOS", after_imgs)
 
     # --- FOOTER ---
