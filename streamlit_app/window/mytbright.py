@@ -268,7 +268,7 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city, crew_member=""
 
 
 # --- STREAMLIT UI ---
-st.set_page_config(page_title="My-T-Brite Report Generator", layout="centered")
+st.set_page_config(page_title="My-T-Brite Report Generator", page_icon="logo.png", layout="centered")
 
 import os as _os
 _logo = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "logo.png")
