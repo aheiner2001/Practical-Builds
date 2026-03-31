@@ -6,7 +6,7 @@ from io import BytesIO
 # 1. Page Configuration
 st.set_page_config(page_title="Glide Upsell", layout="centered")
 
-# 2. Custom CSS (Mobile-First)
+# 2. Custom CSS (Mobile-First & Clean Inputs)
 st.markdown("""
     <style>
     .stButton button { 
@@ -19,7 +19,7 @@ st.markdown("""
         padding: 12px; background: white; border-radius: 10px; 
         margin-bottom: 8px; border: 1px solid #ddd;
     }
-    /* Remove the +/- spinners from number inputs for a cleaner look */
+    /* Hide +/- spinners on number inputs */
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { 
         -webkit-appearance: none; margin: 0; 
@@ -60,7 +60,7 @@ if upsell_id:
 
         if not none_op:
             st.divider()
-            # Only show if price is NOT 0 (which means admin excluded it)
+            # Logic: If price is exactly 0, we assume it was excluded by the Admin
             if data['interior_price'] > 0:
                 if st.checkbox(f"🏠 Interior Windows (${data['interior_price']:.0f})"):
                     running_total += float(data['interior_price']); applied_items.append("Interior")
@@ -108,63 +108,66 @@ else:
         c_name = st.text_input("Customer Name")
         c_base = st.number_input("Base Price", min_value=0.0)
         
-        st.write("### Include these Add-ons?")
-        # Interior
-        col_a, col_b = st.columns([1, 4])
-        inc_int = col_a.checkbox("Int", value=True)
+        st.write("### Select Add-ons to include:")
+        
+        # Helper function for the row layout
+        def service_row(label, default_val, key_prefix):
+            col_check, col_price = st.columns([1, 3])
+            is_on = col_check.checkbox(label, value=False, key=f"check_{key_prefix}")
+            price = 0.0
+            if is_on:
+                price = col_price.number_input(f"{label} Price", value=float(default_val), key=f"val_{key_prefix}", label_visibility="collapsed")
+            return price
+
+        # 1. Interior (Custom calc)
         auto_int = (c_base * 0.6) // 5 * 5
-        val_int = col_b.number_input("Interior Price", value=float(auto_int)) if inc_int else 0
+        val_int = service_row("Interior", auto_int, "int")
         
-        # Screens
-        col_a, col_b = st.columns([1, 4])
-        inc_scr = col_a.checkbox("Scr", value=True)
-        val_scr = col_b.number_input("Screen Price", value=25.0) if inc_scr else 0
+        # 2. Screens
+        val_scr = service_row("Screens", 25.0, "scr")
 
-        # Gutters
-        col_a, col_b = st.columns([1, 4])
-        inc_gut = col_a.checkbox("Gut", value=False)
-        val_gut = col_b.number_input("Gutter Price", value=50.0) if inc_gut else 0
+        # 3. Gutters
+        val_gut = service_row("Gutters", 50.0, "gut")
 
-        # Fans
-        col_a, col_b = st.columns([1, 4])
-        inc_fan = col_a.checkbox("Fan", value=True)
-        val_fan = col_b.number_input("Fan Price (ea)", value=10.0) if inc_fan else 0
+        # 4. Fans
+        val_fan = service_row("Fans", 10.0, "fan")
         
-        # Wells
-        col_a, col_b = st.columns([1, 4])
-        inc_well = col_a.checkbox("Well", value=False)
-        val_well = col_b.number_input("Well Cover Price", value=25.0) if inc_well else 0
+        # 5. Wells
+        val_well = service_row("Wells", 25.0, "well")
 
-        # Mirrors
-        col_a, col_b = st.columns([1, 4])
-        inc_mir = col_a.checkbox("Mir", value=False)
-        val_mir = col_b.number_input("Mirror Price", value=25.0) if inc_mir else 0
+        # 6. Mirrors
+        val_mir = service_row("Mirrors", 25.0, "mir")
 
-        inc_light = st.checkbox("Include Lighting Info?", value=True)
+        st.divider()
+        inc_light = st.checkbox("Include Lighting Info?", value=False)
         light_txt = st.text_area("Lighting Pitch", "Interested in permanent year-round lighting? Check for info!") if inc_light else ""
         
         create_btn = st.form_submit_button("Generate QR Code")
 
     if create_btn:
-        new = conn.table("upsell_sessions").insert({
-            "customer_name": c_name, "base_price": c_base,
-            "interior_price": float(val_int), "screens_price": float(val_scr),
-            "gutters_price": float(val_gut), "fan_price": float(val_fan),
-            "well_covers_price": float(val_well), "mirrors_price": float(val_mir),
-            "perm_lighting_info": light_txt
-        }).execute()
-        
-        full_url = f"https://dgyzpaimv4zy73xfhfjrgv.streamlit.app/?id={new.data[0]['id']}"
-        qr_img = qrcode.make(full_url)
-        buf = BytesIO(); qr_img.save(buf)
-        st.image(buf); st.code(full_url)
+        if not c_name:
+            st.error("Enter a name!")
+        else:
+            new = conn.table("upsell_sessions").insert({
+                "customer_name": c_name, "base_price": c_base,
+                "interior_price": float(val_int), "screens_price": float(val_scr),
+                "gutters_price": float(val_gut), "fan_price": float(val_fan),
+                "well_covers_price": float(val_well), "mirrors_price": float(val_mir),
+                "perm_lighting_info": light_txt
+            }).execute()
+            
+            full_url = f"https://dgyzpaimv4zy73xfhfjrgv.streamlit.app/?id={new.data[0]['id']}"
+            qr_img = qrcode.make(full_url)
+            buf = BytesIO(); qr_img.save(buf)
+            st.image(buf); st.code(full_url)
 
     st.divider()
     if st.button("🔄 Refresh Submissions"):
         st.rerun()
 
-    st.subheader("Submissions")
+    st.subheader("Recent Submissions")
     recent = conn.table("upsell_sessions").select("*").eq("is_submitted", True).order("created_at", desc=True).limit(10).execute()
     for r in recent.data:
         with st.expander(f"✅ {r['customer_name']} - ${r['final_total']}"):
             st.write(f"**Items:** {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
+            st.write(f"**Final Price:** ${r['final_total']}")
