@@ -177,24 +177,24 @@ if upsell_id:
         for label, icon, field, per_unit, always_show in services:
 
             raw_price = data.get(field, 0)
-
+        
             if always_show:
                 price = get_service_price(raw_price, base_price)
             else:
                 if raw_price <= 0:
                     continue
                 price = get_service_price(raw_price, base_price)
-
+        
             selected, total, desc = render_service(label, price, icon, field, per_unit)
-
+        
             if selected:
                 running_total += total
-                applied_items.append(desc)
+                applied_items.append(f"{desc} - ${total:.0f}")
 
         if data.get("perm_lighting_info") and data["perm_lighting_info"].strip():
             if st.checkbox("💡 Interested in permanent year-round lighting? (check for more info)"):
                 st.info(data["perm_lighting_info"])
-                applied_items.append("Lighting Interest")
+                applied_items.append("Lighting Interest - $0")
 
     # Sticky total
     st.markdown(f"""
