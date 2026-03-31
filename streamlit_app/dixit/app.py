@@ -38,7 +38,7 @@ html, body, [class*="css"] {
 
 /* ── BACKGROUNDS ── */
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(160deg, #1a3545 0%, #28536b 40%, #1e3d50 100%) !important;
+    background: --parchment!important;
     min-height: 100vh;
 }
 [data-testid="stHeader"] { background: transparent !important; }
