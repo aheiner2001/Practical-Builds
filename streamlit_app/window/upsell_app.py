@@ -10,14 +10,19 @@ import math
 st.set_page_config(page_title="Glide Upsell", layout="centered")
 
 # -----------------------------
-# CSS
+# CSS (Improved styling + sticky total)
 # -----------------------------
 st.markdown("""
 <style>
-.main { background-color: #f6f0ed; }
+.main {
+    background-color: #f6f0ed;
+}
 
-h1, h2, h3 { color: #28536b; }
+h1, h2, h3 {
+    color: #28536b;
+}
 
+/* Sticky total bar */
 .sticky-total {
     position: sticky;
     top: 0;
@@ -29,6 +34,7 @@ h1, h2, h3 { color: #28536b; }
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
+/* Buttons */
 .stButton button {
     width: 100%;
     border-radius: 12px;
@@ -39,8 +45,11 @@ h1, h2, h3 { color: #28536b; }
     border: none;
 }
 
-.stButton button:hover { background-color: #1f3e50; }
+.stButton button:hover {
+    background-color: #1f3e50;
+}
 
+/* Checkbox cards */
 .stCheckbox {
     padding: 12px;
     background: white;
@@ -49,13 +58,31 @@ h1, h2, h3 { color: #28536b; }
     border: 1px solid #ddd;
 }
 
+/* Total text */
 .total-value {
     font-size: 2rem;
     font-weight: bold;
     color: #688b58;
 }
 
-.block-container { padding-top: 2rem; }
+/* Metric color */
+div[data-testid="stMetricValue"] {
+    color: #688b58;
+}
+
+/* Remove number arrows */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.block-container {
+    padding-top: 2rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -127,14 +154,13 @@ if upsell_id:
         st.info("Request already processed. Thank you!")
         st.stop()
 
-    st.title(f"Hello, {data['customer_name']}")
+    st.title(f"Hello, {data['customer_name']} (see total price below)")
 
     base_price = float(data["base_price"])
     running_total = base_price
     applied_items = []
-    addon_total = 0
 
-    none_op = st.checkbox("❌ None (Keep original price)")
+    none_op = st.checkbox("❌ None (Keep original price)", key="none_box")
 
     if not none_op:
         st.divider()
@@ -163,19 +189,12 @@ if upsell_id:
 
             if selected:
                 running_total += total
-                addon_total += total
-                applied_items.append({
-                    "name": desc,
-                    "price": total
-                })
+                applied_items.append(desc)
 
         if data.get("perm_lighting_info") and data["perm_lighting_info"].strip():
-            if st.checkbox("💡 Interested in permanent year-round lighting?"):
+            if st.checkbox("💡 Interested in permanent year-round lighting? (check for more info)"):
                 st.info(data["perm_lighting_info"])
-                applied_items.append({
-                    "name": "Lighting Interest",
-                    "price": 0
-                })
+                applied_items.append("Lighting Interest")
 
     # Sticky total
     st.markdown(f"""
@@ -193,7 +212,6 @@ if upsell_id:
         conn.table("upsell_sessions").update({
             "selected_items": applied_items,
             "final_total": running_total,
-            "addon_total": addon_total,
             "is_submitted": True
         }).eq("id", upsell_id).execute()
 
@@ -209,24 +227,41 @@ else:
     with st.form("creator"):
 
         c_name = st.text_input("Customer Name")
-        c_phone = st.text_input("Customer Phone Number")
-        c_base = st.number_input("Base Price", min_value=0.0, value=0.0, step=5.0)
+
+        c_base = st.number_input(
+            "Base Price",
+            min_value=0.0,
+            value=0.0,
+            step=5.0,
+            key="base_price"
+        )
 
         st.subheader("Services")
 
         auto_int = fallback_price(c_base)
 
+        # --- SAFE SESSION STATE ---
         if "v_int" not in st.session_state:
             st.session_state.v_int = float(auto_int)
 
-        if st.session_state.get("refresh_int"):
-            st.session_state.v_int = fallback_price(c_base)
+        if "refresh_int" not in st.session_state:
             st.session_state.refresh_int = False
 
+        if st.session_state.refresh_int:
+            st.session_state.v_int = fallback_price(st.session_state.base_price)
+            st.session_state.refresh_int = False
+
+        # Interior row
         col1, col2, col3 = st.columns([1, 2, 1])
 
-        active_int = col1.checkbox("Interior", value=True)
-        val_int = col2.number_input("Interior Price", step=5.0, key="v_int")
+        active_int = col1.checkbox("Interior", value=True, key="a_int")
+
+        val_int = col2.number_input(
+            "Interior Price",
+            step=5.0,
+            label_visibility="collapsed",
+            key="v_int"
+        )
 
         if col3.form_submit_button("🔄"):
             st.session_state.refresh_int = True
@@ -235,7 +270,13 @@ else:
         def admin_row(label, default, key):
             col1, col2 = st.columns([1, 2])
             active = col1.checkbox(label, value=True, key=f"a_{key}")
-            val = col2.number_input(label, value=float(default), step=5.0, key=f"v_{key}")
+            val = col2.number_input(
+                label,
+                value=float(default),
+                step=5.0,
+                label_visibility="collapsed",
+                key=f"v_{key}"
+            )
             return val if active else 0.0
 
         val_scr = admin_row("Screens", 25.0, "scr")
@@ -260,7 +301,6 @@ else:
             else:
                 new = conn.table("upsell_sessions").insert({
                     "customer_name": c_name,
-                    "phone": c_phone,
                     "base_price": c_base,
                     "interior_price": float(val_int if active_int else 0),
                     "screens_price": float(val_scr),
@@ -285,6 +325,7 @@ else:
 
     st.divider()
 
+    # 🔥 Refresh submissions button (RESTORED)
     if st.button("🔄 Refresh Submissions"):
         st.rerun()
 
@@ -299,19 +340,8 @@ else:
 
     if recent.data:
         for r in recent.data:
-            with st.expander(f"✅ {r['customer_name']} ({r.get('phone','No #')}) - ${r['final_total']}"):
-
-                st.write(f"Add-ons Total: ${r.get('addon_total', 0):,.2f}")
-                st.write(f"Original Price: ${r['base_price']:,.2f}")
-
-                if r["selected_items"]:
-                    st.write("Selections:")
-                    for item in r["selected_items"]:
-                        if isinstance(item, dict):
-                            st.write(f"- {item['name']}: ${item['price']:,.2f}")
-                        else:
-                            st.write(f"- {item} (no price saved)")
-                else:
-                    st.write("Selections: None")
+            with st.expander(f"✅ {r['customer_name']} - ${r['final_total']}"):
+                st.write(f"Selected: {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
+                st.write(f"Base Price: ${r['base_price']}")
     else:
         st.info("No customer submissions found yet.")
