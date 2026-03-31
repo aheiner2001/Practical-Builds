@@ -10,7 +10,7 @@ import math
 st.set_page_config(page_title="Glide Upsell", layout="centered")
 
 # -----------------------------
-# THEME / CSS
+# THEME / CSS (includes sticky bar)
 # -----------------------------
 st.markdown("""
 <style>
@@ -22,6 +22,19 @@ h1, h2, h3 {
     color: #28536b;
 }
 
+/* Sticky total bar */
+.sticky-total {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    background: white;
+    padding: 14px;
+    border-radius: 0 0 12px 12px;
+    border-bottom: 2px solid #eee;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* Buttons */
 .stButton button {
     width: 100%;
     border-radius: 12px;
@@ -36,6 +49,7 @@ h1, h2, h3 {
     background-color: #1f3e50;
 }
 
+/* Checkboxes */
 .stCheckbox {
     padding: 12px;
     background: white;
@@ -44,21 +58,16 @@ h1, h2, h3 {
     border: 1px solid #ddd;
 }
 
-div[data-testid="stMetricValue"] {
+/* Total number */
+.total-value {
+    font-size: 2rem;
+    font-weight: bold;
     color: #688b58;
-    font-size: 2.4rem;
 }
 
+/* Clean spacing */
 .block-container {
     padding-top: 2rem;
-}
-
-.card {
-    background: white;
-    padding: 16px;
-    border-radius: 14px;
-    margin-bottom: 10px;
-    border: 1px solid #eee;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -81,7 +90,6 @@ def get_service_price(admin_price: float, base_price: float) -> float:
     return float(fallback_price(base_price))
 
 def render_service(label, price, icon, key, per_unit=False):
-    """Reusable UI block for services"""
     selected = st.checkbox(f"{icon} {label} (${price:.0f})", key=f"chk_{key}")
 
     total = 0
@@ -140,13 +148,12 @@ if upsell_id:
 
     none_op = st.checkbox("❌ No Add-ons (Keep original price)")
 
+    # --- SERVICES ---
     if not none_op:
         st.divider()
 
-        # --- SERVICES ---
-
         services = [
-            ("Interior Windows", "🏠", "interior_price", False, True),  # ALWAYS SHOW
+            ("Interior Windows", "🏠", "interior_price", False, True),
             ("Screen Deep Clean", "🖼️", "screens_price", False, False),
             ("Ceiling Fans", "🌀", "fan_price", True, False),
             ("Gutter Cleaning", "🍂", "gutters_price", False, False),
@@ -158,7 +165,6 @@ if upsell_id:
 
             raw_price = data.get(field, 0)
 
-            # 🔥 FIX: interior ALWAYS gets fallback if zero
             if always_show:
                 price = get_service_price(raw_price, base_price)
             else:
@@ -174,14 +180,22 @@ if upsell_id:
                 running_total += total
                 applied_items.append(desc)
 
-        # Lighting
         if data.get("perm_lighting_info"):
             if st.checkbox("💡 Permanent Holiday Lighting?"):
                 st.info(data["perm_lighting_info"])
                 applied_items.append("Lighting Interest")
 
+    # 🔥 STICKY TOTAL BAR (render AFTER calc, display ABOVE visually)
+    st.markdown(f"""
+    <div class="sticky-total">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><strong>Total</strong></div>
+            <div class="total-value">${running_total:,.2f}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     st.divider()
-    st.metric("Total Appointment Price", f"${running_total:,.2f}")
 
     if st.button("Confirm & Submit"):
         conn.table("upsell_sessions").update({
@@ -206,12 +220,33 @@ else:
             "Base Price",
             min_value=0.0,
             value=0.0,
-            step=5.0
+            step=5.0,
+            key="base_price"
         )
 
         st.subheader("Services")
 
         auto_int = fallback_price(c_base)
+
+        # 🔥 INTERIOR WITH REFRESH BUTTON
+        col1, col2, col3 = st.columns([1, 2, 1])
+
+        active_int = col1.checkbox("Interior", value=True, key="a_int")
+
+        if "v_int" not in st.session_state:
+            st.session_state.v_int = float(auto_int)
+
+        val_int = col2.number_input(
+            "Interior Price",
+            value=st.session_state.v_int,
+            step=5.0,
+            label_visibility="collapsed",
+            key="v_int"
+        )
+
+        if col3.form_submit_button("🔄"):
+            st.session_state.v_int = fallback_price(st.session_state.base_price)
+            st.rerun()
 
         def admin_row(label, default, key):
             col1, col2 = st.columns([1, 2])
@@ -225,7 +260,6 @@ else:
             )
             return val if active else 0.0
 
-        val_int = admin_row("Interior", auto_int, "int")
         val_scr = admin_row("Screens", 25.0, "scr")
         val_gut = admin_row("Gutters", 50.0, "gut")
         val_fan = admin_row("Fans", 10.0, "fan")
@@ -249,7 +283,7 @@ else:
                 new = conn.table("upsell_sessions").insert({
                     "customer_name": c_name,
                     "base_price": c_base,
-                    "interior_price": float(val_int),
+                    "interior_price": float(val_int if active_int else 0),
                     "screens_price": float(val_scr),
                     "gutters_price": float(val_gut),
                     "fan_price": float(val_fan),
