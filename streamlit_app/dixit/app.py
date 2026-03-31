@@ -58,7 +58,7 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
 .login-wrap {
     max-width: 460px;
     margin: 30px auto 0;
-    background: linear-gradient(135deg, rgba(40,83,107,0.85) 0%, rgba(26,53,69,0.95) 100%);
+    background: --parchment;
     border: 1px solid rgba(126,168,190,0.45);
     border-radius: 24px;
     padding: 40px 36px 16px;
