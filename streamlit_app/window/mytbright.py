@@ -326,9 +326,9 @@ if st.button("GENERATE REPORT PDF", use_container_width=True, type="primary"):
         with st.spinner("Building your report..."):
             snippets = []
             if use_simple:
-                snippets.append(f"Thank you {name}, everything looks great.")
+                snippets.append(f"Thank you {name}, everything looks great!")
             if use_trash:
-                snippets.append("We were able to pick up a bit of trash around the house that we saw.")
+                snippets.append("\n <*>We were able to pick up a bit of trash around the house that we saw.")
             if use_cobwebs:
                 snippets.append("Extra time was spent around the frame to get the cobwebs.")
             if use_hardwater:
