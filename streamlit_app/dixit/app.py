@@ -21,45 +21,54 @@ except Exception:
 # ============================================================
 st.markdown("""
 <style>
+/*
+  PALETTE:
+  --charcoal:  #28536b  (dark blue-grey  — primary dark)
+  --steel:     #7ea8be  (medium blue     — accents, borders)
+  --rosy:      #c2948a  (warm rose       — highlights, selected)
+  --parchment: #f6f0ed  (off-white       — backgrounds, text on dark)
+  --olive:     #688b58  (dusty green     — done/success states)
+*/
+
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Nunito:wght@300;400;600;700;800&display=swap');
 
 html, body, [class*="css"] {
     font-family: 'Nunito', sans-serif;
 }
 
-/* Deep starry background */
+/* ── BACKGROUNDS ── */
 [data-testid="stAppViewContainer"] {
-    background: radial-gradient(ellipse at 20% 30%, #1a0040 0%, #0d1433 50%, #060b1a 100%) !important;
+    background: linear-gradient(160deg, #1a3545 0%, #28536b 40%, #1e3d50 100%) !important;
     min-height: 100vh;
 }
 [data-testid="stHeader"] { background: transparent !important; }
 [data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #120030 0%, #0a0f25 100%) !important;
-    border-right: 1px solid rgba(180,120,255,0.2);
+    background: linear-gradient(180deg, #1a3545 0%, #162e3c 100%) !important;
+    border-right: 1px solid rgba(126,168,190,0.25);
 }
 
-/* Headings */
+/* ── TYPOGRAPHY ── */
 h1, h2, h3 {
     font-family: 'Cinzel Decorative', cursive !important;
-    color: #e8c8ff !important;
+    color: #f6f0ed !important;
 }
-p, label, .stMarkdown, [data-testid="stText"] { color: #c8b8e8 !important; }
+p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
 
 /* ── LOGIN CARD ── */
 .login-wrap {
     max-width: 460px;
     margin: 30px auto 0;
-    background: linear-gradient(135deg, rgba(80,20,140,0.55) 0%, rgba(20,10,60,0.85) 100%);
-    border: 1px solid rgba(180,100,255,0.4);
+    background: linear-gradient(135deg, rgba(40,83,107,0.85) 0%, rgba(26,53,69,0.95) 100%);
+    border: 1px solid rgba(126,168,190,0.45);
     border-radius: 24px;
     padding: 40px 36px 16px;
-    box-shadow: 0 0 60px rgba(140,60,255,0.25), 0 0 120px rgba(80,20,140,0.15);
+    box-shadow: 0 8px 48px rgba(20,50,65,0.6), 0 2px 0 rgba(126,168,190,0.2) inset;
     text-align: center;
 }
 .login-title {
     font-family: 'Cinzel Decorative', cursive;
     font-size: 2.2rem;
-    background: linear-gradient(135deg, #e8c8ff, #a060ff, #60c8ff);
+    background: linear-gradient(135deg, #f6f0ed, #c2948a, #7ea8be);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -67,7 +76,7 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #c8b8e8 !important; }
     line-height: 1.2;
 }
 .login-sub {
-    color: rgba(180,140,255,0.7) !important;
+    color: rgba(194,148,138,0.8) !important;
     font-size: 0.8rem;
     letter-spacing: 4px;
     text-transform: uppercase;
@@ -77,13 +86,13 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #c8b8e8 !important; }
     font-size: 3.5rem;
     margin-bottom: 12px;
     display: block;
-    filter: drop-shadow(0 0 20px rgba(180,100,255,0.7));
+    filter: drop-shadow(0 0 16px rgba(194,148,138,0.55));
 }
 
 /* ── PHASE BANNER ── */
 .phase-banner {
-    background: linear-gradient(90deg, rgba(80,20,140,0.6), rgba(20,60,120,0.6));
-    border: 1px solid rgba(140,100,255,0.3);
+    background: linear-gradient(90deg, rgba(40,83,107,0.7), rgba(30,61,80,0.7));
+    border: 1px solid rgba(126,168,190,0.35);
     border-radius: 16px;
     padding: 16px 24px;
     margin-bottom: 20px;
@@ -92,33 +101,33 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #c8b8e8 !important; }
     gap: 14px;
 }
 .phase-banner .phase-icon { font-size: 2rem; }
-.phase-banner .phase-text { color: #e8c8ff !important; font-size: 1.1rem; font-weight: 800; margin-bottom: 2px; }
-.phase-banner .phase-sub  { color: rgba(180,140,255,0.7) !important; font-size: 0.82rem; }
+.phase-banner .phase-text { color: #f6f0ed !important; font-size: 1.1rem; font-weight: 800; margin-bottom: 2px; }
+.phase-banner .phase-sub  { color: rgba(194,148,138,0.75) !important; font-size: 0.82rem; }
 
 /* ── CLUE DISPLAY ── */
 .clue-display {
-    background: linear-gradient(90deg, rgba(80,20,140,0.4), rgba(20,60,120,0.4));
-    border-left: 4px solid #a060ff;
+    background: rgba(40,83,107,0.45);
+    border-left: 4px solid #c2948a;
     border-radius: 0 12px 12px 0;
     padding: 14px 20px;
     margin: 12px 0 20px;
     font-size: 1.3rem;
-    color: #e8c8ff !important;
+    color: #f6f0ed !important;
     font-weight: 700;
     font-style: italic;
 }
 
 /* ── CLUE POPUP ── */
 .clue-popup {
-    background: linear-gradient(135deg, rgba(60,20,100,0.95), rgba(10,20,60,0.98));
-    border: 2px solid rgba(140,80,255,0.6);
+    background: linear-gradient(135deg, rgba(26,53,69,0.97), rgba(20,42,55,0.99));
+    border: 2px solid rgba(126,168,190,0.5);
     border-radius: 20px;
     padding: 24px 24px 18px;
     margin: 16px 0;
-    box-shadow: 0 0 40px rgba(120,60,255,0.3);
+    box-shadow: 0 0 32px rgba(40,83,107,0.5);
 }
 .clue-popup-title {
-    color: #b880ff !important;
+    color: #c2948a !important;
     font-size: 0.8rem;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -130,21 +139,21 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #c8b8e8 !important; }
 .status-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
 .pill { border-radius: 20px; padding: 5px 14px; font-size: 0.8rem; font-weight: 700; }
 .pill-done {
-    background: rgba(40,180,80,0.2);
-    border: 1px solid rgba(40,180,80,0.5);
-    color: #60ff99 !important;
+    background: rgba(104,139,88,0.25);
+    border: 1px solid rgba(104,139,88,0.6);
+    color: #a8c896 !important;
 }
 .pill-waiting {
-    background: rgba(220,140,0,0.15);
-    border: 1px solid rgba(220,140,0,0.4);
-    color: #ffcc55 !important;
+    background: rgba(194,148,138,0.15);
+    border: 1px solid rgba(194,148,138,0.45);
+    color: #c2948a !important;
 }
 
 /* ── SELECTED CARD BADGE ── */
 .selected-badge {
     text-align: center;
-    background: #44ff88;
-    color: #003318;
+    background: #688b58;
+    color: #f6f0ed;
     border-radius: 8px;
     padding: 3px 0;
     font-size: 12px;
@@ -154,54 +163,65 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #c8b8e8 !important; }
 
 /* ── BUTTONS ── */
 .stButton > button {
-    background: linear-gradient(135deg, #6020c0, #3060c0) !important;
-    color: white !important;
-    border: 1px solid rgba(180,120,255,0.4) !important;
+    background: linear-gradient(135deg, #28536b, #1e3d50) !important;
+    color: #f6f0ed !important;
+    border: 1px solid rgba(126,168,190,0.45) !important;
     border-radius: 12px !important;
     font-family: 'Nunito', sans-serif !important;
     font-weight: 700 !important;
     transition: all 0.2s !important;
 }
 .stButton > button:hover {
-    background: linear-gradient(135deg, #7830d8, #4070d8) !important;
-    box-shadow: 0 4px 20px rgba(120,60,255,0.4) !important;
+    background: linear-gradient(135deg, #3a6d8a, #28536b) !important;
+    box-shadow: 0 4px 18px rgba(40,83,107,0.5) !important;
     transform: translateY(-1px);
 }
 [data-testid="baseButton-primary"] > button,
 .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #a040ff, #4080ff) !important;
-    box-shadow: 0 4px 24px rgba(160,64,255,0.35) !important;
+    background: linear-gradient(135deg, #c2948a, #7ea8be) !important;
+    color: #1a3545 !important;
+    border: none !important;
+    box-shadow: 0 4px 20px rgba(194,148,138,0.35) !important;
+}
+[data-testid="baseButton-primary"] > button:hover,
+.stButton > button[kind="primary"]:hover {
+    background: linear-gradient(135deg, #d0a89e, #8fbace) !important;
+    box-shadow: 0 6px 24px rgba(194,148,138,0.5) !important;
 }
 
 /* ── INPUTS ── */
 .stTextInput > div > div > input {
-    background: rgba(255,255,255,0.06) !important;
-    border: 1px solid rgba(140,80,255,0.4) !important;
+    background: rgba(246,240,237,0.07) !important;
+    border: 1px solid rgba(126,168,190,0.4) !important;
     border-radius: 10px !important;
-    color: #e8e0ff !important;
+    color: #f6f0ed !important;
     font-family: 'Nunito', sans-serif !important;
 }
 .stTextInput > div > div > input:focus {
-    border-color: #a060ff !important;
-    box-shadow: 0 0 0 2px rgba(160,96,255,0.2) !important;
+    border-color: #c2948a !important;
+    box-shadow: 0 0 0 2px rgba(194,148,138,0.2) !important;
 }
+.stTextInput > div > div > input::placeholder { color: rgba(246,240,237,0.35) !important; }
 
 /* ── DIVIDER ── */
-hr { border-color: rgba(140,80,255,0.2) !important; }
+hr { border-color: rgba(126,168,190,0.2) !important; }
 
 /* ── SIDEBAR ── */
-[data-testid="stSidebar"] * { color: #c8b0f0 !important; }
+[data-testid="stSidebar"] * { color: #c8bfba !important; }
 [data-testid="stSidebar"] h1,
 [data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 { color: #e0c8ff !important; }
+[data-testid="stSidebar"] h3 { color: #f6f0ed !important; }
 
 /* ── EXPANDER ── */
 .streamlit-expanderHeader {
-    background: rgba(140,60,255,0.1) !important;
+    background: rgba(126,168,190,0.1) !important;
     border-radius: 10px !important;
-    color: #c8a0ff !important;
+    color: #c2948a !important;
     font-weight: 700 !important;
 }
+
+/* ── ALERTS / NOTIFICATIONS ── */
+[data-testid="stNotification"] { border-radius: 12px !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -214,7 +234,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 st.markdown(
-    '<p style="text-align:center;color:rgba(180,140,255,0.55);letter-spacing:5px;font-size:0.75rem;margin-bottom:20px;">THE STORYTELLING CARD GAME</p>',
+    '<p style="text-align:center;color:rgba(194,148,138,0.65);letter-spacing:5px;font-size:0.75rem;margin-bottom:20px;">THE STORYTELLING CARD GAME</p>',
     unsafe_allow_html=True
 )
 
@@ -288,9 +308,9 @@ if not st.session_state.player_name:
     with col:
         st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
         with st.form("login"):
-            st.markdown('<p style="color:#b880ff;font-weight:700;margin-bottom:2px;">Your Name</p>', unsafe_allow_html=True)
+            st.markdown('<p style="color:#c2948a;font-weight:700;margin-bottom:2px;">Your Name</p>', unsafe_allow_html=True)
             name = st.text_input("name", placeholder="e.g. LUNA", label_visibility="collapsed").strip().upper()
-            st.markdown('<p style="color:#b880ff;font-weight:700;margin-bottom:2px;margin-top:8px;">Group Code</p>', unsafe_allow_html=True)
+            st.markdown('<p style="color:#c2948a;font-weight:700;margin-bottom:2px;margin-top:8px;">Group Code</p>', unsafe_allow_html=True)
             group_input = st.text_input("group", placeholder="e.g. DREAM42", label_visibility="collapsed").strip().upper()
             st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
             submitted = st.form_submit_button("✨  Enter the Dream", use_container_width=True, type="primary")
@@ -385,12 +405,12 @@ def show_scoreboard(scores, order):
     for i, p in enumerate(sorted_scores):
         pts = scores.get(p, 0)
         crown = "👑 " if i == 0 else ""
-        bg = "rgba(220,180,0,0.12)" if i == 0 else "rgba(255,255,255,0.04)"
-        border = "rgba(220,180,0,0.3)" if i == 0 else "rgba(140,80,255,0.15)"
+        bg = "rgba(194,148,138,0.15)" if i == 0 else "rgba(246,240,237,0.05)"
+        border = "rgba(194,148,138,0.4)" if i == 0 else "rgba(126,168,190,0.15)"
         st.sidebar.markdown(
             f'<div style="display:flex;justify-content:space-between;padding:8px 12px;border-radius:10px;'
             f'margin-bottom:5px;background:{bg};border:1px solid {border};">'
-            f'<span>{crown}{p}</span><span style="font-weight:800;color:#e8c8ff">{pts} pts</span></div>',
+            f'<span>{crown}{p}</span><span style="font-weight:800;color:#f6f0ed">{pts} pts</span></div>',
             unsafe_allow_html=True
         )
 
@@ -414,7 +434,7 @@ def render_card_grid(cards, selectable=False, selected_card=None, key_prefix="ca
     for i, img in enumerate(display_cards):
         is_sel = (img == selected_card)
         with cols[i % 3]:
-            border_style = "3px solid #44ff88" if is_sel else "2px solid transparent"
+            border_style = "3px solid #688b58" if is_sel else "2px solid transparent"
             st.markdown(
                 f'<div style="border:{border_style};border-radius:12px;overflow:hidden;'
                 f'box-shadow:{"0 0 16px rgba(68,255,136,0.4)" if is_sel else "none"};">',
@@ -490,9 +510,9 @@ if phase == "LOBBY":
     """, unsafe_allow_html=True)
 
     st.markdown(
-        f'<p style="text-align:center;font-size:1rem;color:#c8a0ff;margin-bottom:20px;">'
-        f'Group Code: <span style="font-family:monospace;font-size:1.4rem;color:#e8c8ff;'
-        f'background:rgba(140,60,255,0.2);padding:4px 16px;border-radius:8px;">{group}</span></p>',
+        f'<p style="text-align:center;font-size:1rem;color:#c2948a;margin-bottom:20px;">'
+        f'Group Code: <span style="font-family:monospace;font-size:1.4rem;color:#f6f0ed;'
+        f'background:rgba(40,83,107,0.5);padding:4px 16px;border-radius:8px;">{group}</span></p>',
         unsafe_allow_html=True
     )
 
@@ -508,11 +528,11 @@ if phase == "LOBBY":
     st.markdown("#### Players Joined")
     avatars = ["🌙", "⭐", "🌟", "💫", "🌈", "🔮", "🎭", "🃏"]
     for i, p in enumerate(order):
-        host_tag = " &nbsp;<small style='color:#ffcc55;font-size:0.75rem;'>HOST</small>" if i == 0 else ""
+        host_tag = " &nbsp;<small style='color:#c2948a;font-size:0.75rem;'>HOST</small>" if i == 0 else ""
         you_tag = " &nbsp;<small style='color:#88ccff;font-size:0.75rem;'>YOU</small>" if p == player else ""
         st.markdown(
-            f'<div style="padding:10px 16px;margin:5px 0;background:rgba(140,60,255,0.15);'
-            f'border-radius:12px;border:1px solid rgba(140,60,255,0.25);color:#e8d8ff;">'
+            f'<div style="padding:10px 16px;margin:5px 0;background:rgba(40,83,107,0.35);'
+            f'border-radius:12px;border:1px solid rgba(126,168,190,0.3);color:#f6f0ed;">'
             f'{avatars[i % len(avatars)]} <b>{p}</b>{host_tag}{you_tag}</div>',
             unsafe_allow_html=True
         )
@@ -577,7 +597,7 @@ else:
                 # Re-render inside real Streamlit widgets (can't nest inputs in raw HTML)
                 st.markdown(
                     '<div style="background:linear-gradient(135deg,rgba(60,20,100,0.95),rgba(10,20,60,0.98));'
-                    'border:2px solid rgba(140,80,255,0.6);border-radius:20px;padding:20px 24px 16px;'
+                    'border:2px solid rgba(126,168,190,0.5);border-radius:20px;padding:20px 24px 16px;'
                     'margin:0 0 16px;box-shadow:0 0 40px rgba(120,60,255,0.3);">',
                     unsafe_allow_html=True
                 )
@@ -748,7 +768,7 @@ else:
         _, mid, _ = st.columns([1, 2, 1])
         with mid:
             st.markdown(
-                '<p style="text-align:center;color:#ffcc55;font-weight:800;'
+                '<p style="text-align:center;color:#c2948a;font-weight:800;'
                 'letter-spacing:2px;font-size:0.8rem;margin-bottom:8px;">✦ THE STORYTELLER\'S CARD ✦</p>',
                 unsafe_allow_html=True
             )
@@ -768,11 +788,11 @@ else:
             voters_for_this = [p for p, v in votes.items() if v == img]
             is_real = (img == real_card)
             with cols[i % 3]:
-                border = "3px solid #ffcc55" if is_real else "2px solid rgba(140,80,255,0.3)"
+                border = "3px solid #c2948a" if is_real else "2px solid rgba(126,168,190,0.3)"
                 st.markdown(f'<div style="border:{border};border-radius:12px;overflow:hidden;">', unsafe_allow_html=True)
                 st.image(img, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
-                name_color = "#ffcc55" if submitter == storyteller else "#e8c8ff"
+                name_color = "#c2948a" if submitter == storyteller else "#f6f0ed"
                 st_tag = " 🌟" if submitter == storyteller else ""
                 st.markdown(
                     f'<div style="text-align:center;color:{name_color};font-weight:700;'
@@ -798,16 +818,16 @@ else:
         for i, p in enumerate(sorted_players):
             gained = new_scores[p] - scores.get(p, 0)
             is_leader = (i == 0)
-            bg = "rgba(220,180,0,0.12)" if is_leader else "rgba(255,255,255,0.04)"
-            border = "rgba(220,180,0,0.3)" if is_leader else "rgba(140,80,255,0.15)"
+            bg = "rgba(194,148,138,0.12)" if is_leader else "rgba(246,240,237,0.04)"
+            border = "rgba(194,148,138,0.4)" if is_leader else "rgba(126,168,190,0.15)"
             crown = "👑 " if is_leader else ""
             st.markdown(
                 f'<div style="display:flex;justify-content:space-between;align-items:center;'
                 f'padding:10px 16px;border-radius:12px;margin-bottom:6px;'
                 f'background:{bg};border:1px solid {border};">'
-                f'<span style="color:#e8c8ff;font-weight:700;">{crown}{p}</span>'
-                f'<span style="color:#e8c8ff;font-weight:800;">{new_scores[p]} pts &nbsp;'
-                f'<span style="color:#60ff99;font-size:0.85rem;">(+{gained})</span></span>'
+                f'<span style="color:#f6f0ed;font-weight:700;">{crown}{p}</span>'
+                f'<span style="color:#f6f0ed;font-weight:800;">{new_scores[p]} pts &nbsp;'
+                f'<span style="color:#a8c896;font-size:0.85rem;">(+{gained})</span></span>'
                 f'</div>',
                 unsafe_allow_html=True
             )
