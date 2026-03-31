@@ -341,7 +341,7 @@ if st.button("GENERATE REPORT PDF", use_container_width=True, type="primary"):
             # Manual notes sit after snippets; closing always last
             all_parts = snippets + ([notes.strip()] if notes.strip() else [])
             if use_closing:
-                all_parts.append(f"Have a wonderful day! Enjoy your windows, {name}!")
+                all_parts.append(f"\nHave a wonderful day! Enjoy your windows, {name}!")
             
             final_notes = "  ".join(all_parts)
 
