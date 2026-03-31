@@ -19,7 +19,7 @@ st.markdown("""
         padding: 12px; background: white; border-radius: 10px; 
         margin-bottom: 8px; border: 1px solid #ddd;
     }
-    /* Hide +/- spinners on number inputs */
+    /* Hide +/- spinners on number inputs but keep the 'step' logic functional */
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { 
         -webkit-appearance: none; margin: 0; 
@@ -60,7 +60,7 @@ if upsell_id:
 
         if not none_op:
             st.divider()
-            # Logic: If price is exactly 0, it means it wasn't checked by the Admin
+            # Logic: If price is 0, it was excluded by the Admin
             if data['interior_price'] > 0:
                 if st.checkbox(f"🏠 Interior Windows (${data['interior_price']:.0f})"):
                     running_total += float(data['interior_price']); applied_items.append("Interior")
@@ -106,20 +106,21 @@ else:
     
     with st.form("creator"):
         c_name = st.text_input("Customer Name")
-        c_base = st.number_input("Base Price", min_value=0.0, step=5.0)
+        # Base price incrementing by 5
+        c_base = st.number_input("Base Price", min_value=0.0, value=0.0, step=5.0)
         
         st.write("### Services to Include")
         
-        # Helper function for consistent UI
-        def admin_service_row(label, default_val, key_prefix, help_text=None):
+        # Helper function with step=5.0 for all prices
+        def admin_service_row(label, default_val, key_prefix):
             col_check, col_price = st.columns([1, 2])
             is_active = col_check.checkbox(label, value=True, key=f"active_{key_prefix}")
-            price_input = col_price.number_input(f"{label} Price", value=float(default_val), key=f"val_{key_prefix}", label_visibility="collapsed", help=help_text)
+            price_input = col_price.number_input(f"{label} Price", value=float(default_val), step=5.0, key=f"val_{key_prefix}", label_visibility="collapsed")
             return price_input if is_active else 0.0
 
         # Interior: Logic - .6 of base price rounded down to nearest 5
         auto_int = (c_base * 0.6) // 5 * 5
-        val_int = admin_service_row("Interior", auto_int, "int", help_text="Defaults to 60% of base price")
+        val_int = admin_service_row("Interior", auto_int, "int")
         
         val_scr = admin_service_row("Screens", 25.0, "scr")
         val_gut = admin_service_row("Gutters", 50.0, "gut")
@@ -145,7 +146,7 @@ else:
                 "perm_lighting_info": light_txt
             }).execute()
             
-            # Auto-detect URL or use your fixed link
+            # Link generation
             base_url = "https://dgyzpaimv4zy73xfhfjrgv.streamlit.app/"
             full_url = f"{base_url}?id={new.data[0]['id']}"
             
@@ -165,7 +166,7 @@ else:
     if recent.data:
         for r in recent.data:
             with st.expander(f"✅ {r['customer_name']} - ${r['final_total']}"):
-                st.write(f"**Items:** {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
+                st.write(f"**Selected:** {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
                 st.write(f"**Base Price:** ${r['base_price']}")
     else:
         st.info("No customer submissions found yet.")
