@@ -10,7 +10,7 @@ import math
 st.set_page_config(page_title="Glide Upsell", layout="centered")
 
 # -----------------------------
-# THEME / CSS (includes sticky bar)
+# CSS (Sticky header included)
 # -----------------------------
 st.markdown("""
 <style>
@@ -58,14 +58,13 @@ h1, h2, h3 {
     border: 1px solid #ddd;
 }
 
-/* Total number */
+/* Total text */
 .total-value {
     font-size: 2rem;
     font-weight: bold;
     color: #688b58;
 }
 
-/* Clean spacing */
 .block-container {
     padding-top: 2rem;
 }
@@ -137,7 +136,7 @@ if upsell_id:
     data = res.data[0]
 
     if data.get("is_submitted"):
-        st.info("Request already processed. Thank you!")
+        st.info("Request already processed.")
         st.stop()
 
     st.title(f"Hello, {data['customer_name']} 👋")
@@ -148,7 +147,6 @@ if upsell_id:
 
     none_op = st.checkbox("❌ No Add-ons (Keep original price)")
 
-    # --- SERVICES ---
     if not none_op:
         st.divider()
 
@@ -185,10 +183,10 @@ if upsell_id:
                 st.info(data["perm_lighting_info"])
                 applied_items.append("Lighting Interest")
 
-    # 🔥 STICKY TOTAL BAR (render AFTER calc, display ABOVE visually)
+    # 🔥 Sticky total (always visible)
     st.markdown(f"""
     <div class="sticky-total">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between;">
             <div><strong>Total</strong></div>
             <div class="total-value">${running_total:,.2f}</div>
         </div>
@@ -214,6 +212,7 @@ else:
     st.title("Glide Admin")
 
     with st.form("creator"):
+
         c_name = st.text_input("Customer Name")
 
         c_base = st.number_input(
@@ -228,26 +227,41 @@ else:
 
         auto_int = fallback_price(c_base)
 
-        # 🔥 INTERIOR WITH REFRESH BUTTON
+        # -----------------------------
+        # SAFE SESSION STATE INIT
+        # -----------------------------
+        if "v_int" not in st.session_state:
+            st.session_state.v_int = float(auto_int)
+
+        if "refresh_int" not in st.session_state:
+            st.session_state.refresh_int = False
+
+        # Handle refresh BEFORE widget render
+        if st.session_state.refresh_int:
+            st.session_state.v_int = fallback_price(st.session_state.base_price)
+            st.session_state.refresh_int = False
+
+        # -----------------------------
+        # INTERIOR ROW
+        # -----------------------------
         col1, col2, col3 = st.columns([1, 2, 1])
 
         active_int = col1.checkbox("Interior", value=True, key="a_int")
 
-        if "v_int" not in st.session_state:
-            st.session_state.v_int = float(auto_int)
-
         val_int = col2.number_input(
             "Interior Price",
-            value=st.session_state.v_int,
             step=5.0,
             label_visibility="collapsed",
             key="v_int"
         )
 
         if col3.form_submit_button("🔄"):
-            st.session_state.v_int = fallback_price(st.session_state.base_price)
+            st.session_state.refresh_int = True
             st.rerun()
 
+        # -----------------------------
+        # OTHER SERVICES
+        # -----------------------------
         def admin_row(label, default, key):
             col1, col2 = st.columns([1, 2])
             active = col1.checkbox(label, value=True, key=f"a_{key}")
