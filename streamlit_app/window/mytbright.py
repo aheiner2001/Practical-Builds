@@ -303,8 +303,10 @@ st.caption("Check any that apply — they'll be added to the notes automatically
 
 use_simple = st.checkbox("✅ Simple / Thank you")
 use_trash = st.checkbox("🗑️ Trash pickup")
+use_cobwebs = st.checkbox("🕸️ Cobwebs")
 use_hardwater = st.checkbox("💧 Hard water stains")
-use_damage = st.checkbox("🪟 Window Pane Damage (pictures added)")
+use_screen = st.checkbox("🪟 Free screen wash")
+use_damage = st.checkbox("⚠️ Window Pane Damage (pictures added)")
 use_closing = st.checkbox("👋 Closing message")
 
 notes = st.text_area("Job Notes & Observations", height=120)
@@ -322,22 +324,25 @@ st.markdown("")
 if st.button("GENERATE REPORT PDF", use_container_width=True, type="primary"):
     if name:
         with st.spinner("Building your report..."):
-            # Build snippet messages (closing always pinned to end)
             snippets = []
             if use_simple:
                 snippets.append(f"Thank you {name}, everything looks great.")
             if use_trash:
                 snippets.append("We were able to pick up a bit of trash around the house that we saw.")
+            if use_cobwebs:
+                snippets.append("Extra time was spent around the frame to get the cobwebs.")
             if use_hardwater:
                 snippets.append("A few windows had bad hard water stains, we did the best we could. We used hard water removal and it looks a ton better.")
+            if use_screen:
+                snippets.append("We noticed a few screens were extra dirty so we cleaned those for free!")
             if use_damage:
                 snippets.append("We added pictures of some windows that had a gas leak.")
-
+            
             # Manual notes sit after snippets; closing always last
             all_parts = snippets + ([notes.strip()] if notes.strip() else [])
             if use_closing:
                 all_parts.append(f"Have a wonderful day! Enjoy your windows, {name}!")
-
+            
             final_notes = "  ".join(all_parts)
 
             pdf = create_pdf(name, phone, final_notes, before, after, city, crew_member)
