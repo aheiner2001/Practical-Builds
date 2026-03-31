@@ -154,7 +154,7 @@ if upsell_id:
         st.info("Request already processed. Thank you!")
         st.stop()
 
-    st.title(f"Hello, {data['customer_name']}")
+    st.title(f"Hello, {data['customer_name']} (see total price below)")
 
     base_price = float(data["base_price"])
     running_total = base_price
