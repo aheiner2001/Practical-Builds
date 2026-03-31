@@ -14,13 +14,9 @@ st.set_page_config(page_title="Glide Upsell", layout="centered")
 # -----------------------------
 st.markdown("""
 <style>
-.main {
-    background-color: #f6f0ed;
-}
+.main { background-color: #f6f0ed; }
 
-h1, h2, h3 {
-    color: #28536b;
-}
+h1, h2, h3 { color: #28536b; }
 
 .sticky-total {
     position: sticky;
@@ -43,9 +39,7 @@ h1, h2, h3 {
     border: none;
 }
 
-.stButton button:hover {
-    background-color: #1f3e50;
-}
+.stButton button:hover { background-color: #1f3e50; }
 
 .stCheckbox {
     padding: 12px;
@@ -61,13 +55,7 @@ h1, h2, h3 {
     color: #688b58;
 }
 
-div[data-testid="stMetricValue"] {
-    color: #688b58;
-}
-
-.block-container {
-    padding-top: 2rem;
-}
+.block-container { padding-top: 2rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -89,7 +77,7 @@ def get_service_price(admin_price: float, base_price: float) -> float:
     return float(fallback_price(base_price))
 
 def render_service(label, price, icon, key, per_unit=False):
-     = st.checkbox(f"{icon} {label} (${price:.0f})", key=f"chk_{key}")
+    selected = st.checkbox(f"{icon} {label} (${price:.0f})", key=f"chk_{key}")
 
     total = 0
     desc = None
@@ -146,7 +134,7 @@ if upsell_id:
     applied_items = []
     addon_total = 0
 
-    none_op = st.checkbox("❌ None (Keep original price)", key="none_box")
+    none_op = st.checkbox("❌ None (Keep original price)")
 
     if not none_op:
         st.divider()
@@ -222,7 +210,6 @@ else:
 
         c_name = st.text_input("Customer Name")
         c_phone = st.text_input("Customer Phone Number")
-
         c_base = st.number_input("Base Price", min_value=0.0, value=0.0, step=5.0)
 
         st.subheader("Services")
@@ -232,10 +219,7 @@ else:
         if "v_int" not in st.session_state:
             st.session_state.v_int = float(auto_int)
 
-        if "refresh_int" not in st.session_state:
-            st.session_state.refresh_int = False
-
-        if st.session_state.refresh_int:
+        if st.session_state.get("refresh_int"):
             st.session_state.v_int = fallback_price(c_base)
             st.session_state.refresh_int = False
 
@@ -323,17 +307,11 @@ else:
                 if r["selected_items"]:
                     st.write("Selections:")
                     for item in r["selected_items"]:
-                
-                        # NEW format (dict)
                         if isinstance(item, dict):
                             st.write(f"- {item['name']}: ${item['price']:,.2f}")
-                
-                        # OLD format (string)
-                 else:
-                    st.write(f"- {item}")
+                        else:
+                            st.write(f"- {item} (no price saved)")
                 else:
-                    st.write(f"- {item}: (no price saved)")
-        else:
-            st.write("Selections: None")
-            else:
-                st.info("No customer submissions found yet.")
+                    st.write("Selections: None")
+    else:
+        st.info("No customer submissions found yet.")
