@@ -89,7 +89,7 @@ def get_service_price(admin_price: float, base_price: float) -> float:
     return float(fallback_price(base_price))
 
 def render_service(label, price, icon, key, per_unit=False):
-    selected = st.checkbox(f"{icon} {label} (${price:.0f})", key=f"chk_{key}")
+     = st.checkbox(f"{icon} {label} (${price:.0f})", key=f"chk_{key}")
 
     total = 0
     desc = None
@@ -323,8 +323,17 @@ else:
                 if r["selected_items"]:
                     st.write("Selections:")
                     for item in r["selected_items"]:
-                        st.write(f"- {item['name']}: ${item['price']:,.2f}")
+                
+                        # NEW format (dict)
+                        if isinstance(item, dict):
+                            st.write(f"- {item['name']}: ${item['price']:,.2f}")
+                
+                        # OLD format (string)
+                 else:
+                    st.write(f"- {item}")
                 else:
-                    st.write("Selections: None")
-    else:
-        st.info("No customer submissions found yet.")
+                    st.write(f"- {item}: (no price saved)")
+        else:
+            st.write("Selections: None")
+            else:
+                st.info("No customer submissions found yet.")
