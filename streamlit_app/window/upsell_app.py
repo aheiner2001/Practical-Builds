@@ -192,7 +192,7 @@ if upsell_id:
                 applied_items.append(desc)
 
         if data.get("perm_lighting_info") and data["perm_lighting_info"].strip():
-            if st.checkbox("💡 Permanent Holiday Lighting?"):
+            if st.checkbox("💡 Interested in permanent year-round lighting? (check for more info)"):
                 st.info(data["perm_lighting_info"])
                 applied_items.append("Lighting Interest")
 
@@ -287,7 +287,7 @@ else:
 
         st.divider()
 
-        inc_light = st.checkbox("💡 Interested in permanent year-round lighting? (check for more info)")
+        inc_light = st.checkbox("Permanent lighting info")
         light_txt = st.text_area(
             "Lighting Pitch Text",
             "We’ll go over lighting options with you at the door!"
