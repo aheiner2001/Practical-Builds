@@ -330,13 +330,13 @@ if st.button("GENERATE REPORT PDF", use_container_width=True, type="primary"):
             if use_trash:
                 snippets.append("\n \u2022 We were able to pick up a bit of trash around the house that we saw.")
             if use_cobwebs:
-                snippets.append("Extra time was spent around the frame to get the cobwebs.")
+                snippets.append("\n\u2022 Extra time was spent around the frame to get the cobwebs.")
             if use_hardwater:
-                snippets.append("A few windows had bad hard water stains, we did the best we could. We used hard water removal and it looks a ton better.")
+                snippets.append("\n\u2022 A few windows had bad hard water stains, we did the best we could. We used hard water removal and it looks a ton better.")
             if use_screen:
-                snippets.append("We noticed a few screens were extra dirty so we cleaned those for free!")
+                snippets.append("\n\u2022 We noticed a few screens were extra dirty so we cleaned those for free!")
             if use_damage:
-                snippets.append("We added pictures of some windows that had a gas leak.")
+                snippets.append("\n\u2022 We added pictures of some windows that had a gas leak.")
             
             # Manual notes sit after snippets; closing always last
             all_parts = snippets + ([notes.strip()] if notes.strip() else [])
