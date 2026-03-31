@@ -179,7 +179,7 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
 [data-testid="baseButton-primary"] > button,
 .stButton > button[kind="primary"] {
     background: linear-gradient(135deg, #c2948a, #7ea8be) !important;
-    color: #1a3545 !important;
+    color: #C2948A !important;
     border: none !important;
     box-shadow: 0 4px 20px rgba(194,148,138,0.35) !important;
 }
