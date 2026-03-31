@@ -297,11 +297,7 @@ if "group_code" not in st.session_state:
 # ============================================================
 if not st.session_state.player_name:
     st.markdown("""
-    <div class="login-wrap">
-        <span class="login-emoji">🌙</span>
-        <div class="login-title">Enter the Dream</div>
-        <div class="login-sub">✦ Dixit Pro ✦</div>
-    </div>
+    
     """, unsafe_allow_html=True)
 
     _, col, _ = st.columns([1, 2, 1])
