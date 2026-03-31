@@ -60,7 +60,7 @@ if upsell_id:
 
         if not none_op:
             st.divider()
-            # Logic: If price is exactly 0, we assume it was excluded by the Admin
+            # Logic: If price is exactly 0, it means it wasn't checked by the Admin
             if data['interior_price'] > 0:
                 if st.checkbox(f"🏠 Interior Windows (${data['interior_price']:.0f})"):
                     running_total += float(data['interior_price']); applied_items.append("Interior")
@@ -93,7 +93,7 @@ if upsell_id:
         st.divider()
         st.metric("Total", f"${running_total:,.2f}")
 
-        if st.button("Submit"):
+        if st.button("Submit Selection"):
             conn.table("upsell_sessions").update({
                 "selected_items": applied_items, "final_total": running_total, "is_submitted": True
             }).eq("id", upsell_id).execute()
@@ -108,45 +108,37 @@ else:
         c_name = st.text_input("Customer Name")
         c_base = st.number_input("Base Price", min_value=0.0)
         
-        st.write("### Select Add-ons to include:")
+        st.write("### Services to Display")
         
-        # Helper function for the row layout
-        def service_row(label, default_val, key_prefix):
-            col_check, col_price = st.columns([1, 3])
-            is_on = col_check.checkbox(label, value=False, key=f"check_{key_prefix}")
-            price = 0.0
-            if is_on:
-                price = col_price.number_input(f"{label} Price", value=float(default_val), key=f"val_{key_prefix}", label_visibility="collapsed")
-            return price
+        # Helper function where input is ALWAYS shown, checkbox determines inclusion
+        def admin_service_row(label, default_val, key_prefix):
+            col_check, col_price = st.columns([1, 2])
+            # Checkbox on left
+            is_active = col_check.checkbox(label, value=True, key=f"active_{key_prefix}")
+            # Price input on right (Always visible)
+            price_input = col_price.number_input(f"{label} Price", value=float(default_val), key=f"val_{key_prefix}", label_visibility="collapsed")
+            # If not active, we return 0 so the customer doesn't see it
+            return price_input if is_active else 0.0
 
-        # 1. Interior (Custom calc)
+        # Interior (Auto-calc: 60% of base rounded down to 5)
         auto_int = (c_base * 0.6) // 5 * 5
-        val_int = service_row("Interior", auto_int, "int")
+        val_int = admin_service_row("Interior", auto_int, "int")
         
-        # 2. Screens
-        val_scr = service_row("Screens", 25.0, "scr")
-
-        # 3. Gutters
-        val_gut = service_row("Gutters", 50.0, "gut")
-
-        # 4. Fans
-        val_fan = service_row("Fans", 10.0, "fan")
-        
-        # 5. Wells
-        val_well = service_row("Wells", 25.0, "well")
-
-        # 6. Mirrors
-        val_mir = service_row("Mirrors", 25.0, "mir")
+        val_scr = admin_service_row("Screens", 25.0, "scr")
+        val_gut = admin_service_row("Gutters", 50.0, "gut")
+        val_fan = admin_service_row("Fans", 10.0, "fan")
+        val_well = admin_service_row("Wells", 25.0, "well")
+        val_mir = admin_service_row("Mirrors", 25.0, "mir")
 
         st.divider()
-        inc_light = st.checkbox("Include Lighting Info?", value=False)
-        light_txt = st.text_area("Lighting Pitch", "Interested in permanent year-round lighting? Check for info!") if inc_light else ""
+        inc_light = st.checkbox("Show Permanent Lighting Info?", value=False)
+        light_txt = st.text_area("Lighting Pitch Text", "Interested in permanent year-round lighting? Check for info!") if inc_light else ""
         
         create_btn = st.form_submit_button("Generate QR Code")
 
     if create_btn:
         if not c_name:
-            st.error("Enter a name!")
+            st.error("Please enter a name!")
         else:
             new = conn.table("upsell_sessions").insert({
                 "customer_name": c_name, "base_price": c_base,
@@ -162,12 +154,12 @@ else:
             st.image(buf); st.code(full_url)
 
     st.divider()
-    if st.button("🔄 Refresh Submissions"):
+    if st.button("🔄 Check for New Submissions"):
         st.rerun()
 
-    st.subheader("Recent Submissions")
+    st.subheader("Completed Jobs")
     recent = conn.table("upsell_sessions").select("*").eq("is_submitted", True).order("created_at", desc=True).limit(10).execute()
     for r in recent.data:
         with st.expander(f"✅ {r['customer_name']} - ${r['final_total']}"):
-            st.write(f"**Items:** {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
-            st.write(f"**Final Price:** ${r['final_total']}")
+            st.write(f"**Selected:** {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
+            st.write(f"**Total Price:** ${r['final_total']}")
