@@ -6,9 +6,10 @@ from io import BytesIO
 # 1. Page Configuration for Mobile
 st.set_page_config(page_title="Glide Upsell", layout="centered")
 
-# Custom CSS for a clean mobile "App" look
+# 2. Custom CSS for a clean mobile "App" look (Corrected Parameter)
 st.markdown("""
     <style>
+    /* Make buttons big and thumb-friendly */
     .stButton button { 
         width: 100%; 
         border-radius: 12px; 
@@ -18,28 +19,39 @@ st.markdown("""
         font-weight: bold;
         font-size: 1.1rem;
     }
+    /* Background and Metric styling */
     .main { background-color: #f9f9f9; }
     div[data-testid="stMetricValue"] { color: #2e7d32; font-size: 2.2rem; }
-    .stCheckbox { padding: 10px; background: white; border-radius: 8px; margin-bottom: 5px; border: 1px solid #eee; }
+    
+    /* Style checkboxes to look like selectable cards */
+    .stCheckbox { 
+        padding: 15px; 
+        background: white; 
+        border-radius: 10px; 
+        margin-bottom: 10px; 
+        border: 1px solid #ddd;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+    }
     </style>
-    """, unsafe_all_white_space=True)
+    """, unsafe_allow_html=True)
 
-# 2. Connect to Supabase
+# 3. Connect to Supabase
+# Ensure your Secrets are set in Streamlit Cloud Settings
 conn = st.connection("supabase", type=SupabaseConnection)
 
-# 3. Routing Logic (Checking URL Parameters)
+# 4. Routing Logic (Using URL Parameters)
 query_params = st.query_params
 upsell_id = query_params.get("id")
 
-# --- CUSTOMER FLOW ---
+# --- CUSTOMER FLOW (The page the client sees) ---
 if upsell_id:
     # Check if they just finished in this session
     if st.session_state.get("finished", False):
-        st.success("### Success!\n\nYour request has been sent. You may now close this browser window.")
+        st.success("### Success!\n\nYour request has been received. You may now close this browser window.")
         st.balloons()
         st.stop()
 
-    # Fetch data for this specific ID
+    # Fetch data for this specific ID from Supabase
     res = conn.table("upsell_sessions").select("*").eq("id", upsell_id).execute()
     
     if not res.data:
@@ -53,10 +65,10 @@ if upsell_id:
             st.stop()
 
         st.title(f"Hello, {data['customer_name']}!")
-        st.write("Review your estimate below and add any additional services you'd like performed today.")
+        st.write("Review your service estimate below. Check any boxes to add these services to your appointment today.")
 
-        # Pricing Logic
-        none_op = st.checkbox("❌ None (Keep original price only)", key="none_box")
+        # "None" Logic - if checked, it overrides others
+        none_op = st.checkbox("❌ No additions today (Keep original price)", key="none_box")
         
         running_total = float(data['base_price'])
         applied_items = []
@@ -64,7 +76,7 @@ if upsell_id:
         if not none_op:
             st.divider()
             
-            # Interior (.6 of base, rounded down to nearest 5)
+            # Interior Price
             if st.checkbox(f"🏠 Interior Windows (+${data['interior_price']:.0f})"):
                 running_total += float(data['interior_price'])
                 applied_items.append("Interior")
@@ -96,55 +108,58 @@ if upsell_id:
                 applied_items.append("Mirrors")
 
             # Permanent Lighting
+            st.write("---")
             if st.checkbox("💡 Interested in Permanent Holiday Lighting?"):
-                st.info(f"**Details:** {data['perm_lighting_info']}")
-                applied_items.append("Perm Lighting Info Requested")
+                st.info(f"**Information:** {data['perm_lighting_info']}")
+                applied_items.append("Perm Lighting Interest")
 
         st.divider()
-        st.metric("Total Estimate", f"${running_total:,.2f}")
+        st.metric("Total Appointment Price", f"${running_total:,.2f}")
 
-        if st.button("Confirm Add-Ons"):
+        if st.button("Confirm & Submit"):
+            # Update Supabase with selections
             conn.table("upsell_sessions").update({
                 "selected_items": applied_items,
                 "final_total": running_total,
                 "is_submitted": True
             }).eq("id", upsell_id).execute()
             
+            # Show the thank you page
             st.session_state.finished = True
             st.rerun()
 
-# --- ADMIN FLOW (Your Phone) ---
+# --- ADMIN FLOW (The page you use on your phone) ---
 else:
     st.title("Glide Upsell Creator")
     
-    with st.form("creator_form"):
+    with st.form("creator_form", clear_on_submit=True):
         cust_name = st.text_input("Customer Name")
-        current_price = st.number_input("Base Price", min_value=0.0, step=10.0)
+        current_price = st.number_input("Original Job Price", min_value=0.0, step=5.0)
         
-        st.write("### Adjust Add-on Pricing")
+        st.write("### Set Add-on Pricing")
         col1, col2 = st.columns(2)
         
         with col1:
-            # Auto-calc interior (60% of base rounded down to nearest 5)
+            # Auto-calculation: 60% of base, rounded down to nearest 5
             auto_int = (current_price * 0.6) // 5 * 5
-            p_interior = st.number_input("Interior", value=float(auto_int))
-            p_screens = st.number_input("Screens", value=25.0)
-            p_wells = st.number_input("Well Covers", value=25.0)
+            p_interior = st.number_input("Interior Price", value=float(auto_int))
+            p_screens = st.number_input("Screens Price", value=25.0)
+            p_wells = st.number_input("Well Covers Price", value=25.0)
             
         with col2:
-            p_gutters = st.number_input("Gutters", value=50.0)
-            p_fans = st.number_input("Fans (per)", value=10.0)
-            p_mirrors = st.number_input("Mirrors", value=25.0)
+            p_gutters = st.number_input("Gutters Price", value=50.0)
+            p_fans = st.number_input("Fan Price (Per)", value=10.0)
+            p_mirrors = st.number_input("Mirrors Price", value=25.0)
             
-        p_light_info = st.text_area("Perm Lighting Text", "Check for more information on our permanent year-round lighting solutions!")
+        p_light_info = st.text_area("Permanent Lighting Pitch", "Interested in permanent lighting? Check for more information.")
         
-        submitted = st.form_submit_button("Generate Upsell QR")
+        submitted = st.form_submit_button("Create & Generate QR")
 
     if submitted:
         if not cust_name:
-            st.error("Please enter a customer name.")
+            st.error("Please provide a name.")
         else:
-            # Insert into Supabase
+            # Save to Database
             new_row = conn.table("upsell_sessions").insert({
                 "customer_name": cust_name,
                 "base_price": current_price,
@@ -157,13 +172,13 @@ else:
                 "perm_lighting_info": p_light_info
             }).execute()
             
-            # Create Link
+            # Link Creation
             new_id = new_row.data[0]['id']
-            # IMPORTANT: Change this URL to your actual Streamlit Cloud URL once deployed
-            base_url = "https://your-app-name.streamlit.app/" 
+            # Change this to your actual deployed URL
+            base_url = "https://your-app.streamlit.app/" 
             full_url = f"{base_url}?id={new_id}"
             
-            st.success("Upsell Created!")
+            st.success(f"Upsell Ready for {cust_name}!")
             
             # QR Code Generation
             qr = qrcode.QRCode(version=1, box_size=10, border=5)
@@ -173,17 +188,17 @@ else:
             
             buf = BytesIO()
             img.save(buf)
-            st.image(buf, caption="Customer scans this")
+            st.image(buf, caption="Let customer scan this")
             st.code(full_url)
 
     st.divider()
-    st.subheader("Recent Customer Submissions")
-    recent = conn.table("upsell_sessions").select("*").eq("is_submitted", True).order("created_at", desc=True).limit(10).execute()
+    st.subheader("Completed Upsells")
+    recent = conn.table("upsell_sessions").select("*").eq("is_submitted", True).order("created_at", desc=True).limit(5).execute()
     
     if recent.data:
         for r in recent.data:
-            with st.expander(f"{r['customer_name']} - ${r['final_total']}"):
-                st.write(f"**Add-ons Selected:** {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
-                st.write(f"**Final Price:** ${r['final_total']}")
+            with st.expander(f"{r['customer_name']} - Total: ${r['final_total']}"):
+                st.write(f"**Added:** {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
+                st.write(f"**Original Price:** ${r['base_price']}")
     else:
-        st.info("No submissions yet today.")
+        st.info("No customer submissions found.")
