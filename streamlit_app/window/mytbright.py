@@ -230,17 +230,15 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city, crew_member=""
 
         for f in files:
             img = ImageOps.exif_transpose(PILImage.open(f))
+            # Resize if wider than 1200px (phone photos are often 4000px+)
+            if img.width > 1200:
+                ratio = 1200 / img.width
+                img = img.resize((1200, int(img.height * ratio)), PILImage.LANCZOS)
+            # Convert to RGB so JPEG saving works (handles RGBA/PNG uploads too)
+            img = img.convert("RGB")
             tmp = BytesIO()
-            img.save(tmp, format="PNG")
+            img.save(tmp, format="JPEG", quality=75)  # JPEG is way smaller than PNG
             tmp.seek(0)
-
-            aspect = img.height / img.width
-            row.append(Image(tmp, width=3.2 * inch, height=3.2 * inch * aspect))
-
-            if len(row) == 2:
-                grid.append(row)
-                row = []
-
         if row:
             row.append("")
             grid.append(row)
