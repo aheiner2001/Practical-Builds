@@ -38,7 +38,7 @@ html, body, [class*="css"] {
 
 /* ── BACKGROUNDS ── */
 [data-testid="stAppViewContainer"] {
-    background: --charcoal !important;
+    background: #28536b !important;
     min-height: 100vh;
 }
 [data-testid="stHeader"] { background: transparent !important; }
