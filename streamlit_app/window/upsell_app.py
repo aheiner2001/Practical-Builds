@@ -3,195 +3,168 @@ from st_supabase_connection import SupabaseConnection
 import qrcode
 from io import BytesIO
 
-# 1. Page Configuration for Mobile
+# 1. Page Configuration
 st.set_page_config(page_title="Glide Upsell", layout="centered")
 
-# 2. Custom CSS for a clean mobile "App" look
+# 2. Custom CSS (Mobile-First)
 st.markdown("""
     <style>
-    /* Big, thumb-friendly buttons */
     .stButton button { 
-        width: 100%; 
-        border-radius: 12px; 
-        height: 3.5em; 
-        background-color: #007bff; 
-        color: white; 
-        font-weight: bold;
-        font-size: 1.1rem;
+        width: 100%; border-radius: 12px; height: 3.5em; 
+        background-color: #007bff; color: white; font-weight: bold;
     }
-    /* Overall page styling */
     .main { background-color: #f9f9f9; }
     div[data-testid="stMetricValue"] { color: #2e7d32; font-size: 2.2rem; }
-    
-    /* Checkbox "Cards" */
     .stCheckbox { 
-        padding: 15px; 
-        background: white; 
-        border-radius: 10px; 
-        margin-bottom: 10px; 
-        border: 1px solid #ddd;
-        box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+        padding: 12px; background: white; border-radius: 10px; 
+        margin-bottom: 8px; border: 1px solid #ddd;
     }
+    /* Remove the +/- spinners from number inputs for a cleaner look */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; margin: 0; 
+    }
+    input[type=number] { -moz-appearance: textfield; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Connect to Supabase
+# 3. Supabase Connection
 conn = st.connection("supabase", type=SupabaseConnection)
 
-# 4. Routing Logic via Query Parameters
+# 4. Routing
 query_params = st.query_params
 upsell_id = query_params.get("id")
 
 # --- CUSTOMER FLOW ---
 if upsell_id:
-    # Handle the "Submission Finished" state
     if st.session_state.get("finished", False):
-        st.success("### Success!\n\nYour request has been received. You may now close this browser window.")
+        st.success("### Thanks! \n\nYou may now close this browser.")
         st.balloons()
         st.stop()
 
-    # Fetch the specific upsell data
     res = conn.table("upsell_sessions").select("*").eq("id", upsell_id).execute()
     
     if not res.data:
-        st.error("This link is no longer active.")
+        st.error("Invalid Link.")
     else:
         data = res.data[0]
-        
-        # Check if this ID was already submitted in a previous session
         if data.get('is_submitted'):
-            st.info("This request has already been processed. Thank you!")
+            st.info("Request already processed. Thank you!")
             st.stop()
 
         st.title(f"Hello, {data['customer_name']}!")
-        st.write("Add any additional services to your appointment today:")
-
-        # The "None" Box Logic
-        none_op = st.checkbox("❌ No additions today (Keep original price)", key="none_box")
         
+        none_op = st.checkbox("❌ None (Keep original price)", key="none_box")
         running_total = float(data['base_price'])
         applied_items = []
 
         if not none_op:
             st.divider()
+            # Only show if price is NOT 0 (which means admin excluded it)
+            if data['interior_price'] > 0:
+                if st.checkbox(f"🏠 Interior Windows (${data['interior_price']:.0f})"):
+                    running_total += float(data['interior_price']); applied_items.append("Interior")
             
-            # 1. Interior Windows
-            if st.checkbox(f"🏠 Interior Windows (+${data['interior_price']:.0f})"):
-                running_total += float(data['interior_price'])
-                applied_items.append("Interior")
+            if data['screens_price'] > 0:
+                if st.checkbox(f"🖼️ Screen Deep Clean (${data['screens_price']:.0f})"):
+                    running_total += float(data['screens_price']); applied_items.append("Screens")
+
+            if data['fan_price'] > 0:
+                if st.checkbox(f"🌀 Ceiling Fans (${data['fan_price']:.0f} ea)"):
+                    fan_count = st.number_input("How many?", min_value=1, value=1, step=1, label_visibility="collapsed")
+                    running_total += (float(data['fan_price']) * fan_count); applied_items.append(f"Fans ({fan_count})")
+
+            if data['gutters_price'] > 0:
+                if st.checkbox(f"🍂 Gutter Cleaning (${data['gutters_price']:.0f})"):
+                    running_total += float(data['gutters_price']); applied_items.append("Gutters")
             
-            # 2. Screen Deep Clean
-            if st.checkbox(f"🖼️ Screen Deep Clean (+${data['screens_price']:.0f})"):
-                running_total += float(data['screens_price'])
-                applied_items.append("Screens")
+            if data['well_covers_price'] > 0:
+                if st.checkbox(f"🛡️ Well Covers (${data['well_covers_price']:.0f})"):
+                    running_total += float(data['well_covers_price']); applied_items.append("Well Covers")
 
-            # 3. Ceiling Fans (with incrementor)
-            if st.checkbox(f"🌀 Ceiling Fans (+${data['fan_price']:.0f} ea)"):
-                fan_count = st.number_input("How many fans?", min_value=1, value=1, step=1)
-                running_total += (float(data['fan_price']) * fan_count)
-                applied_items.append(f"Fans ({fan_count})")
+            if data['mirrors_price'] > 0:
+                if st.checkbox(f"🪞 Mirror Cleaning (${data['mirrors_price']:.0f})"):
+                    running_total += float(data['mirrors_price']); applied_items.append("Mirrors")
 
-            # 4. Gutter Debris Removal
-            if st.checkbox(f"🍂 Gutter Debris Removal (+${data['gutters_price']:.0f})"):
-                running_total += float(data['gutters_price'])
-                applied_items.append("Gutters")
-            
-            # 5. Window Well Covers
-            if st.checkbox(f"🛡️ Window Well Covers (+${data['well_covers_price']:.0f})"):
-                running_total += float(data['well_covers_price'])
-                applied_items.append("Well Covers")
-
-            # 6. Mirror Cleaning
-            if st.checkbox(f"🪞 Mirror Cleaning (+${data['mirrors_price']:.0f})"):
-                running_total += float(data['mirrors_price'])
-                applied_items.append("Mirrors")
-
-            # 7. Permanent Holiday Lighting
-            if st.checkbox("💡 Interested in Permanent Holiday Lighting?"):
-                st.info(f"**Details:** {data['perm_lighting_info']}")
-                applied_items.append("Perm Lighting Interest")
+            if data['perm_lighting_info'] and data['perm_lighting_info'].strip() != "":
+                if st.checkbox("💡 Permanent Holiday Lighting?"):
+                    st.info(data['perm_lighting_info']); applied_items.append("Lighting Interest")
 
         st.divider()
-        st.metric("Total Appointment Price", f"${running_total:,.2f}")
+        st.metric("Total", f"${running_total:,.2f}")
 
-        if st.button("Confirm & Submit"):
-            # Update the database
+        if st.button("Submit"):
             conn.table("upsell_sessions").update({
-                "selected_items": applied_items,
-                "final_total": running_total,
-                "is_submitted": True
+                "selected_items": applied_items, "final_total": running_total, "is_submitted": True
             }).eq("id", upsell_id).execute()
-            
-            # Trigger the thank you view
             st.session_state.finished = True
             st.rerun()
 
-# --- ADMIN FLOW (Your creator page) ---
+# --- ADMIN FLOW ---
 else:
-    st.title("Glide Upsell Creator")
+    st.title("Glide Admin")
     
-    with st.form("creator_form", clear_on_submit=True):
-        cust_name = st.text_input("Customer Name")
-        current_price = st.number_input("Original Job Price", min_value=0.0, step=5.0)
+    with st.form("creator"):
+        c_name = st.text_input("Customer Name")
+        c_base = st.number_input("Base Price", min_value=0.0)
         
-        st.write("### Set Add-on Pricing")
-        col1, col2 = st.columns(2)
+        st.write("### Include these Add-ons?")
+        # Interior
+        col_a, col_b = st.columns([1, 4])
+        inc_int = col_a.checkbox("Int", value=True)
+        auto_int = (c_base * 0.6) // 5 * 5
+        val_int = col_b.number_input("Interior Price", value=float(auto_int)) if inc_int else 0
         
-        with col1:
-            # Auto-calculate: 60% of base, rounded down to nearest 5
-            auto_int = (current_price * 0.6) // 5 * 5
-            p_interior = st.number_input("Interior Price", value=float(auto_int))
-            p_screens = st.number_input("Screens Price", value=25.0)
-            p_wells = st.number_input("Well Covers Price", value=25.0)
-            
-        with col2:
-            p_gutters = st.number_input("Gutters Price", value=50.0)
-            p_fans = st.number_input("Fan Price (Per)", value=10.0)
-            p_mirrors = st.number_input("Mirrors Price", value=25.0)
-            
-        p_light_info = st.text_area("Perm Lighting Text", "Interested in permanent year-round lighting? Check for more info!")
-        
-        submitted = st.form_submit_button("Create & Generate QR")
+        # Screens
+        col_a, col_b = st.columns([1, 4])
+        inc_scr = col_a.checkbox("Scr", value=True)
+        val_scr = col_b.number_input("Screen Price", value=25.0) if inc_scr else 0
 
-    if submitted:
-        if not cust_name:
-            st.error("Please provide a customer name.")
-        else:
-            # Save to Supabase
-            new_row = conn.table("upsell_sessions").insert({
-                "customer_name": cust_name, "base_price": current_price,
-                "interior_price": p_interior, "screens_price": p_screens,
-                "well_covers_price": p_wells, "gutters_price": p_gutters,
-                "fan_price": p_fans, "mirrors_price": p_mirrors,
-                "perm_lighting_info": p_light_info
-            }).execute()
-            
-            new_id = new_row.data[0]['id']
-            
-            # Generate the customer link dynamically
-            full_url = f"https://dgyzpaimv4zy73xfhfjrgv.streamlit.app/?id={new_id}"
-            
-            st.success(f"Upsell Created for {cust_name}!")
-            
-            # Create the QR image
-            qr = qrcode.QRCode(version=1, box_size=10, border=5)
-            qr.add_data(full_url)
-            qr.make(fit=True)
-            img = qr.make_image(fill_color="black", back_color="white")
-            
-            buf = BytesIO()
-            img.save(buf)
-            st.image(buf, caption="Scan this code with the customer's phone")
-            st.code(full_url)
+        # Gutters
+        col_a, col_b = st.columns([1, 4])
+        inc_gut = col_a.checkbox("Gut", value=False)
+        val_gut = col_b.number_input("Gutter Price", value=50.0) if inc_gut else 0
+
+        # Fans
+        col_a, col_b = st.columns([1, 4])
+        inc_fan = col_a.checkbox("Fan", value=True)
+        val_fan = col_b.number_input("Fan Price (ea)", value=10.0) if inc_fan else 0
+        
+        # Wells
+        col_a, col_b = st.columns([1, 4])
+        inc_well = col_a.checkbox("Well", value=False)
+        val_well = col_b.number_input("Well Cover Price", value=25.0) if inc_well else 0
+
+        # Mirrors
+        col_a, col_b = st.columns([1, 4])
+        inc_mir = col_a.checkbox("Mir", value=False)
+        val_mir = col_b.number_input("Mirror Price", value=25.0) if inc_mir else 0
+
+        inc_light = st.checkbox("Include Lighting Info?", value=True)
+        light_txt = st.text_area("Lighting Pitch", "Interested in permanent year-round lighting? Check for info!") if inc_light else ""
+        
+        create_btn = st.form_submit_button("Generate QR Code")
+
+    if create_btn:
+        new = conn.table("upsell_sessions").insert({
+            "customer_name": c_name, "base_price": c_base,
+            "interior_price": float(val_int), "screens_price": float(val_scr),
+            "gutters_price": float(val_gut), "fan_price": float(val_fan),
+            "well_covers_price": float(val_well), "mirrors_price": float(val_mir),
+            "perm_lighting_info": light_txt
+        }).execute()
+        
+        full_url = f"https://dgyzpaimv4zy73xfhfjrgv.streamlit.app/?id={new.data[0]['id']}"
+        qr_img = qrcode.make(full_url)
+        buf = BytesIO(); qr_img.save(buf)
+        st.image(buf); st.code(full_url)
 
     st.divider()
-    st.subheader("Recent Client Selections")
+    if st.button("🔄 Refresh Submissions"):
+        st.rerun()
+
+    st.subheader("Submissions")
     recent = conn.table("upsell_sessions").select("*").eq("is_submitted", True).order("created_at", desc=True).limit(10).execute()
-    
-    if recent.data:
-        for r in recent.data:
-            with st.expander(f"{r['customer_name']} - Final Total: ${r['final_total']}"):
-                st.write(f"**Items Requested:** {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
-                st.write(f"**Submitted at:** {r['created_at']}")
-    else:
-        st.info("No submissions recorded yet.")
+    for r in recent.data:
+        with st.expander(f"✅ {r['customer_name']} - ${r['final_total']}"):
+            st.write(f"**Items:** {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
