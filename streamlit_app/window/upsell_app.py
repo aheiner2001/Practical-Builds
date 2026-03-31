@@ -166,12 +166,12 @@ if upsell_id:
         st.divider()
 
         services = [
-            ("Interior Windows", "🏠", "interior_price", False, True),
-            ("Screen Deep Clean", "🖼️", "screens_price", False, False),
-            ("Ceiling Fans", "🌀", "fan_price", True, False),
-            ("Gutter Cleaning", "🍂", "gutters_price", False, False),
-            ("Well Covers", "🛡️", "well_covers_price", False, False),
-            ("Mirror Cleaning", "🪞", "mirrors_price", False, False),
+            ("Interior Windows", "", "interior_price", False, True),
+            ("Deep Screen Clean", "", "screens_price", False, False),
+            ("Ceiling Fan Dusting", "", "fan_price", True, False),
+            ("Gutter Cleaning", "", "gutters_price", False, False),
+            ("Window Well Cover Cleaning", "", "well_covers_price", False, False),
+            ("Mirror Cleaning", "", "mirrors_price", False, False),
         ]
 
         for label, icon, field, per_unit, always_show in services:
@@ -287,10 +287,10 @@ else:
 
         st.divider()
 
-        inc_light = st.checkbox("Show Permanent Lighting Info?")
+        inc_light = st.checkbox("💡 Interested in permanent year-round lighting? (check for more info)")
         light_txt = st.text_area(
             "Lighting Pitch Text",
-            "Interested in permanent year-round lighting? Check for info!"
+            "We’ll go over lighting options with you at the door!"
         ) if inc_light else ""
 
         submitted = st.form_submit_button("Generate QR Code")
