@@ -221,34 +221,47 @@ def create_pdf(name, phone, notes, before_imgs, after_imgs, city, crew_member=""
     def add_imgs(label, files):
         if not files:
             return
-
+    
+        valid_images = []
+        for f in files:
+            try:
+                img = ImageOps.exif_transpose(PILImage.open(f))
+                if img.width > 1200:
+                    ratio = 1200 / img.width
+                    img = img.resize((1200, int(img.height * ratio)), PILImage.LANCZOS)
+                img = img.convert("RGB")
+                tmp = BytesIO()
+                img.save(tmp, format="JPEG", quality=75)
+                tmp.seek(0)
+                aspect = img.height / img.width
+                valid_images.append(Image(tmp, width=3.2 * inch, height=3.2 * inch * aspect))
+            except Exception:
+                continue  # skip any broken/unreadable image
+    
+        if not valid_images:  # ← this is the key fix
+            return
+    
         story.append(Paragraph(label, header_style))
         story.append(HRFlowable(width="100%", thickness=1, color=GREEN, spaceBefore=0, spaceAfter=8))
-
+    
         grid = []
         row = []
-
-        for f in files:
-            img = ImageOps.exif_transpose(PILImage.open(f))
-            # Resize if wider than 1200px (phone photos are often 4000px+)
-            if img.width > 1200:
-                ratio = 1200 / img.width
-                img = img.resize((1200, int(img.height * ratio)), PILImage.LANCZOS)
-            # Convert to RGB so JPEG saving works (handles RGBA/PNG uploads too)
-            img = img.convert("RGB")
-            tmp = BytesIO()
-            img.save(tmp, format="JPEG", quality=75)  # JPEG is way smaller than PNG
-            tmp.seek(0)
+        for img_obj in valid_images:
+            row.append(img_obj)
+            if len(row) == 2:
+                grid.append(row)
+                row = []
+    
         if row:
             row.append("")
             grid.append(row)
-
+    
         table = Table(grid, colWidths=[3.4 * inch, 3.4 * inch])
         table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 14),
         ]))
-
+    
         story.append(table)
         story.append(Spacer(1, 0.25 * inch))
 
