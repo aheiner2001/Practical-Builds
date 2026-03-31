@@ -91,9 +91,9 @@ if upsell_id:
                     st.info(data['perm_lighting_info']); applied_items.append("Lighting Interest")
 
         st.divider()
-        st.metric("Total", f"${running_total:,.2f}")
+        st.metric("Total Appointment Price", f"${running_total:,.2f}")
 
-        if st.button("Submit Selection"):
+        if st.button("Confirm & Submit"):
             conn.table("upsell_sessions").update({
                 "selected_items": applied_items, "final_total": running_total, "is_submitted": True
             }).eq("id", upsell_id).execute()
@@ -106,23 +106,20 @@ else:
     
     with st.form("creator"):
         c_name = st.text_input("Customer Name")
-        c_base = st.number_input("Base Price", min_value=0.0)
+        c_base = st.number_input("Base Price", min_value=0.0, step=5.0)
         
-        st.write("### Services to Display")
+        st.write("### Services to Include")
         
-        # Helper function where input is ALWAYS shown, checkbox determines inclusion
-        def admin_service_row(label, default_val, key_prefix):
+        # Helper function for consistent UI
+        def admin_service_row(label, default_val, key_prefix, help_text=None):
             col_check, col_price = st.columns([1, 2])
-            # Checkbox on left
             is_active = col_check.checkbox(label, value=True, key=f"active_{key_prefix}")
-            # Price input on right (Always visible)
-            price_input = col_price.number_input(f"{label} Price", value=float(default_val), key=f"val_{key_prefix}", label_visibility="collapsed")
-            # If not active, we return 0 so the customer doesn't see it
+            price_input = col_price.number_input(f"{label} Price", value=float(default_val), key=f"val_{key_prefix}", label_visibility="collapsed", help=help_text)
             return price_input if is_active else 0.0
 
-        # Interior (Auto-calc: 60% of base rounded down to 5)
+        # Interior: Logic - .6 of base price rounded down to nearest 5
         auto_int = (c_base * 0.6) // 5 * 5
-        val_int = admin_service_row("Interior", auto_int, "int")
+        val_int = admin_service_row("Interior", auto_int, "int", help_text="Defaults to 60% of base price")
         
         val_scr = admin_service_row("Screens", 25.0, "scr")
         val_gut = admin_service_row("Gutters", 50.0, "gut")
@@ -148,18 +145,27 @@ else:
                 "perm_lighting_info": light_txt
             }).execute()
             
-            full_url = f"https://dgyzpaimv4zy73xfhfjrgv.streamlit.app/?id={new.data[0]['id']}"
+            # Auto-detect URL or use your fixed link
+            base_url = "https://dgyzpaimv4zy73xfhfjrgv.streamlit.app/"
+            full_url = f"{base_url}?id={new.data[0]['id']}"
+            
+            st.success(f"Upsell Created for {c_name}!")
+            
             qr_img = qrcode.make(full_url)
             buf = BytesIO(); qr_img.save(buf)
-            st.image(buf); st.code(full_url)
+            st.image(buf, caption="Customer scans this code")
+            st.code(full_url)
 
     st.divider()
     if st.button("🔄 Check for New Submissions"):
         st.rerun()
 
-    st.subheader("Completed Jobs")
+    st.subheader("Recent Submissions")
     recent = conn.table("upsell_sessions").select("*").eq("is_submitted", True).order("created_at", desc=True).limit(10).execute()
-    for r in recent.data:
-        with st.expander(f"✅ {r['customer_name']} - ${r['final_total']}"):
-            st.write(f"**Selected:** {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
-            st.write(f"**Total Price:** ${r['final_total']}")
+    if recent.data:
+        for r in recent.data:
+            with st.expander(f"✅ {r['customer_name']} - ${r['final_total']}"):
+                st.write(f"**Items:** {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
+                st.write(f"**Base Price:** ${r['base_price']}")
+    else:
+        st.info("No customer submissions found yet.")
