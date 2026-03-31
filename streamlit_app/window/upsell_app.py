@@ -10,7 +10,7 @@ import math
 st.set_page_config(page_title="Glide Upsell", layout="centered")
 
 # -----------------------------
-# CSS (Sticky header included)
+# CSS (Improved styling + sticky total)
 # -----------------------------
 st.markdown("""
 <style>
@@ -49,7 +49,7 @@ h1, h2, h3 {
     background-color: #1f3e50;
 }
 
-/* Checkboxes */
+/* Checkbox cards */
 .stCheckbox {
     padding: 12px;
     background: white;
@@ -63,6 +63,21 @@ h1, h2, h3 {
     font-size: 2rem;
     font-weight: bold;
     color: #688b58;
+}
+
+/* Metric color */
+div[data-testid="stMetricValue"] {
+    color: #688b58;
+}
+
+/* Remove number arrows */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number] {
+    -moz-appearance: textfield;
 }
 
 .block-container {
@@ -136,7 +151,7 @@ if upsell_id:
     data = res.data[0]
 
     if data.get("is_submitted"):
-        st.info("Request already processed.")
+        st.info("Request already processed. Thank you!")
         st.stop()
 
     st.title(f"Hello, {data['customer_name']} 👋")
@@ -145,7 +160,7 @@ if upsell_id:
     running_total = base_price
     applied_items = []
 
-    none_op = st.checkbox("❌ No Add-ons (Keep original price)")
+    none_op = st.checkbox("❌ None (Keep original price)", key="none_box")
 
     if not none_op:
         st.divider()
@@ -170,20 +185,18 @@ if upsell_id:
                     continue
                 price = get_service_price(raw_price, base_price)
 
-            selected, total, desc = render_service(
-                label, price, icon, field, per_unit
-            )
+            selected, total, desc = render_service(label, price, icon, field, per_unit)
 
             if selected:
                 running_total += total
                 applied_items.append(desc)
 
-        if data.get("perm_lighting_info"):
+        if data.get("perm_lighting_info") and data["perm_lighting_info"].strip():
             if st.checkbox("💡 Permanent Holiday Lighting?"):
                 st.info(data["perm_lighting_info"])
                 applied_items.append("Lighting Interest")
 
-    # 🔥 Sticky total (always visible)
+    # Sticky total
     st.markdown(f"""
     <div class="sticky-total">
         <div style="display:flex; justify-content:space-between;">
@@ -227,23 +240,18 @@ else:
 
         auto_int = fallback_price(c_base)
 
-        # -----------------------------
-        # SAFE SESSION STATE INIT
-        # -----------------------------
+        # --- SAFE SESSION STATE ---
         if "v_int" not in st.session_state:
             st.session_state.v_int = float(auto_int)
 
         if "refresh_int" not in st.session_state:
             st.session_state.refresh_int = False
 
-        # Handle refresh BEFORE widget render
         if st.session_state.refresh_int:
             st.session_state.v_int = fallback_price(st.session_state.base_price)
             st.session_state.refresh_int = False
 
-        # -----------------------------
-        # INTERIOR ROW
-        # -----------------------------
+        # Interior row
         col1, col2, col3 = st.columns([1, 2, 1])
 
         active_int = col1.checkbox("Interior", value=True, key="a_int")
@@ -259,9 +267,6 @@ else:
             st.session_state.refresh_int = True
             st.rerun()
 
-        # -----------------------------
-        # OTHER SERVICES
-        # -----------------------------
         def admin_row(label, default, key):
             col1, col2 = st.columns([1, 2])
             active = col1.checkbox(label, value=True, key=f"a_{key}")
@@ -282,17 +287,17 @@ else:
 
         st.divider()
 
-        inc_light = st.checkbox("Include Lighting Pitch?")
+        inc_light = st.checkbox("Show Permanent Lighting Info?")
         light_txt = st.text_area(
-            "Lighting Text",
-            "Ask us about permanent lighting!"
+            "Lighting Pitch Text",
+            "Interested in permanent year-round lighting? Check for info!"
         ) if inc_light else ""
 
         submitted = st.form_submit_button("Generate QR Code")
 
         if submitted:
             if not c_name:
-                st.error("Enter a name")
+                st.error("Please enter a name!")
             else:
                 new = conn.table("upsell_sessions").insert({
                     "customer_name": c_name,
@@ -306,18 +311,23 @@ else:
                     "perm_lighting_info": light_txt
                 }).execute()
 
-                url = f"https://dgyzpaimv4zy73xfhfjrgv.streamlit.app/?id={new.data[0]['id']}"
+                base_url = "https://dgyzpaimv4zy73xfhfjrgv.streamlit.app/"
+                full_url = f"{base_url}?id={new.data[0]['id']}"
 
-                st.success(f"Created for {c_name}")
+                st.success(f"Upsell Created for {c_name}!")
 
-                img = qrcode.make(url)
+                qr_img = qrcode.make(full_url)
                 buf = BytesIO()
-                img.save(buf)
+                qr_img.save(buf)
 
-                st.image(buf)
-                st.code(url)
+                st.image(buf, caption="Customer scans this code")
+                st.code(full_url)
 
     st.divider()
+
+    # 🔥 Refresh submissions button (RESTORED)
+    if st.button("🔄 Refresh Submissions"):
+        st.rerun()
 
     st.subheader("Recent Submissions")
 
@@ -330,8 +340,8 @@ else:
 
     if recent.data:
         for r in recent.data:
-            with st.expander(f"{r['customer_name']} - ${r['final_total']}"):
-                st.write("Items:", ", ".join(r['selected_items']) or "None")
-                st.write("Base:", f"${r['base_price']}")
+            with st.expander(f"✅ {r['customer_name']} - ${r['final_total']}"):
+                st.write(f"Selected: {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
+                st.write(f"Base Price: ${r['base_price']}")
     else:
-        st.info("No submissions yet.")
+        st.info("No customer submissions found yet.")
