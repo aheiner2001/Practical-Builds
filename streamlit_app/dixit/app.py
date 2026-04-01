@@ -38,7 +38,7 @@ html, body, [class*="css"] {
 
 /* ── BACKGROUNDS ── */
 [data-testid="stAppViewContainer"] {
-    background: #28536b !important;
+    background: linear-gradient(160deg, #1a3545 0%, #28536b 40%, #1e3d50 100%) !important;
     min-height: 100vh;
 }
 [data-testid="stHeader"] { background: transparent !important; }
@@ -58,7 +58,7 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
 .login-wrap {
     max-width: 460px;
     margin: 30px auto 0;
-    background: --parchment;
+    background: linear-gradient(135deg, rgba(40,83,107,0.85) 0%, rgba(26,53,69,0.95) 100%);
     border: 1px solid rgba(126,168,190,0.45);
     border-radius: 24px;
     padding: 40px 36px 16px;
@@ -179,7 +179,7 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
 [data-testid="baseButton-primary"] > button,
 .stButton > button[kind="primary"] {
     background: linear-gradient(135deg, #c2948a, #7ea8be) !important;
-    color: #C2948A !important;
+    color: #1a3545 !important;
     border: none !important;
     box-shadow: 0 4px 20px rgba(194,148,138,0.35) !important;
 }
@@ -297,7 +297,11 @@ if "group_code" not in st.session_state:
 # ============================================================
 if not st.session_state.player_name:
     st.markdown("""
-    
+    <div class="login-wrap">
+        <span class="login-emoji">🌙</span>
+        <div class="login-title">Enter the Dream</div>
+        <div class="login-sub">✦ Dixit Pro ✦</div>
+    </div>
     """, unsafe_allow_html=True)
 
     _, col, _ = st.columns([1, 2, 1])
