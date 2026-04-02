@@ -25,9 +25,12 @@ st.markdown("""
   PALETTE:
   --charcoal:  #28536b  (dark blue-grey  — primary dark)
   --steel:     #7ea8be  (medium blue     — accents, borders)
-  --rosy:      #c2948a  (warm rose       — highlights, selected)
+  --rosy:      #e8a89e  (warm rose       — highlights, selected) [BRIGHTENED]
   --parchment: #f6f0ed  (off-white       — backgrounds, text on dark)
-  --olive:     #688b58  (dusty green     — done/success states)
+  --olive:     #82b06a  (dusty green     — done/success states) [BRIGHTENED]
+  --text-main: #f0e8e4  (near-white      — primary readable text)
+  --text-soft: #c8bfba  (light grey      — secondary text)
+  --text-muted:#a09590  (muted           — tertiary / placeholders)
 */
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Nunito:wght@300;400;600;700;800&display=swap');
@@ -44,15 +47,26 @@ html, body, [class*="css"] {
 [data-testid="stHeader"] { background: transparent !important; }
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #1a3545 0%, #162e3c 100%) !important;
-    border-right: 1px solid rgba(126,168,190,0.25);
+    border-right: 1px solid rgba(126,168,190,0.35);
 }
 
-/* ── TYPOGRAPHY ── */
+/* ── TYPOGRAPHY — IMPROVED CONTRAST ── */
 h1, h2, h3 {
     font-family: 'Cinzel Decorative', cursive !important;
     color: #f6f0ed !important;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
-p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
+/* All body text: bright enough to read on dark bg */
+p, li, .stMarkdown p, [data-testid="stText"],
+.stMarkdown, .stMarkdown li,
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li {
+    color: #f0e8e4 !important;
+}
+label, .stCheckbox label, .stRadio label {
+    color: #f0e8e4 !important;
+    font-weight: 600;
+}
 
 /* ── LOGIN CARD ── */
 .login-wrap {
@@ -68,7 +82,7 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
 .login-title {
     font-family: 'Cinzel Decorative', cursive;
     font-size: 2.2rem;
-    background: linear-gradient(135deg, #f6f0ed, #c2948a, #7ea8be);
+    background: linear-gradient(135deg, #f6f0ed, #e8a89e, #7ea8be);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -76,7 +90,7 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
     line-height: 1.2;
 }
 .login-sub {
-    color: rgba(194,148,138,0.8) !important;
+    color: rgba(232,168,158,0.9) !important;
     font-size: 0.8rem;
     letter-spacing: 4px;
     text-transform: uppercase;
@@ -86,13 +100,13 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
     font-size: 3.5rem;
     margin-bottom: 12px;
     display: block;
-    filter: drop-shadow(0 0 16px rgba(194,148,138,0.55));
+    filter: drop-shadow(0 0 16px rgba(232,168,158,0.55));
 }
 
 /* ── PHASE BANNER ── */
 .phase-banner {
-    background: linear-gradient(90deg, rgba(40,83,107,0.7), rgba(30,61,80,0.7));
-    border: 1px solid rgba(126,168,190,0.35);
+    background: linear-gradient(90deg, rgba(40,83,107,0.75), rgba(30,61,80,0.75));
+    border: 1px solid rgba(126,168,190,0.45);
     border-radius: 16px;
     padding: 16px 24px;
     margin-bottom: 20px;
@@ -101,13 +115,22 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
     gap: 14px;
 }
 .phase-banner .phase-icon { font-size: 2rem; }
-.phase-banner .phase-text { color: #f6f0ed !important; font-size: 1.1rem; font-weight: 800; margin-bottom: 2px; }
-.phase-banner .phase-sub  { color: rgba(194,148,138,0.75) !important; font-size: 0.82rem; }
+.phase-banner .phase-text {
+    color: #f6f0ed !important;
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 2px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.phase-banner .phase-sub  {
+    color: rgba(232,168,158,0.9) !important;
+    font-size: 0.82rem;
+}
 
 /* ── CLUE DISPLAY ── */
 .clue-display {
-    background: rgba(40,83,107,0.45);
-    border-left: 4px solid #c2948a;
+    background: rgba(40,83,107,0.55);
+    border-left: 4px solid #e8a89e;
     border-radius: 0 12px 12px 0;
     padding: 14px 20px;
     margin: 12px 0 20px;
@@ -115,6 +138,7 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
     color: #f6f0ed !important;
     font-weight: 700;
     font-style: italic;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
 /* ── CLUE POPUP ── */
@@ -127,7 +151,7 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
     box-shadow: 0 0 32px rgba(40,83,107,0.5);
 }
 .clue-popup-title {
-    color: #c2948a !important;
+    color: #e8a89e !important;
     font-size: 0.8rem;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -137,16 +161,16 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
 
 /* ── STATUS PILLS ── */
 .status-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
-.pill { border-radius: 20px; padding: 5px 14px; font-size: 0.8rem; font-weight: 700; }
+.pill { border-radius: 20px; padding: 5px 14px; font-size: 0.82rem; font-weight: 700; }
 .pill-done {
-    background: rgba(104,139,88,0.25);
-    border: 1px solid rgba(104,139,88,0.6);
-    color: #a8c896 !important;
+    background: rgba(130,176,106,0.3);
+    border: 1px solid rgba(130,176,106,0.7);
+    color: #c0e8a8 !important;
 }
 .pill-waiting {
-    background: rgba(194,148,138,0.15);
-    border: 1px solid rgba(194,148,138,0.45);
-    color: #c2948a !important;
+    background: rgba(232,168,158,0.2);
+    border: 1px solid rgba(232,168,158,0.55);
+    color: #f0b8ae !important;
 }
 
 /* ── SELECTED CARD BADGE ── */
@@ -165,7 +189,7 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
 .stButton > button {
     background: linear-gradient(135deg, #28536b, #1e3d50) !important;
     color: #f6f0ed !important;
-    border: 1px solid rgba(126,168,190,0.45) !important;
+    border: 1px solid rgba(126,168,190,0.55) !important;
     border-radius: 12px !important;
     font-family: 'Nunito', sans-serif !important;
     font-weight: 700 !important;
@@ -178,50 +202,103 @@ p, label, .stMarkdown, [data-testid="stText"] { color: #d8cfc9 !important; }
 }
 [data-testid="baseButton-primary"] > button,
 .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #c2948a, #7ea8be) !important;
+    background: linear-gradient(135deg, #e8a89e, #7ea8be) !important;
     color: #1a3545 !important;
     border: none !important;
-    box-shadow: 0 4px 20px rgba(194,148,138,0.35) !important;
+    box-shadow: 0 4px 20px rgba(232,168,158,0.35) !important;
+    font-weight: 800 !important;
 }
 [data-testid="baseButton-primary"] > button:hover,
 .stButton > button[kind="primary"]:hover {
-    background: linear-gradient(135deg, #d0a89e, #8fbace) !important;
-    box-shadow: 0 6px 24px rgba(194,148,138,0.5) !important;
+    background: linear-gradient(135deg, #f0b8ae, #8fbace) !important;
+    box-shadow: 0 6px 24px rgba(232,168,158,0.5) !important;
 }
 
 /* ── INPUTS ── */
 .stTextInput > div > div > input {
-    background: rgba(246,240,237,0.07) !important;
-    border: 1px solid rgba(126,168,190,0.4) !important;
+    background: rgba(246,240,237,0.1) !important;
+    border: 1px solid rgba(126,168,190,0.5) !important;
     border-radius: 10px !important;
     color: #f6f0ed !important;
     font-family: 'Nunito', sans-serif !important;
+    font-size: 1rem !important;
 }
 .stTextInput > div > div > input:focus {
-    border-color: #c2948a !important;
-    box-shadow: 0 0 0 2px rgba(194,148,138,0.2) !important;
+    border-color: #e8a89e !important;
+    box-shadow: 0 0 0 2px rgba(232,168,158,0.25) !important;
 }
-.stTextInput > div > div > input::placeholder { color: rgba(246,240,237,0.35) !important; }
+.stTextInput > div > div > input::placeholder { color: rgba(246,240,237,0.4) !important; }
 
 /* ── DIVIDER ── */
-hr { border-color: rgba(126,168,190,0.2) !important; }
+hr { border-color: rgba(126,168,190,0.25) !important; }
 
-/* ── SIDEBAR ── */
-[data-testid="stSidebar"] * { color: #c8bfba !important; }
+/* ── SIDEBAR — ALL TEXT BRIGHT ── */
+[data-testid="stSidebar"] { padding-bottom: 40px; }
+[data-testid="stSidebar"] * { color: #e8e0db !important; }
 [data-testid="stSidebar"] h1,
 [data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 { color: #f6f0ed !important; }
+[data-testid="stSidebar"] h3 {
+    color: #f6f0ed !important;
+    font-size: 1rem !important;
+}
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] .stMarkdown p {
+    color: #e8e0db !important;
+}
+[data-testid="stSidebar"] small,
+[data-testid="stSidebar"] caption {
+    color: #c8bfba !important;
+}
+
+/* ── SIDEBAR SCORE ROW ── */
+.score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+}
+.score-row span { color: #f0e8e4 !important; }
+.score-pts { font-weight: 800; color: #f6f0ed !important; }
+
+/* ── SIDEBAR DECK CARD ── */
+.deck-card-wrap {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(126,168,190,0.3);
+    margin-bottom: 8px;
+}
 
 /* ── EXPANDER ── */
 .streamlit-expanderHeader {
-    background: rgba(126,168,190,0.1) !important;
+    background: rgba(126,168,190,0.12) !important;
     border-radius: 10px !important;
-    color: #c2948a !important;
+    color: #e8a89e !important;
+    font-weight: 700 !important;
+}
+[data-testid="stExpander"] summary span {
+    color: #e8a89e !important;
     font-weight: 700 !important;
 }
 
 /* ── ALERTS / NOTIFICATIONS ── */
 [data-testid="stNotification"] { border-radius: 12px !important; }
+/* st.info / st.success / st.warning text contrast */
+[data-testid="stAlert"] p,
+[data-testid="stAlert"] div,
+div[class*="stAlert"] p {
+    color: #1a3545 !important;
+    font-weight: 700;
+}
+
+/* ── BOLD / STRONG ── */
+strong, b { color: #f6f0ed !important; }
+
+/* ── CAPTION ── */
+.stCaption, [data-testid="stCaptionContainer"] {
+    color: #c8bfba !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -234,7 +311,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 st.markdown(
-    '<p style="text-align:center;color:rgba(194,148,138,0.65);letter-spacing:5px;font-size:0.75rem;margin-bottom:20px;">THE STORYTELLING CARD GAME</p>',
+    '<p style="text-align:center;color:rgba(232,168,158,0.8);letter-spacing:5px;font-size:0.75rem;margin-bottom:20px;">THE STORYTELLING CARD GAME</p>',
     unsafe_allow_html=True
 )
 
@@ -308,9 +385,9 @@ if not st.session_state.player_name:
     with col:
         st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
         with st.form("login"):
-            st.markdown('<p style="color:#c2948a;font-weight:700;margin-bottom:2px;">Your Name</p>', unsafe_allow_html=True)
+            st.markdown('<p style="color:#e8a89e;font-weight:700;margin-bottom:2px;">Your Name</p>', unsafe_allow_html=True)
             name = st.text_input("name", placeholder="e.g. LUNA", label_visibility="collapsed").strip().upper()
-            st.markdown('<p style="color:#c2948a;font-weight:700;margin-bottom:2px;margin-top:8px;">Group Code</p>', unsafe_allow_html=True)
+            st.markdown('<p style="color:#e8a89e;font-weight:700;margin-bottom:2px;margin-top:8px;">Group Code</p>', unsafe_allow_html=True)
             group_input = st.text_input("group", placeholder="e.g. DREAM42", label_visibility="collapsed").strip().upper()
             st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
             submitted = st.form_submit_button("✨  Enter the Dream", use_container_width=True, type="primary")
@@ -404,13 +481,13 @@ def show_scoreboard(scores, order):
     sorted_scores = sorted(order, key=lambda p: scores.get(p, 0), reverse=True)
     for i, p in enumerate(sorted_scores):
         pts = scores.get(p, 0)
-        crown = "👑 " if i == 0 else ""
-        bg = "rgba(194,148,138,0.15)" if i == 0 else "rgba(246,240,237,0.05)"
-        border = "rgba(194,148,138,0.4)" if i == 0 else "rgba(126,168,190,0.15)"
+        crown = "👑 " if i == 0 else f"{i+1}. "
+        bg = "rgba(232,168,158,0.2)" if i == 0 else "rgba(246,240,237,0.06)"
+        border = "rgba(232,168,158,0.5)" if i == 0 else "rgba(126,168,190,0.2)"
         st.sidebar.markdown(
-            f'<div style="display:flex;justify-content:space-between;padding:8px 12px;border-radius:10px;'
-            f'margin-bottom:5px;background:{bg};border:1px solid {border};">'
-            f'<span>{crown}{p}</span><span style="font-weight:800;color:#f6f0ed">{pts} pts</span></div>',
+            f'<div class="score-row" style="background:{bg};border:1px solid {border};">'
+            f'<span style="color:#f0e8e4;font-weight:700;">{crown}{p}</span>'
+            f'<span class="score-pts">{pts} pts</span></div>',
             unsafe_allow_html=True
         )
 
@@ -434,10 +511,10 @@ def render_card_grid(cards, selectable=False, selected_card=None, key_prefix="ca
     for i, img in enumerate(display_cards):
         is_sel = (img == selected_card)
         with cols[i % 3]:
-            border_style = "3px solid #688b58" if is_sel else "2px solid transparent"
+            border_style = "3px solid #82b06a" if is_sel else "2px solid rgba(126,168,190,0.25)"
             st.markdown(
                 f'<div style="border:{border_style};border-radius:12px;overflow:hidden;'
-                f'box-shadow:{"0 0 16px rgba(68,255,136,0.4)" if is_sel else "none"};">',
+                f'box-shadow:{"0 0 16px rgba(130,176,106,0.5)" if is_sel else "none"};">',
                 unsafe_allow_html=True
             )
             st.image(img, use_container_width=True)
@@ -456,26 +533,49 @@ def render_card_grid(cards, selectable=False, selected_card=None, key_prefix="ca
 # ============================================================
 if phase != "LOBBY":
     st.sidebar.markdown(f"### 👤 {player}")
-    st.sidebar.markdown(f"**Group:** `{group}`")
-    st.sidebar.markdown(f"**Storyteller:** {game['storyteller_id']}")
-    st.sidebar.markdown(f"**Round:** {game['round_number'] + 1}")
+    st.sidebar.markdown(
+        f'<p style="color:#e8e0db;font-size:0.85rem;margin:2px 0;"><b>Group:</b> <code style="background:rgba(126,168,190,0.15);padding:1px 6px;border-radius:4px;color:#7ec8e8;">{group}</code></p>',
+        unsafe_allow_html=True
+    )
+    st.sidebar.markdown(
+        f'<p style="color:#e8e0db;font-size:0.85rem;margin:2px 0;"><b>Storyteller:</b> <span style="color:#f0c8a0;">{game["storyteller_id"]}</span></p>',
+        unsafe_allow_html=True
+    )
+    st.sidebar.markdown(
+        f'<p style="color:#e8e0db;font-size:0.85rem;margin:2px 0;"><b>Round:</b> {game["round_number"] + 1}</p>',
+        unsafe_allow_html=True
+    )
     st.sidebar.divider()
     show_scoreboard(scores, order)
     st.sidebar.divider()
 
-    # Always-visible deck viewer
+    # ── MY DECK — always visible in sidebar ──
     my_hand_sidebar = decks.get(player, [])
-    with st.sidebar.expander(f"🃏 My Deck  ({len(my_hand_sidebar)} cards)"):
-        if my_hand_sidebar:
-            for i in range(0, len(my_hand_sidebar), 2):
-                c1, c2 = st.sidebar.columns(2)
-                with c1:
-                    st.image(my_hand_sidebar[i], use_container_width=True)
-                if i + 1 < len(my_hand_sidebar):
-                    with c2:
-                        st.image(my_hand_sidebar[i + 1], use_container_width=True)
-        else:
-            st.sidebar.caption("No cards in hand.")
+    card_count = len(my_hand_sidebar)
+
+    st.sidebar.markdown(
+        f'<p style="color:#f0e8e4;font-weight:800;font-size:0.95rem;margin-bottom:8px;">'
+        f'🃏 My Cards &nbsp;<span style="background:rgba(126,168,190,0.2);color:#7ec8e8;'
+        f'border-radius:10px;padding:1px 8px;font-size:0.8rem;">{card_count}</span></p>',
+        unsafe_allow_html=True
+    )
+
+    if my_hand_sidebar:
+        # Render cards in 2-column grid (better fit for sidebar width)
+        for i in range(0, len(my_hand_sidebar), 2):
+            col_a, col_b = st.sidebar.columns(2)
+            with col_a:
+                st.image(my_hand_sidebar[i], use_container_width=True)
+                st.caption(f"Card {i+1}")
+            if i + 1 < len(my_hand_sidebar):
+                with col_b:
+                    st.image(my_hand_sidebar[i + 1], use_container_width=True)
+                    st.caption(f"Card {i+2}")
+    else:
+        st.sidebar.markdown(
+            '<p style="color:#c8bfba;font-size:0.85rem;font-style:italic;">No cards in hand.</p>',
+            unsafe_allow_html=True
+        )
 
     st.sidebar.divider()
     if st.sidebar.button("🚪 Exit & Reset Game"):
@@ -510,9 +610,9 @@ if phase == "LOBBY":
     """, unsafe_allow_html=True)
 
     st.markdown(
-        f'<p style="text-align:center;font-size:1rem;color:#c2948a;margin-bottom:20px;">'
+        f'<p style="text-align:center;font-size:1rem;color:#e8a89e;margin-bottom:20px;">'
         f'Group Code: <span style="font-family:monospace;font-size:1.4rem;color:#f6f0ed;'
-        f'background:rgba(40,83,107,0.5);padding:4px 16px;border-radius:8px;">{group}</span></p>',
+        f'background:rgba(40,83,107,0.6);padding:4px 16px;border-radius:8px;">{group}</span></p>',
         unsafe_allow_html=True
     )
 
@@ -528,11 +628,11 @@ if phase == "LOBBY":
     st.markdown("#### Players Joined")
     avatars = ["🌙", "⭐", "🌟", "💫", "🌈", "🔮", "🎭", "🃏"]
     for i, p in enumerate(order):
-        host_tag = " &nbsp;<small style='color:#c2948a;font-size:0.75rem;'>HOST</small>" if i == 0 else ""
+        host_tag = " &nbsp;<small style='color:#e8a89e;font-size:0.75rem;'>HOST</small>" if i == 0 else ""
         you_tag = " &nbsp;<small style='color:#88ccff;font-size:0.75rem;'>YOU</small>" if p == player else ""
         st.markdown(
-            f'<div style="padding:10px 16px;margin:5px 0;background:rgba(40,83,107,0.35);'
-            f'border-radius:12px;border:1px solid rgba(126,168,190,0.3);color:#f6f0ed;">'
+            f'<div style="padding:10px 16px;margin:5px 0;background:rgba(40,83,107,0.4);'
+            f'border-radius:12px;border:1px solid rgba(126,168,190,0.35);color:#f0e8e4;">'
             f'{avatars[i % len(avatars)]} <b>{p}</b>{host_tag}{you_tag}</div>',
             unsafe_allow_html=True
         )
@@ -587,21 +687,14 @@ else:
                 st.session_state.selected_card = clicked
                 st.rerun()
 
-            # Clue popup — appears right after grid when card is selected
             if selected and selected in my_hand:
-                st.markdown("""
-                <div class="clue-popup">
-                    <div class="clue-popup-title">✦ Your Clue</div>
-                </div>
-                """, unsafe_allow_html=True)
-                # Re-render inside real Streamlit widgets (can't nest inputs in raw HTML)
                 st.markdown(
-                    '<div style="background:linear-gradient(135deg,rgba(60,20,100,0.95),rgba(10,20,60,0.98));'
+                    '<div style="background:linear-gradient(135deg,rgba(26,53,69,0.97),rgba(20,42,55,0.99));'
                     'border:2px solid rgba(126,168,190,0.5);border-radius:20px;padding:20px 24px 16px;'
-                    'margin:0 0 16px;box-shadow:0 0 40px rgba(120,60,255,0.3);">',
+                    'margin:0 0 16px;box-shadow:0 0 40px rgba(40,83,107,0.4);">',
                     unsafe_allow_html=True
                 )
-                st.markdown('<p class="clue-popup-title">✦ &nbsp;WRITE YOUR CLUE</p>', unsafe_allow_html=True)
+                st.markdown('<p style="color:#e8a89e;font-size:0.8rem;letter-spacing:3px;text-transform:uppercase;font-weight:800;margin-bottom:8px;">✦ &nbsp;WRITE YOUR CLUE</p>', unsafe_allow_html=True)
                 clue = st.text_input(
                     "clue",
                     placeholder="e.g. melancholy afternoon… lonely giant… forgotten music…",
@@ -641,6 +734,10 @@ else:
                 </div>
             </div>
             """, unsafe_allow_html=True)
+            st.markdown(
+                '<p style="color:#c8bfba;font-style:italic;">Your cards are visible in the sidebar. Sit tight!</p>',
+                unsafe_allow_html=True
+            )
             time.sleep(3)
             st.rerun()
 
@@ -732,8 +829,8 @@ else:
                     st.image(img, use_container_width=True)
                     if img == my_decoy:
                         st.markdown(
-                            '<div style="text-align:center;color:rgba(180,140,255,0.5);'
-                            'font-size:11px;padding:2px 0;">your card</div>',
+                            '<div style="text-align:center;color:rgba(200,170,255,0.7);'
+                            'font-size:11px;padding:2px 0;font-weight:700;">your card</div>',
                             unsafe_allow_html=True
                         )
                     else:
@@ -768,7 +865,7 @@ else:
         _, mid, _ = st.columns([1, 2, 1])
         with mid:
             st.markdown(
-                '<p style="text-align:center;color:#c2948a;font-weight:800;'
+                '<p style="text-align:center;color:#e8a89e;font-weight:800;'
                 'letter-spacing:2px;font-size:0.8rem;margin-bottom:8px;">✦ THE STORYTELLER\'S CARD ✦</p>',
                 unsafe_allow_html=True
             )
@@ -788,11 +885,11 @@ else:
             voters_for_this = [p for p, v in votes.items() if v == img]
             is_real = (img == real_card)
             with cols[i % 3]:
-                border = "3px solid #c2948a" if is_real else "2px solid rgba(126,168,190,0.3)"
+                border = "3px solid #e8a89e" if is_real else "2px solid rgba(126,168,190,0.3)"
                 st.markdown(f'<div style="border:{border};border-radius:12px;overflow:hidden;">', unsafe_allow_html=True)
                 st.image(img, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
-                name_color = "#c2948a" if submitter == storyteller else "#f6f0ed"
+                name_color = "#e8a89e" if submitter == storyteller else "#f0e8e4"
                 st_tag = " 🌟" if submitter == storyteller else ""
                 st.markdown(
                     f'<div style="text-align:center;color:{name_color};font-weight:700;'
@@ -801,13 +898,13 @@ else:
                 )
                 if voters_for_this:
                     st.markdown(
-                        f'<div style="text-align:center;color:#80e8a0;font-size:0.75rem;">'
+                        f'<div style="text-align:center;color:#a8e890;font-size:0.75rem;font-weight:600;">'
                         f'Voted by: {", ".join(voters_for_this)}</div>',
                         unsafe_allow_html=True
                     )
                 else:
                     st.markdown(
-                        '<div style="text-align:center;color:rgba(180,140,255,0.4);font-size:0.75rem;">No votes</div>',
+                        '<div style="text-align:center;color:rgba(200,180,255,0.55);font-size:0.75rem;">No votes</div>',
                         unsafe_allow_html=True
                     )
 
@@ -818,16 +915,16 @@ else:
         for i, p in enumerate(sorted_players):
             gained = new_scores[p] - scores.get(p, 0)
             is_leader = (i == 0)
-            bg = "rgba(194,148,138,0.12)" if is_leader else "rgba(246,240,237,0.04)"
-            border = "rgba(194,148,138,0.4)" if is_leader else "rgba(126,168,190,0.15)"
-            crown = "👑 " if is_leader else ""
+            bg = "rgba(232,168,158,0.15)" if is_leader else "rgba(246,240,237,0.05)"
+            border = "rgba(232,168,158,0.5)" if is_leader else "rgba(126,168,190,0.2)"
+            crown = "👑 " if is_leader else f"{i+1}. "
             st.markdown(
                 f'<div style="display:flex;justify-content:space-between;align-items:center;'
                 f'padding:10px 16px;border-radius:12px;margin-bottom:6px;'
                 f'background:{bg};border:1px solid {border};">'
-                f'<span style="color:#f6f0ed;font-weight:700;">{crown}{p}</span>'
-                f'<span style="color:#f6f0ed;font-weight:800;">{new_scores[p]} pts &nbsp;'
-                f'<span style="color:#a8c896;font-size:0.85rem;">(+{gained})</span></span>'
+                f'<span style="color:#f0e8e4;font-weight:700;">{crown}{p}</span>'
+                f'<span style="color:#f0e8e4;font-weight:800;">{new_scores[p]} pts &nbsp;'
+                f'<span style="color:#a8e890;font-size:0.85rem;font-weight:700;">(+{gained})</span></span>'
                 f'</div>',
                 unsafe_allow_html=True
             )
@@ -855,5 +952,3 @@ else:
             st.info(f"⏳ Waiting for **{storyteller}** to start the next round…")
             time.sleep(3)
             st.rerun()
-
-
