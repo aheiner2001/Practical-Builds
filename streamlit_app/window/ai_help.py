@@ -73,7 +73,9 @@ if prompt := st.chat_input("Ask about an estimate or window issue..."):
         
         if uploaded_file:
             # Convert uploaded file to PIL image for the new SDK
-            img = Image.open(uploaded_file)
+            image_bytes = uploaded_file.getvalue()
+            img = Image.open(io.BytesIO(image_bytes))
+            img.load()  # force validation
             content_parts.append(img)
             content_parts.append(f"User Question: {prompt}")
         else:
