@@ -106,11 +106,11 @@ div[class*="stAlert"] p { color: #1a3545 !important; font-weight: 700 !important
 
 # --- SESSION STATE ---
 if "pending_delete" not in st.session_state:
-    st.session_state.pending_delete = None  # stores the id awaiting confirmation
+    st.session_state.pending_delete = None
+if "images" not in st.session_state:
+    st.session_state.images = None  # None = needs initial load
 
-# --- LOAD IMAGES ---
-@st.cache_data(ttl=30)
-def load_images():
+def fetch_images():
     res = supabase.table("dixit_pool").select("id, url").order("created_at", desc=True).execute()
     return [(r["id"], r["url"]) for r in res.data if r.get("url")]
 
@@ -121,15 +121,15 @@ st.markdown('<p style="text-align:center;color:rgba(232,168,158,0.8);letter-spac
 col1, col2 = st.columns([3, 1])
 with col2:
     if st.button("🔄 Refresh", use_container_width=True):
-        st.cache_data.clear()
+        st.session_state.images = fetch_images()
         st.session_state.pending_delete = None
-        st.session_state.pop("images_override", None)
         st.rerun()
 
-# Use override list if available (set after a delete for instant UI update)
-images = st.session_state.pop("images_override", None)
-if images is None:
-    images = load_images()
+# Load from DB only on first visit; after that session_state is the source of truth
+if st.session_state.images is None:
+    st.session_state.images = fetch_images()
+
+images = st.session_state.images
 
 with col1:
     st.markdown(
@@ -160,14 +160,12 @@ else:
                 st.markdown('</div>', unsafe_allow_html=True)
 
                 if not is_pending:
-                    # Normal — show remove button
                     st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
                     if st.button("🗑️ Remove", key=f"del_{img_id}", use_container_width=True):
                         st.session_state.pending_delete = img_id
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
                 else:
-                    # Confirmation state — card glows red
                     st.markdown(
                         '<div class="confirm-box">'
                         '<div class="confirm-label">⚠️ Delete this card?</div>'
@@ -180,10 +178,9 @@ else:
                         if st.button("✓ Yes", key=f"yes_{img_id}", use_container_width=True):
                             try:
                                 supabase.table("dixit_pool").delete().eq("id", img_id).execute()
+                                # Remove from session state list immediately — no cache involved
+                                st.session_state.images = [(i, u) for (i, u) in st.session_state.images if i != img_id]
                                 st.session_state.pending_delete = None
-                                st.cache_data.clear()
-                                # Store filtered list so next render is instant, no cache wait
-                                st.session_state.images_override = [img for img in images if img[0] != img_id]
                             except Exception as e:
                                 st.error(f"Failed: {e}")
                             st.rerun()
