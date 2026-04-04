@@ -106,12 +106,12 @@ div[class*="stAlert"] p { color: #1a3545 !important; font-weight: 700 !important
 
 # --- SESSION STATE ---
 if "pending_delete" not in st.session_state:
-    st.session_state.pending_delete = None  # stores the id awaiting confirmation
+    st.session_state.pending_delete = None  # sto the id awaiting confirmation
 
 # --- LOAD IMAGES ---
 @st.cache_data(ttl=30)
 def load_images():
-    res = supabase.table("dixit_pool").select("id, url").execute()
+    res = supabase.table("dixit_pool").select("id, url").order("created_at", desc=True).execute()
     return [(r["id"], r["url"]) for r in res.data if r.get("url")]
 
 # --- HEADER ---
