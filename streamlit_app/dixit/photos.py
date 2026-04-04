@@ -106,7 +106,7 @@ div[class*="stAlert"] p { color: #1a3545 !important; font-weight: 700 !important
 
 # --- SESSION STATE ---
 if "pending_delete" not in st.session_state:
-    st.session_state.pending_delete = None  # sto the id awaiting confirmation
+    st.session_state.pending_delete = None  # stores the id awaiting confirmation
 
 # --- LOAD IMAGES ---
 @st.cache_data(ttl=30)
@@ -123,9 +123,13 @@ with col2:
     if st.button("🔄 Refresh", use_container_width=True):
         st.cache_data.clear()
         st.session_state.pending_delete = None
+        st.session_state.pop("images_override", None)
         st.rerun()
 
-images = load_images()  # list of (id, url)
+# Use override list if available (set after a delete for instant UI update)
+images = st.session_state.pop("images_override", None)
+if images is None:
+    images = load_images()
 
 with col1:
     st.markdown(
@@ -178,7 +182,8 @@ else:
                                 supabase.table("dixit_pool").delete().eq("id", img_id).execute()
                                 st.session_state.pending_delete = None
                                 st.cache_data.clear()
-                                st.success("Card removed.")
+                                # Store filtered list so next render is instant, no cache wait
+                                st.session_state.images_override = [img for img in images if img[0] != img_id]
                             except Exception as e:
                                 st.error(f"Failed: {e}")
                             st.rerun()
