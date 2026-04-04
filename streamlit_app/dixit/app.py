@@ -25,21 +25,12 @@ st.markdown("""
   PALETTE:
   --charcoal:  #28536b  (dark blue-grey  — primary dark)
   --steel:     #7ea8be  (medium blue     — accents, borders)
-  --rosy:      #e8a89e  (warm rose       — highlights, selected)
+  --rosy:      #e8a89e  (warm rose       — highlights, selected) [BRIGHTENED]
   --parchment: #f6f0ed  (off-white       — backgrounds, text on dark)
-  --olive:     #82b06a  (dusty green     — done/success states)
+  --olive:     #82b06a  (dusty green     — done/success states) [BRIGHTENED]
   --text-main: #f0e8e4  (near-white      — primary readable text)
   --text-soft: #c8bfba  (light grey      — secondary text)
   --text-muted:#a09590  (muted           — tertiary / placeholders)
-
-  CONTRAST RULES:
-  - Dark bg (#1a3545, #28536b): text must be #f0e8e4 or lighter
-  - Medium bg (rgba overlays ~0.4-0.6): text #f6f0ed
-  - Alert/info boxes (light bg): text #1a3545 dark
-  - Pill-done (dark green bg): text #c0e8a8
-  - Pill-waiting (dark rose bg): text #f0b8ae
-  - Score rows: text #f0e8e4
-  - Sidebar: all text #f0e8e4 or lighter
 */
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Nunito:wght@300;400;600;700;800&display=swap');
@@ -59,51 +50,22 @@ html, body, [class*="css"] {
     border-right: 1px solid rgba(126,168,190,0.35);
 }
 
-/* ── TYPOGRAPHY — HIGH CONTRAST ── */
+/* ── TYPOGRAPHY — IMPROVED CONTRAST ── */
 h1, h2, h3 {
     font-family: 'Cinzel Decorative', cursive !important;
     color: #f6f0ed !important;
     text-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
-
-/* All body text on the dark app bg: must be very light */
-p, li, span,
-.stMarkdown p,
-[data-testid="stText"],
-.stMarkdown,
-.stMarkdown li,
+/* All body text: bright enough to read on dark bg */
+p, li, .stMarkdown p, [data-testid="stText"],
+.stMarkdown, .stMarkdown li,
 [data-testid="stMarkdownContainer"] p,
-[data-testid="stMarkdownContainer"] li,
-[data-testid="stMarkdownContainer"] span {
+[data-testid="stMarkdownContainer"] li {
     color: #f0e8e4 !important;
 }
-
-/* Labels and form elements */
 label, .stCheckbox label, .stRadio label {
     color: #f0e8e4 !important;
     font-weight: 600;
-}
-
-/* Markdown bold/strong — keep bright on dark bg */
-strong, b { color: #ffffff !important; }
-
-/* Caption text — still readable, just softer */
-.stCaption, [data-testid="stCaptionContainer"] {
-    color: #b8b0aa !important;
-}
-
-/* ── ALERT / INFO BOXES — light bg, use dark text ── */
-/* Streamlit renders these with a coloured-light background */
-[data-testid="stAlert"],
-[data-testid="stAlert"] p,
-[data-testid="stAlert"] div,
-div[class*="stAlert"] p,
-div[class*="stAlert"] span,
-[data-baseweb="notification"] p,
-[data-baseweb="notification"] span,
-[data-baseweb="notification"] div {
-    color: #1a3545 !important;
-    font-weight: 700 !important;
 }
 
 /* ── LOGIN CARD ── */
@@ -161,9 +123,8 @@ div[class*="stAlert"] span,
     text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 .phase-banner .phase-sub  {
-    color: rgba(232,168,158,0.95) !important;
+    color: rgba(232,168,158,0.9) !important;
     font-size: 0.82rem;
-    font-weight: 600;
 }
 
 /* ── CLUE DISPLAY ── */
@@ -180,55 +141,48 @@ div[class*="stAlert"] span,
     text-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
+/* ── CLUE POPUP ── */
+.clue-popup {
+    background: linear-gradient(135deg, rgba(26,53,69,0.97), rgba(20,42,55,0.99));
+    border: 2px solid rgba(126,168,190,0.5);
+    border-radius: 20px;
+    padding: 24px 24px 18px;
+    margin: 16px 0;
+    box-shadow: 0 0 32px rgba(40,83,107,0.5);
+}
+.clue-popup-title {
+    color: #e8a89e !important;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
 /* ── STATUS PILLS ── */
 .status-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
-.pill { border-radius: 20px; padding: 5px 14px; font-size: 0.82rem; font-weight: 800; }
+.pill { border-radius: 20px; padding: 5px 14px; font-size: 0.82rem; font-weight: 700; }
 .pill-done {
-    background: rgba(80,140,60,0.5);
-    border: 1px solid rgba(130,176,106,0.8);
-    color: #d4f0bc !important;
+    background: rgba(130,176,106,0.3);
+    border: 1px solid rgba(130,176,106,0.7);
+    color: #c0e8a8 !important;
 }
 .pill-waiting {
-    background: rgba(140,80,70,0.35);
-    border: 1px solid rgba(232,168,158,0.65);
-    color: #f8c8be !important;
+    background: rgba(232,168,158,0.2);
+    border: 1px solid rgba(232,168,158,0.55);
+    color: #f0b8ae !important;
 }
-/* Make sure pill text is never swallowed */
-.pill span, .pill-done span, .pill-waiting span { color: inherit !important; }
 
 /* ── SELECTED CARD BADGE ── */
 .selected-badge {
     text-align: center;
-    background: #4a7a38;
-    color: #e8f8d8 !important;
+    background: #688b58;
+    color: #f6f0ed;
     border-radius: 8px;
-    padding: 4px 0;
+    padding: 3px 0;
     font-size: 12px;
     font-weight: 800;
     margin-top: 3px;
-}
-
-/* ── PREVIEW CARD BANNER ── */
-.preview-banner {
-    background: linear-gradient(135deg, rgba(60,30,80,0.7), rgba(30,60,90,0.8));
-    border: 2px solid rgba(200,160,255,0.4);
-    border-radius: 18px;
-    padding: 20px 24px;
-    margin-bottom: 20px;
-    text-align: center;
-}
-.preview-banner .preview-title {
-    color: #e8d0ff !important;
-    font-size: 1.3rem;
-    font-weight: 800;
-    font-family: 'Cinzel Decorative', cursive;
-    margin-bottom: 6px;
-    text-shadow: 0 0 20px rgba(200,160,255,0.5);
-}
-.preview-banner .preview-sub {
-    color: #c8b8e8 !important;
-    font-size: 0.88rem;
-    line-height: 1.5;
 }
 
 /* ── BUTTONS ── */
@@ -308,6 +262,14 @@ hr { border-color: rgba(126,168,190,0.25) !important; }
 .score-row span { color: #f0e8e4 !important; }
 .score-pts { font-weight: 800; color: #f6f0ed !important; }
 
+/* ── SIDEBAR DECK CARD ── */
+.deck-card-wrap {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(126,168,190,0.3);
+    margin-bottom: 8px;
+}
+
 /* ── EXPANDER ── */
 .streamlit-expanderHeader {
     background: rgba(126,168,190,0.12) !important;
@@ -318,6 +280,24 @@ hr { border-color: rgba(126,168,190,0.25) !important; }
 [data-testid="stExpander"] summary span {
     color: #e8a89e !important;
     font-weight: 700 !important;
+}
+
+/* ── ALERTS / NOTIFICATIONS ── */
+[data-testid="stNotification"] { border-radius: 12px !important; }
+/* st.info / st.success / st.warning text contrast */
+[data-testid="stAlert"] p,
+[data-testid="stAlert"] div,
+div[class*="stAlert"] p {
+    color: #1a3545 !important;
+    font-weight: 700;
+}
+
+/* ── BOLD / STRONG ── */
+strong, b { color: #f6f0ed !important; }
+
+/* ── CAPTION ── */
+.stCaption, [data-testid="stCaptionContainer"] {
+    color: #c8bfba !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -387,8 +367,6 @@ if "player_name" not in st.session_state:
     st.session_state.player_name = None
 if "group_code" not in st.session_state:
     st.session_state.group_code = None
-if "preview_ready" not in st.session_state:
-    st.session_state.preview_ready = False
 
 
 # ============================================================
@@ -417,7 +395,6 @@ if not st.session_state.player_name:
                 if name and group_input:
                     st.session_state.player_name = name
                     st.session_state.group_code = group_input
-                    st.session_state.preview_ready = False
                     st.rerun()
                 else:
                     st.warning("Please enter both your name and a group code.")
@@ -445,7 +422,6 @@ if not game_res.data:
         "clue": None,
         "storyteller_id": None,
         "round_number": 0,
-        "preview_ready": {},
     }).execute()
     st.rerun()
 
@@ -455,7 +431,6 @@ order: list = game["player_order"] or []
 decks: dict = game["player_decks"] or {}
 discard: list = game["discard_pile"] or []
 scores: dict = game["scores"] or {}
-preview_ready: dict = game.get("preview_ready") or {}
 
 
 # ============================================================
@@ -556,28 +531,23 @@ def render_card_grid(cards, selectable=False, selected_card=None, key_prefix="ca
 # ============================================================
 # SIDEBAR (during active game)
 # ============================================================
-if phase not in ("LOBBY",):
+if phase != "LOBBY":
     st.sidebar.markdown(f"### 👤 {player}")
     st.sidebar.markdown(
         f'<p style="color:#e8e0db;font-size:0.85rem;margin:2px 0;"><b>Group:</b> <code style="background:rgba(126,168,190,0.15);padding:1px 6px;border-radius:4px;color:#7ec8e8;">{group}</code></p>',
         unsafe_allow_html=True
     )
-
-    if phase != "PREVIEW":
-        st.sidebar.markdown(
-            f'<p style="color:#e8e0db;font-size:0.85rem;margin:2px 0;"><b>Storyteller:</b> <span style="color:#f0c8a0;">{game["storyteller_id"]}</span></p>',
-            unsafe_allow_html=True
-        )
-        st.sidebar.markdown(
-            f'<p style="color:#e8e0db;font-size:0.85rem;margin:2px 0;"><b>Round:</b> {game["round_number"] + 1}</p>',
-            unsafe_allow_html=True
-        )
-
+    st.sidebar.markdown(
+        f'<p style="color:#e8e0db;font-size:0.85rem;margin:2px 0;"><b>Storyteller:</b> <span style="color:#f0c8a0;">{game["storyteller_id"]}</span></p>',
+        unsafe_allow_html=True
+    )
+    st.sidebar.markdown(
+        f'<p style="color:#e8e0db;font-size:0.85rem;margin:2px 0;"><b>Round:</b> {game["round_number"] + 1}</p>',
+        unsafe_allow_html=True
+    )
     st.sidebar.divider()
-
-    if phase != "PREVIEW":
-        show_scoreboard(scores, order)
-        st.sidebar.divider()
+    show_scoreboard(scores, order)
+    st.sidebar.divider()
 
     # ── MY DECK — always visible in sidebar ──
     my_hand_sidebar = decks.get(player, [])
@@ -591,6 +561,7 @@ if phase not in ("LOBBY",):
     )
 
     if my_hand_sidebar:
+        # Render cards in 2-column grid (better fit for sidebar width)
         for i in range(0, len(my_hand_sidebar), 2):
             col_a, col_b = st.sidebar.columns(2)
             with col_a:
@@ -619,10 +590,8 @@ if phase not in ("LOBBY",):
             "clue": None,
             "storyteller_id": None,
             "round_number": 0,
-            "preview_ready": {},
         }).eq("group_code", group).execute()
         st.session_state.player_name = None
-        st.session_state.preview_ready = False
         st.rerun()
 
 
@@ -675,14 +644,13 @@ if phase == "LOBBY":
         if st.button("🚀  Begin the Dream!", type="primary", use_container_width=True):
             refill_hands()
             supabase.table("dixit_games").update({
-                "phase": "PREVIEW",
+                "phase": "STORYTELLING",
                 "storyteller_id": order[0],
                 "round_number": 0,
                 "submissions": {},
                 "votes": {},
                 "clue": None,
                 "scores": {p: 0 for p in order},
-                "preview_ready": {},
             }).eq("group_code", group).execute()
             st.rerun()
     else:
@@ -690,83 +658,6 @@ if phase == "LOBBY":
 
     time.sleep(3)
     st.rerun()
-
-
-# ============================================================
-# PHASE: PREVIEW — Everyone reviews their hand before play
-# ============================================================
-elif phase == "PREVIEW":
-    my_hand = decks.get(player, [])
-    ready_players = set(preview_ready.keys()) if preview_ready else set()
-    all_ready = len(ready_players) >= len(order)
-
-    st.markdown("""
-    <div class="preview-banner">
-        <div class="preview-title">✨ Your Hand Has Been Dealt ✨</div>
-        <div class="preview-sub">
-            Study your cards carefully — look for stories, feelings, and connections.<br>
-            When you're ready, click the button below to confirm you've seen your hand.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Big card grid — full width, no select needed, just viewing
-    st.markdown(
-        '<p style="color:#e8d0ff;font-weight:800;font-size:1rem;margin-bottom:12px;">'
-        '🃏 &nbsp;Your Starting Hand</p>',
-        unsafe_allow_html=True
-    )
-
-    if my_hand:
-        cols = st.columns(3)
-        for i, img in enumerate(my_hand):
-            with cols[i % 3]:
-                st.markdown(
-                    '<div style="border:2px solid rgba(200,160,255,0.35);border-radius:14px;'
-                    'overflow:hidden;box-shadow:0 4px 20px rgba(100,60,160,0.25);">',
-                    unsafe_allow_html=True
-                )
-                st.image(img, use_container_width=True)
-                st.markdown('</div>', unsafe_allow_html=True)
-                st.markdown(
-                    f'<p style="text-align:center;color:#c8b8e8;font-size:0.78rem;'
-                    f'font-weight:700;margin:3px 0 10px;">Card {i+1}</p>',
-                    unsafe_allow_html=True
-                )
-    else:
-        st.warning("No cards found in your hand — something may have gone wrong.")
-
-    st.markdown("---")
-
-    # Who is ready?
-    st.markdown(
-        '<p style="color:#f0e8e4;font-weight:800;font-size:0.9rem;margin-bottom:6px;">'
-        '🟢 &nbsp;Who\'s Ready to Play</p>',
-        unsafe_allow_html=True
-    )
-    status_pills(order, ready_players, label_done="✓ Ready", label_waiting="👀 Reviewing")
-
-    if player in ready_players:
-        st.success(f"✅ You're ready! Waiting for everyone else… ({len(ready_players)}/{len(order)} ready)")
-        if all_ready:
-            # All players ready — transition to STORYTELLING (only once, avoid race)
-            supabase.table("dixit_games").update({
-                "phase": "STORYTELLING",
-            }).eq("group_code", group).execute()
-            st.rerun()
-        else:
-            time.sleep(3)
-            st.rerun()
-    else:
-        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-        if st.button("✅  I've Seen My Cards — Let's Play!", type="primary", use_container_width=True):
-            preview_ready[player] = True
-            all_now_ready = len(preview_ready) >= len(order)
-            update_payload = {"preview_ready": preview_ready}
-            if all_now_ready:
-                update_payload["phase"] = "STORYTELLING"
-            supabase.table("dixit_games").update(update_payload).eq("group_code", group).execute()
-            st.rerun()
 
 
 # ============================================================
@@ -938,7 +829,7 @@ else:
                     st.image(img, use_container_width=True)
                     if img == my_decoy:
                         st.markdown(
-                            '<div style="text-align:center;color:#c8b0ff;'
+                            '<div style="text-align:center;color:rgba(200,170,255,0.7);'
                             'font-size:11px;padding:2px 0;font-weight:700;">your card</div>',
                             unsafe_allow_html=True
                         )
@@ -1013,7 +904,7 @@ else:
                     )
                 else:
                     st.markdown(
-                        '<div style="text-align:center;color:#b0a0d8;font-size:0.75rem;">No votes</div>',
+                        '<div style="text-align:center;color:rgba(200,180,255,0.55);font-size:0.75rem;">No votes</div>',
                         unsafe_allow_html=True
                     )
 
@@ -1061,3 +952,4 @@ else:
             st.info(f"⏳ Waiting for **{storyteller}** to start the next round…")
             time.sleep(3)
             st.rerun()
+
