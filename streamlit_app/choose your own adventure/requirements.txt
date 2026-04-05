@@ -1,1 +1,4 @@
-
+streamlit
+python-dotenv
+supabase
+google-generativeai
