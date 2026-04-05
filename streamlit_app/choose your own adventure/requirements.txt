@@ -7,3 +7,4 @@ google-generativeai
 rich
 markdown-it-py
 pygments
+mdurl
