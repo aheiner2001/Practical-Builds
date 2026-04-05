@@ -2,9 +2,3 @@ streamlit
 supabase
 python-dotenv
 google-generativeai
-
-# prevent conflicts
-rich
-markdown-it-py
-pygments
-mdurl
