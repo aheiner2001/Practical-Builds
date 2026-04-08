@@ -618,7 +618,11 @@ def generate_forecast(model, feature_cols, start_date, num_days=14):
 
     # Build hourly rows for forecast window
     rows = []
+    df = pd.DataFrame(rows)
+    df = pd.merge(df, hourly_w, on='datetime', how='left')
+    df = pd.merge(df, daily_w, on='date', how='left')
     df = df[df['date'].dt.dayofweek != 6]
+    
     for day_offset in range(num_days):
         d = start_date + timedelta(days=day_offset)
         for h in range(7, 21):  # 7am–8pm
@@ -627,9 +631,7 @@ def generate_forecast(model, feature_cols, start_date, num_days=14):
                          'car_count': 0})
     df = df[df['date'].dt.dayofweek != 6]
 
-    df = pd.DataFrame(rows)
-    df = pd.merge(df, hourly_w, on='datetime', how='left')
-    df = pd.merge(df, daily_w, on='date', how='left')
+    
 
     # Fill NaN weather with reasonable defaults
     df['hour_temp']   = df['hour_temp'].fillna(60)
