@@ -617,34 +617,52 @@ def generate_forecast(model, feature_cols, start_date, num_days=14):
         return None
 
     # Build hourly rows for forecast window
-    rows = []
-    df = pd.DataFrame(rows)
-    df = pd.merge(df, hourly_w, on='datetime', how='left')
-    df = pd.merge(df, daily_w, on='date', how='left')
-    df = df[df['date'].dt.dayofweek != 6]
+    import pandas as pd
+from datetime import timedelta
+
+# 1. Generate the skeleton data while skipping Sundays
+rows = []
+for day_offset in range(num_days):
+    current_day = start_date + timedelta(days=day_offset)
     
-    for day_offset in range(num_days):
-        d = start_date + timedelta(days=day_offset)
-        for h in range(7, 21):  # 7am–8pm
-            rows.append({'date': pd.Timestamp(d), 'hour_of_day': h,
-                         'datetime': pd.Timestamp(d) + pd.to_timedelta(h, unit='h'),
-                         'car_count': 0})
-    df = df[df['date'].dt.dayofweek != 6]
+    # .weekday() returns 6 for Sunday; we skip the entire day here
+    if current_day.weekday() == 6:
+        continue
+        
+    for h in range(7, 21):  # 7am–8pm
+        dt = pd.Timestamp(current_day) + pd.to_timedelta(h, unit='h')
+        rows.append({
+            'date': pd.Timestamp(current_day), 
+            'hour_of_day': h,
+            'datetime': dt,
+            'car_count': 0
+        })
 
-    
+# 2. Create DataFrame from the filtered rows
+df = pd.DataFrame(rows)
 
-    # Fill NaN weather with reasonable defaults
-    df['hour_temp']   = df['hour_temp'].fillna(60)
-    df['hour_precip'] = df['hour_precip'].fillna(0)
-    df['hour_wind']   = df['hour_wind'].fillna(10)
-    df['weather_code']= df['weather_code'].fillna(0)
-    df['day_temp_max']= df['day_temp_max'].fillna(65)
-    df['day_precip_sum'] = df['day_precip_sum'].fillna(0)
-    df['day_wind_max']   = df['day_wind_max'].fillna(12)
+# 3. Merge with weather data
+# (Ensure hourly_w and daily_w have datetime/date columns as the same type)
+df = pd.merge(df, hourly_w, on='datetime', how='left')
+df = pd.merge(df, daily_w, on='date', how='left')
 
-    df = df.sort_values(['date', 'hour_of_day']).reset_index(drop=True)
-    df = add_features(df)
-    df = df.fillna(0)
+# 4. Fill NaN weather with specific defaults
+fill_values = {
+    'hour_temp': 60,
+    'hour_precip': 0,
+    'hour_wind': 10,
+    'weather_code': 0,
+    'day_temp_max': 65,
+    'day_precip_sum': 0,
+    'day_wind_max': 12
+}
+df = df.fillna(value=fill_values)
+
+# 5. Final processing
+df = df.sort_values('datetime').reset_index(drop=True)
+df = add_features(df)
+df = df.fillna(0)
+
 
     # Predict
     X = pd.get_dummies(df[FEATURES], drop_first=True)
