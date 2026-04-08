@@ -448,9 +448,12 @@ if page == "📊 Weekly Overview":
         z=pivot_wide.values,
         x=[f"{h}:00" for h in pivot_wide.columns],
         y=pivot_wide.index.tolist(),
-        colorscale='Blues',
-        hoverongaps=False,
-        colorbar=dict(title="Avg Cars", tickfont=dict(color='#8b949e'), titlefont=dict(color='#8b949e')),
+        colorbar=dict(
+            title=dict(
+                text="Your Title Here",
+                font=dict(size=14)
+            )
+        )
     ))
     fig_heat.update_layout(
         title="Average Cars by Day & Hour",
