@@ -11,7 +11,8 @@ from plotly.subplots import make_subplots
 import re
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-from xgboost import XGBRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import train_test_split
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PAGE CONFIG
@@ -351,7 +352,16 @@ def load_and_train():
     max_date = df_model['date'].max()
     weights  = np.exp(-0.005*(max_date - df_model.loc[X_train.index,'date']).dt.days)
 
-    model = XGBRegressor(n_estimators=600, learning_rate=0.05, max_depth=7)
+    model = GradientBoostingRegressor(
+    n_estimators=600,      # same idea
+    learning_rate=0.05,    # same
+    max_depth=7,           # controls tree depth
+    min_samples_split=5,
+    min_samples_leaf=3,
+    subsample=0.8,         # like stochastic boosting (important!)
+    random_state=42
+)
+
     model.fit(X_train, y_train, sample_weight=weights)
 
     # ── 6. EVAL ──────────────────────────────────────────────────────────────
