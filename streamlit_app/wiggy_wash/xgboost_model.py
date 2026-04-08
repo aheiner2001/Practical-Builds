@@ -142,7 +142,7 @@ def train_model(df):
 # FORECAST
 # ==============================
 @st.cache_data
-def forecast_future(model, df, hourly_weather, days=14):
+def forecast_future(_model, df, hourly_weather, days=14):
     future_dates = pd.date_range(start=df['date'].max(), periods=days*24, freq='H')
 
     future_df = pd.DataFrame({'datetime': future_dates})
