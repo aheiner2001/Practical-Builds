@@ -6,7 +6,10 @@ import requests
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-from xgboost import XGBRegressor
+from sklearn.ensemble import RandomForestRegressor
+
+
+
 
 st.set_page_config(layout="wide")
 st.title("🚗 Wiggy Wash AI Dashboard")
@@ -128,7 +131,12 @@ def load_and_train():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-    model = XGBRegressor(n_estimators=300)
+    model = RandomForestRegressor(
+    n_estimators=200,
+    max_depth=15,
+    random_state=42,
+    n_jobs=-1
+)
     model.fit(X_train, y_train)
 
     preds = np.expm1(model.predict(X_test))
