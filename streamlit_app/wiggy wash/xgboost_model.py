@@ -1,7 +1,8 @@
 # wiggy_wash_app.py  –  Wiggy Wash Forecasting Dashboard
 # Run with:  streamlit run wiggy_wash_app.py
-st.write("App starting...")
+
 import streamlit as st
+st.write("App starting...")
 import pandas as pd
 import numpy as np
 import requests
