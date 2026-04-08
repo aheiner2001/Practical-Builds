@@ -157,7 +157,7 @@ df_hist, model, features = load_and_train()
 # FUTURE FORECAST (NEXT 14 DAYS)
 # ─────────────────────────────────────────────────────────────────────────────
 @st.cache_data(show_spinner="Generating forecasts...")
-def build_future_forecast(model, features):
+def build_future_forecast(_model, features):
 
     params = {
         'latitude': 40.1618,
