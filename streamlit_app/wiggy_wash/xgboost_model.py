@@ -624,6 +624,7 @@ def generate_forecast(model, feature_cols, start_date, num_days=14):
             rows.append({'date': pd.Timestamp(d), 'hour_of_day': h,
                          'datetime': pd.Timestamp(d) + pd.to_timedelta(h, unit='h'),
                          'car_count': 0})
+    df = df[df['date'].dt.dayofweek != 6]
 
     df = pd.DataFrame(rows)
     df = pd.merge(df, hourly_w, on='datetime', how='left')
