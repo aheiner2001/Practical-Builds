@@ -617,8 +617,8 @@ def generate_forecast(model, feature_cols, start_date, num_days=14):
         return None
 
     # Build hourly rows for forecast window
-    import pandas as pd
-from datetime import timedelta
+    
+
 
 # 1. Generate the skeleton data while skipping Sundays
     rows = []
