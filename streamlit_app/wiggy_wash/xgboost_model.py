@@ -618,6 +618,7 @@ def generate_forecast(model, feature_cols, start_date, num_days=14):
 
     # Build hourly rows for forecast window
     rows = []
+    df = df[df['date'].dt.dayofweek != 6]
     for day_offset in range(num_days):
         d = start_date + timedelta(days=day_offset)
         for h in range(7, 21):  # 7am–8pm
