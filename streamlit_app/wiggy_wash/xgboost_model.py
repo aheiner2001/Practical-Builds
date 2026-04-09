@@ -6,21 +6,34 @@ import joblib
 import os
 from datetime import datetime, timedelta
 
+import os
+import joblib
+import streamlit as st
+
 st.set_page_config(page_title="WiggyWash Forecast", layout="wide")
 
 LAT, LON = 40.1618, -111.6348
 
 # ─────────────────────────────────────────────
-# LOAD MODEL
+# LOAD MODEL (FIXED)
 # ─────────────────────────────────────────────
 @st.cache_resource
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(BASE_DIR, "pipeline.pkl")
+def load_model():
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(BASE_DIR, "pipeline.pkl")
 
-model = joblib.load(model_path)
+    model = joblib.load(model_path)
+    return model
 
-feature_cols = data["feature_cols"]
-hour_pct_mapping = data["hour_pct_mapping"]
+model = load_model()
+
+# If you're loading extra data (you referenced `data`)
+# make sure it's actually defined — otherwise this will crash
+# Example:
+# data = joblib.load("metadata.pkl")
+
+# feature_cols = data["feature_cols"]
+# hour_pct_mapping = data["hour_pct_mapping"]
 
 
 # ─────────────────────────────────────────────
