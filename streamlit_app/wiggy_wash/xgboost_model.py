@@ -278,8 +278,14 @@ def parse_weather_json(w: dict):
     return hourly, daily
 
 @st.cache_resource(show_spinner=False)
+import os
+import pickle
+
 def load_model():
-    with open('pipeline.pkl', 'rb') as f:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(BASE_DIR, "pipeline.pkl")
+
+    with open(model_path, "rb") as f:
         return pickle.load(f)
 
 # ─────────────────────────────────────────
