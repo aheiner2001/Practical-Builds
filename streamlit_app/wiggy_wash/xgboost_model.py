@@ -14,8 +14,6 @@ LAT, LON = 40.1618, -111.6348
 # LOAD MODEL
 # ─────────────────────────────────────────────
 @st.cache_resource
-
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(BASE_DIR, "pipeline.pkl")
 
