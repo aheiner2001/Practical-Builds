@@ -4,6 +4,8 @@ import numpy as np
 import requests
 import pickle
 import datetime
+import os
+import pickle
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -278,8 +280,6 @@ def parse_weather_json(w: dict):
     return hourly, daily
 
 @st.cache_resource(show_spinner=False)
-import os
-import pickle
 
 def load_model():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
