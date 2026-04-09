@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import requests
 import joblib
+import os
 from datetime import datetime, timedelta
 
 st.set_page_config(page_title="WiggyWash Forecast", layout="wide")
@@ -13,13 +14,16 @@ LAT, LON = 40.1618, -111.6348
 # LOAD MODEL
 # ─────────────────────────────────────────────
 @st.cache_resource
-def load_pipeline():
-    return joblib.load("pipeline.pkl")
 
-data = load_pipeline()
-model = data["model"]
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(BASE_DIR, "pipeline.pkl")
+
+model = joblib.load(model_path)
+
 feature_cols = data["feature_cols"]
 hour_pct_mapping = data["hour_pct_mapping"]
+
 
 # ─────────────────────────────────────────────
 # WEATHER (OPEN METEO)
