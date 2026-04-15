@@ -1,3 +1,7 @@
+import warnings
+from sklearn.exceptions import InconsistentVersionWarning
+warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -281,11 +285,9 @@ def parse_weather_json(w: dict):
     return hourly, daily
 
 @st.cache_resource(show_spinner=False)
-
 def load_model():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     model_path = os.path.join(BASE_DIR, "pipeline.pkl")
-
     return joblib.load(model_path)
 
 # ─────────────────────────────────────────
