@@ -3,6 +3,14 @@ from st_supabase_connection import SupabaseConnection
 import qrcode
 from io import BytesIO
 import math
+from datetime import datetime
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_KEY")
 
 # -----------------------------
 # Page Config
@@ -137,11 +145,6 @@ upsell_id = query_params.get("id")
 # =============================
 if upsell_id:
 
-    if st.session_state.get("finished"):
-        st.success("Thanks! You may now close this browser.")
-        st.balloons()
-        st.stop()
-
     res = conn.table("upsell_sessions").select("*").eq("id", upsell_id).execute()
 
     if not res.data:
@@ -151,7 +154,17 @@ if upsell_id:
     data = res.data[0]
 
     if data.get("is_submitted"):
-        st.info("Request already processed. Thank you!")
+        st.success("Your bid has been submitted!")
+        st.subheader("Your Bid Summary")
+        st.write(f"Total Price: ${data['final_total']:,.2f}")
+        if data['selected_items']:
+            st.write("Selected Services:")
+            for item in data['selected_items']:
+                st.write(f"- {item}")
+        else:
+            st.write("No additional services selected.")
+        summary = f"Customer: {data['customer_name']}\nTotal: ${data['final_total']:,.2f}\nServices: {', '.join(data['selected_items']) if data['selected_items'] else 'None'}"
+        st.download_button("Download Bid Summary", summary, file_name="bid_summary.txt")
         st.stop()
 
     st.title(f"Hello, {data['customer_name']} (see total price below)")
@@ -191,11 +204,11 @@ if upsell_id:
                 running_total += total
                 applied_items.append(f"{desc} - ${total:.0f}")
 
-        if data.get("perm_lighting_info") and data["perm_lighting_info"].strip():
-            if st.checkbox("💡 Interested in permanent year-round lighting? (check for more info)"):
-                st.info(data["perm_lighting_info"])
-                applied_items.append("Lighting Interest - $0")
-
+        # if data.get("perm_lighting_info") and data["perm_lighting_info"].strip():
+        #     if st.checkbox("💡 Interested in permanent year-round lighting? (check for more info)"):
+        #         st.info(data["perm_lighting_info"])
+        #         applied_items.append("Lighting Interest - $0")
+       
     # Sticky total
     st.markdown(f"""
     <div class="sticky-total">
@@ -208,21 +221,25 @@ if upsell_id:
 
     st.divider()
 
+
     if st.button("Confirm & Submit"):
+
+        submission_time = datetime.now().strftime("%A, %B %d at %I:%M %p")
+
         conn.table("upsell_sessions").update({
             "selected_items": applied_items,
             "final_total": running_total,
-            "is_submitted": True
+            "is_submitted": True,
+            # "submission_time": submission_time
         }).eq("id", upsell_id).execute()
 
-        st.session_state.finished = True
         st.rerun()
 
 # =============================
 # ADMIN FLOW
 # =============================
 else:
-    st.title("Glide Admin")
+    st.title("FreshPane Bidding")
 
     with st.form("creator"):
 
@@ -230,8 +247,8 @@ else:
 
         c_base = st.number_input(
             "Base Price",
-            min_value=0.0,
-            value=0.0,
+            min_value=150.0,
+            value=150.0,
             step=5.0,
             key="base_price"
         )
@@ -280,18 +297,18 @@ else:
             return val if active else 0.0
 
         val_scr = admin_row("Screens", 25.0, "scr")
-        val_gut = admin_row("Gutters", 50.0, "gut")
+        val_gut = admin_row("Gutters", 175.0, "gut")
         val_fan = admin_row("Fans", 10.0, "fan")
         val_well = admin_row("Wells", 25.0, "well")
         val_mir = admin_row("Mirrors", 25.0, "mir")
 
         st.divider()
 
-        inc_light = st.checkbox("Permanent lighting info")
-        light_txt = st.text_area(
-            "Lighting Pitch Text",
-            "We’ll go over lighting options with you at the door!"
-        ) if inc_light else ""
+        # inc_light = st.checkbox("Permanent lighting info")
+        # light_txt = st.text_area(
+        #     "Lighting Pitch Text",
+        #     "We’ll go over lighting options with you at the door!"
+        # ) if inc_light else ""
 
         submitted = st.form_submit_button("Generate QR Code")
 
@@ -308,7 +325,9 @@ else:
                     "fan_price": float(val_fan),
                     "well_covers_price": float(val_well),
                     "mirrors_price": float(val_mir),
-                    "perm_lighting_info": light_txt
+                    # add datetime of submission
+                    # "created_at": datetime.now().isoformat(),
+                    # "perm_lighting_info": light_txt
                 }).execute()
 
                 base_url = "https://dgyzpaimv4zy73xfhfjrgv.streamlit.app/"
@@ -337,10 +356,16 @@ else:
         .order("created_at", desc=True) \
         .limit(10) \
         .execute()
+# formate created_at to be more readable
+
 
     if recent.data:
         for r in recent.data:
-            with st.expander(f"✅ {r['customer_name']} - ${r['final_total']}"):
+            raw_date = r.get('created_at')
+            formatted_date = datetime.fromisoformat(raw_date).strftime("%b %d, %Y %I:%M %p")
+           
+
+            with st.expander(f"✅ {r['customer_name']} - ${r['final_total']} | {formatted_date}"):
                 st.write(f"Selected: {', '.join(r['selected_items']) if r['selected_items'] else 'None'}")
                 st.write(f"Base Price: ${r['base_price']}")
     else:
