@@ -143,31 +143,35 @@ upsell_id = query_params.get("id")
 # add create pdf function that takes in summary and creates a pdf with the summary as content and a header image of the freshpane logo
 from fpdf import FPDF
 def create_pdf(summary):
-    # This gets the directory of the current file (upsell_app.py)
+    # 1. Initialize the PDF object
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    
+    # 2. Setup the path (The fix from before)
     script_path = Path(__file__).resolve().parent
     logo_path = script_path / "logofreshpoane.png"
     
-    # Debug: This will print the path to your Streamlit logs 
-    # so you can see exactly where it's looking
-    print(f"Looking for logo at: {logo_path}")
-    
-    # Initialize your PDF (assuming FPDF)
-    # pdf = FPDF() ... 
-    # pdf.add_page()
-    
-    if not logo_path.exists():
-        raise FileNotFoundError(f"Logo not found at {logo_path}. Check your folder structure.")
+    # 3. Add the logo (check if exists first to avoid crashes)
+    if logo_path.exists():
+        pdf.image(str(logo_path), x=10, y=8, w=33)
+    else:
+        # Optional: Add a placeholder or warning if logo is missing
+        pdf.cell(200, 10, txt="[Logo Missing]", ln=1, align='C')
 
-    pdf.image(str(logo_path), x=10, y=8, w=33)
-
-    # Add summary text
+    # 4. Add the summary text
+    # Moving the cursor down so it doesn't overlap the logo
+    pdf.ln(20) 
     pdf.multi_cell(0, 10, summary)
 
-    # Output PDF to a bytes buffer
-    buffer = BytesIO()
-    pdf.output(buffer)
-    buffer.seek(0)
-    return buffer.read()
+    # 5. Output to buffer
+    # Use 'S' to return the document as a byte string
+    pdf_output = pdf.output(dest='S')
+    
+    # Depending on your FPDF version, .output(dest='S') 
+    # might return bytes or a string. 
+    # Streamlit's download_button likes bytes.
+    return bytes(pdf_output) if isinstance(pdf_output, str) else pdf_output
 # =============================
 # CUSTOMER FLOW
 # =============================
