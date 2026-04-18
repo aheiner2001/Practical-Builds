@@ -164,7 +164,7 @@ if upsell_id:
         else:
             st.write("No additional services selected.")
         summary = f"Customer: {data['customer_name']}\nTotal: ${data['final_total']:,.2f}\nServices: {', '.join(data['selected_items']) if data['selected_items'] else 'None'}"
-        st.download_button("Download Bid Summary", summary, file_name="bid_summary.txt")
+        st.download_button("Download Bid Summary", summary, file_name="bid_summary.pdf", mime="text/plain")
         st.stop()
 
     st.title(f"Hello, {data['customer_name']} (see total price below)")
