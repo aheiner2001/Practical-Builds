@@ -143,14 +143,21 @@ upsell_id = query_params.get("id")
 # add create pdf function that takes in summary and creates a pdf with the summary as content and a header image of the freshpane logo
 from fpdf import FPDF
 def create_pdf(summary):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    current_dir = Path(__file__).parent if "__file__" in locals() else Path.cwd()
-    logo_path = current_dir / "logofreshpoane.png"
+    # This gets the directory of the current file (upsell_app.py)
+    script_path = Path(__file__).resolve().parent
+    logo_path = script_path / "logofreshpoane.png"
     
-    # Use the absolute path in your PDF generation
+    # Debug: This will print the path to your Streamlit logs 
+    # so you can see exactly where it's looking
+    print(f"Looking for logo at: {logo_path}")
+    
+    # Initialize your PDF (assuming FPDF)
+    # pdf = FPDF() ... 
+    # pdf.add_page()
+    
+    if not logo_path.exists():
+        raise FileNotFoundError(f"Logo not found at {logo_path}. Check your folder structure.")
+
     pdf.image(str(logo_path), x=10, y=8, w=33)
 
     # Add summary text
