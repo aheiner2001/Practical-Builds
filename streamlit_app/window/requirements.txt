@@ -18,3 +18,4 @@ pillow
 google.genai
 dotenv
 fpdf
+pathlib
