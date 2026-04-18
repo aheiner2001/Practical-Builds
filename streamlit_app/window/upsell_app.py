@@ -147,8 +147,11 @@ def create_pdf(summary):
     pdf.add_page()
     pdf.set_font("Arial", size=12)
 
-    # Add header image (replace 'logo.png' with your actual logo file)
-    pdf.image("logofreshpoane.png", x=10, y=8, w=33)
+    current_dir = Path(__file__).parent if "__file__" in locals() else Path.cwd()
+    logo_path = current_dir / "logofreshpoane.png"
+    
+    # Use the absolute path in your PDF generation
+    pdf.image(str(logo_path), x=10, y=8, w=33)
 
     # Add summary text
     pdf.multi_cell(0, 10, summary)
