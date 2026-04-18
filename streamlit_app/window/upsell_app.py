@@ -140,6 +140,24 @@ def render_service(label, price, icon, key, per_unit=False):
 query_params = st.query_params
 upsell_id = query_params.get("id")
 
+# add create pdf function that takes in summary and creates a pdf with the summary as content and a header image of the freshpane logo
+from fpdf import FPDF
+def create_pdf(summary):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    # Add header image (replace 'logo.png' with your actual logo file)
+    pdf.image("Untitled design (2).png", x=10, y=8, w=33)
+
+    # Add summary text
+    pdf.multi_cell(0, 10, summary)
+
+    # Output PDF to a bytes buffer
+    buffer = BytesIO()
+    pdf.output(buffer)
+    buffer.seek(0)
+    return buffer.read()
 # =============================
 # CUSTOMER FLOW
 # =============================
@@ -164,7 +182,15 @@ if upsell_id:
         else:
             st.write("No additional services selected.")
         summary = f"Customer: {data['customer_name']}\nTotal: ${data['final_total']:,.2f}\nServices: {', '.join(data['selected_items']) if data['selected_items'] else 'None'}"
-        st.download_button("Download Bid Summary", summary, file_name="bid_summary.pdf", mime="text/plain")
+        # download as pdf with image
+        pdf = create_pdf(summary)
+
+        st.download_button(
+            label="Download Summary PDF",
+            data=pdf,
+            file_name=f"{data['customer_name']}_bid_summary.pdf",
+            mime="application/pdf"
+        )
         st.stop()
 
     st.title(f"Hello, {data['customer_name']} (see total price below)")
