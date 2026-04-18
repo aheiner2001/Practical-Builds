@@ -16,3 +16,4 @@ st-supabase-connection
 qrcode
 pillow
 google.genai
+dotenv
