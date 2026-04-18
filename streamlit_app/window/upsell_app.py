@@ -148,7 +148,7 @@ def create_pdf(summary):
     pdf.set_font("Arial", size=12)
 
     # Add header image (replace 'logo.png' with your actual logo file)
-    pdf.image("Untitled design (2).png", x=10, y=8, w=33)
+    pdf.image("logofreshpoane.png", x=10, y=8, w=33)
 
     # Add summary text
     pdf.multi_cell(0, 10, summary)
