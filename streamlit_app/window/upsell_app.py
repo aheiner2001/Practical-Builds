@@ -166,7 +166,7 @@ if upsell_id:
         st.divider()
 
         services = [
-            ("Interior Windows", "", "interior_price", False, True),
+            ("Interior Windows", "", "interior_price", False, False),
             ("Deep Screen Clean", "", "screens_price", False, False),
             ("Ceiling Fan Dusting", "", "fan_price", True, False),
             ("Gutter Cleaning", "", "gutters_price", False, False),
