@@ -197,7 +197,7 @@ if upsell_id:
             st.write("No additional services selected.")
             # get data for [original price only] case and display that in a more user friendly way
 
-        summary = f"Customer: {data['customer_name']}\nTotal: ${data['final_total']:,.2f}\nExterior: ${data['exterior_price']:,.2f}\nAdd on Services: {', '.join(data['selected_items']) if data['selected_items'] else 'None'}"
+        summary = f"Customer: {data['customer_name']}\nTotal: ${data['final_total']:,.2f}\nExterior: ${data['base_price']:,.2f}\nAdd on Services: {', '.join(data['selected_items']) if data['selected_items'] else 'None'}"
         # download as pdf with image
         pdf = create_pdf(summary)
 
