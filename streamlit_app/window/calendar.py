@@ -5,7 +5,7 @@ from datetime import datetime, date, time, timedelta
 import calendar
 
 st.set_page_config(
-    page_title="Crystal Clear Window Cleaning",
+    page_title="FreshPane Solutions LLC",
     page_icon="🪟",
     layout="wide",
     initial_sidebar_state="collapsed",
