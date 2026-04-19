@@ -282,17 +282,17 @@ if upsell_id:
 # ADMIN FLOW
 # =============================
 else:
-    st.title("FreshPane Bidding")
+    
     # have button withhyperlink for this website google.com
     st.markdown("""
     <a href="https://freshpanebookings.streamlit.app/" target="_blank">
         <button style="width:100%; padding: 12px; background-color:#28536b; color:white; font-weight:600; border:none; border-radius:12px; margin-bottom:20px;">
-            Visit FreshPane Website
+            View Booking Calendar
         </button>
     </a>
     """, unsafe_allow_html=True)
 
-
+    st.title("FreshPane Bidding")
     with st.form("creator"):
 
         c_name = st.text_input("Customer Name")
