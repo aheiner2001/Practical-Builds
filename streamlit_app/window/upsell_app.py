@@ -208,6 +208,11 @@ if upsell_id:
             file_name=f"{data['customer_name']}_bid_summary.pdf",
             mime="application/pdf"
         )
+        st.link_button(
+            label="Schedule Later Time", 
+            url="https://freshpanecustomerbooking.streamlit.app/",
+            use_container_width=True  # Optional: makes the button stretch to match the UI
+        )
         st.stop()
 
     st.title(f"Hello, {data['customer_name']} (see total price below)")
