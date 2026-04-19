@@ -408,7 +408,7 @@ else:
 
 # Convert string to datetime object, then to Mountain Time
             dt_utc = pd.to_datetime(raw_date)
-            dt_local = dt_utc.tz_convert('US/Mountain') 
+            dt_local = dt_utc.tz_convert('America/Denver')
 
             formatted_date = dt_local.strftime("%b %d, %Y %I:%M %p")
            
