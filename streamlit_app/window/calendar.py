@@ -30,10 +30,10 @@ logo_path = script_path / "logofreshpoane.png"
     
     # 3. Add the logo (check if exists first to avoid crashes)
 if logo_path.exists():
-        pdf.image(str(logo_path), x=10, y=8, w=33)
+    st.image(str(logo_path), width=120)
 else:
-        # Optional: Add a placeholder or warning if logo is missing
-        pdf.cell(200, 10, txt="[Logo Missing]", ln=1, align='C')
+    st.warning("Logo image not found at 'logofreshpoane.png'. Please add your logo to the project directory.")
+
 
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
