@@ -23,13 +23,13 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     st.error("⚠️ Missing Supabase credentials. Add SUPABASE_URL and SUPABASE_KEY to your Streamlit secrets.")
     st.stop()
 
-# def sb_headers():
-#     return {
-#         "apikey": SUPABASE_KEY,
-#         "Authorization": f"Bearer {SUPABASE_KEY}",
-#         "Content-Type": "application/json",
-#         "Prefer": "return=representation",
-#     }
+def sb_headers():
+    return {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+    }
 
 def sb_get(table, params=None):
     r = requests.get(f"{SUPABASE_URL}/rest/v1/{table}", headers=sb_headers(), params=params or {})
