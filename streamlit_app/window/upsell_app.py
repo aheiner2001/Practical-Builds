@@ -7,6 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import os
 from pathlib import Path
+import pandas as pd
 load_dotenv()
 
 supabase_url = os.getenv("SUPABASE_URL")
@@ -404,7 +405,12 @@ else:
     if recent.data:
         for r in recent.data:
             raw_date = r.get('created_at')
-            formatted_date = datetime.fromisoformat(raw_date).strftime("%b %d, %Y %I:%M %p")
+
+# Convert string to datetime object, then to Mountain Time
+            dt_utc = pd.to_datetime(raw_date)
+            dt_local = dt_utc.tz_convert('US/Mountain') 
+
+            formatted_date = dt_local.strftime("%b %d, %Y %I:%M %p")
            
 
             with st.expander(f"✅ {r['customer_name']} - ${r['final_total']} | {formatted_date}"):
