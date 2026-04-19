@@ -382,7 +382,7 @@ else:
                     # "perm_lighting_info": light_txt
                 }).execute()
 
-                base_url = "https://dgyzpaimv4zy73xfhfjrgv.streamlit.app/"
+                base_url = "https://freshbids.streamlit.app/"
                 full_url = f"{base_url}?id={new.data[0]['id']}"
 
                 st.success(f"Upsell Created for {c_name}!")
