@@ -20,7 +20,7 @@ def make_maps_link(address):
 
 # 2. Page Config
 st.set_page_config(page_title="Admin Bookings", layout="wide")
-st.title("📅 Internal Bookings Calendar")
+st.title("📅 FreshPane Solutions Bookins")
 
 # Fetch Data
 data = get_bookings()
