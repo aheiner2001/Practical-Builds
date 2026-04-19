@@ -216,7 +216,7 @@ if upsell_id:
     running_total = base_price
     applied_items = []
 
-    none_op = st.checkbox("Exterior Only", key="none_box")
+    none_op = st.checkbox("Exterior Only: ${:.2f}".format(base_price), key="none_box")
 
     if not none_op:
         st.divider()
