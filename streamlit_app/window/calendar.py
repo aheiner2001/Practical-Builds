@@ -15,7 +15,16 @@ BUSINESS_NAME = "FreshPane Solutions LLC"
 BUSINESS_SUB  = "Window Cleaning"
 BOOKING_NOTE  = "60-min appointment · We bring all equipment"
 # add business logo
-st.image("logofreshpoane.png", width=100)
+script_path = Path(__file__).resolve().parent
+    logo_path = script_path / "logofreshpoane.png"
+    
+    # 3. Add the logo (check if exists first to avoid crashes)
+    if logo_path.exists():
+        pdf.image(str(logo_path), x=10, y=8, w=33)
+    else:
+        # Optional: Add a placeholder or warning if logo is missing
+        pdf.cell(200, 10, txt="[Logo Missing]", ln=1, align='C')
+
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
