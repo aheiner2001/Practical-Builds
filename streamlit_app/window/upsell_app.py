@@ -171,7 +171,7 @@ def create_pdf(summary):
     # Depending on your FPDF version, .output(dest='S') 
     # might return bytes or a string. 
     # Streamlit's download_button likes bytes.
-    return bytes(pdf_output) if isinstance(pdf_output, str) else pdf_output
+    return pdf_output.encode('latin-1') if isinstance(pdf_output, str) else pdf_output
 # =============================
 # CUSTOMER FLOW
 # =============================
