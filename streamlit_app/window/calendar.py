@@ -15,8 +15,9 @@ BUSINESS_NAME = "Crystal Clear"
 BUSINESS_SUB  = "Window Cleaning"
 BOOKING_NOTE  = "60-min appointment · We bring all equipment"
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", st.secrets.get("SUPABASE_URL", "")).rstrip("/")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", st.secrets.get("SUPABASE_KEY", ""))
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_KEY")
+
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     st.error("⚠️ Missing Supabase credentials. Add SUPABASE_URL and SUPABASE_KEY to your Streamlit secrets.")
