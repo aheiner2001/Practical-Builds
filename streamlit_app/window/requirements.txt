@@ -19,3 +19,4 @@ google.genai
 dotenv
 fpdf
 pathlib
+streamlit-calendar
