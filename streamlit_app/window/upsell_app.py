@@ -161,7 +161,7 @@ def create_pdf(summary):
 
     # 4. Add the summary text
     # Moving the cursor down so it doesn't overlap the logo
-    pdf.ln(50) 
+    pdf.ln(25) 
     pdf.multi_cell(0, 10, summary)
 
     # 5. Output to buffer
