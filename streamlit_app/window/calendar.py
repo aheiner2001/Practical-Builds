@@ -11,9 +11,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-BUSINESS_NAME = "Crystal Clear"
+BUSINESS_NAME = "FreshPane Solutions LLC"
 BUSINESS_SUB  = "Window Cleaning"
 BOOKING_NOTE  = "60-min appointment · We bring all equipment"
+# add business logo
+st.image("logofreshpoane.png", width=100)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
