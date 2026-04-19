@@ -15,8 +15,8 @@ BUSINESS_NAME = "Crystal Clear"
 BUSINESS_SUB  = "Window Cleaning"
 BOOKING_NOTE  = "60-min appointment · We bring all equipment"
 
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 
 if not SUPABASE_URL or not SUPABASE_KEY:
