@@ -224,9 +224,9 @@ if upsell_id:
         services = [
             ("Interior Windows", "", "interior_price", False, False),
             ("Deep Screen Clean", "", "screens_price", False, False),
-            ("Ceiling Fan Dusting", "", "fan_price", True, False),
+            # ("Ceiling Fan Dusting", "", "fan_price", True, False),
             ("Gutter Cleaning", "", "gutters_price", False, False),
-            ("Window Well Cover Cleaning", "", "well_covers_price", False, False),
+            # ("Window Well Cover Cleaning", "", "well_covers_price", False, False),
             ("Mirror Cleaning", "", "mirrors_price", False, False),
         ]
 
@@ -341,8 +341,8 @@ else:
 
         val_scr = admin_row("Screens", 25.0, "scr")
         val_gut = admin_row("Gutters", 175.0, "gut")
-        val_fan = admin_row("Fans", 10.0, "fan")
-        val_well = admin_row("Wells", 25.0, "well")
+        # val_fan = admin_row("Fans", 10.0, "fan") 
+        # val_well = admin_row("Wells", 25.0, "well")
         val_mir = admin_row("Mirrors", 25.0, "mir")
 
         st.divider()
@@ -365,8 +365,8 @@ else:
                     "interior_price": float(val_int if active_int else 0),
                     "screens_price": float(val_scr),
                     "gutters_price": float(val_gut),
-                    "fan_price": float(val_fan),
-                    "well_covers_price": float(val_well),
+                    # "fan_price": float(val_fan),
+                    # "well_covers_price": float(val_well),
                     "mirrors_price": float(val_mir),
                     # add datetime of submission
                     # "created_at": datetime.now().isoformat(),
