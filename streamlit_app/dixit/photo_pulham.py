@@ -111,7 +111,7 @@ if "images" not in st.session_state:
     st.session_state.images = None  # None = needs initial load
 
 def fetch_images():
-    res = supabase.table("dixit_pool").select("id, url").order("created_at", desc=True).execute()
+    res = supabase.table("dixit_pool_pulham").select("id, url").order("created_at", desc=True).execute()
     return [(r["id"], r["url"]) for r in res.data if r.get("url")]
 
 # --- HEADER ---
@@ -177,7 +177,7 @@ else:
                         st.markdown('<div class="confirm-yes">', unsafe_allow_html=True)
                         if st.button("✓ Yes", key=f"yes_{img_id}", use_container_width=True):
                             try:
-                                supabase.table("dixit_pool").delete().eq("id", img_id).execute()
+                                supabase.table("dixit_pool_pulham").delete().eq("id", img_id).execute()
                                 # Remove from session state list immediately — no cache involved
                                 st.session_state.images = [(i, u) for (i, u) in st.session_state.images if i != img_id]
                                 st.session_state.pending_delete = None
