@@ -359,7 +359,7 @@ with st.expander("⬆️ Admin: Add Cards to the Pool"):
 
 st.markdown(
     '<p style="text-align:center;font-size:0.82rem;margin-bottom:4px;">'
-    '<a href="https://era3hxbfcx3djqf3mdyfx2.streamlit.app/" target="_blank" '
+    '<a href="https://lxests6fmsfr8zsztpvzpz.streamlit.app/" target="_blank" '
     'style="color:#7ea8be;text-decoration:none;font-weight:700;'
     'background:rgba(126,168,190,0.12);padding:5px 14px;border-radius:8px;'
     'border:1px solid rgba(126,168,190,0.3);">🖼️ Open Image Gallery →</a></p>',
