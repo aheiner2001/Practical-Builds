@@ -151,7 +151,7 @@ def get_admin_password():
 if "admin_auth"    not in st.session_state: st.session_state.admin_auth = False
 if "selected_date" not in st.session_state: st.session_state.selected_date = None
 if "cal_month"     not in st.session_state: st.session_state.cal_month = date.today().replace(day=1)
-
+st.markdown("""
 <style>
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
@@ -285,7 +285,7 @@ hr { border-color: #c8dff0; }
 }
 
 </style>
-
+""", unsafe_allow_html=True)
 admin_mode = st.query_params.get("admin", "false").lower() == "true"
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -517,14 +517,14 @@ for week in calendar.monthcalendar(cur.year, cur.month):
                     st.session_state.selected_date = d
                     st.session_state.pop("confirm_slot", None)
                     st.session_state.pop("confirm_date", None)
-        
+                    st.rerun()
         # Smooth scroll trigger
         st.markdown("""
             <script>
                 window.parent.document.getElementById('booking-section').scrollIntoView({behavior: 'smooth'});
             </script>
         """, unsafe_allow_html=True)
-        st.rerun()
+       
 
 st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 st.divider()
