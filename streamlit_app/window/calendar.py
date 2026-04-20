@@ -418,7 +418,7 @@ for week in calendar.monthcalendar(cur.year, cur.month):
             scount = f"<div class='slot-count'>{n_slots} open</div>" if n_slots and not is_past else ""
             st.markdown(f"<div class='{cls}'><div class='day-num'>{day_num}</div>{tdot}{pips}{scount}</div>", unsafe_allow_html=True)
             if not is_past and n_slots > 0:
-                if st.button(str(day_num), key=f"c_{d.isoformat()}", help=f"{n_slots} slot(s)", use_container_width=True):
+                if st.button(f"{day_num}: Click Here", key=f"c_{d.isoformat()}", help=f"{n_slots} slot(s)", use_container_width=True):
                     st.session_state.selected_date = d
                     st.session_state.pop("confirm_slot", None); st.session_state.pop("confirm_date", None); st.rerun()
 
