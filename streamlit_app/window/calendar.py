@@ -347,8 +347,40 @@ if admin_mode:
 # ══════════════════════════════════════════════════════════════════════════════
 today = date.today()
 
-st.markdown(f"""<div class="hero-card"><div class="hero-label">Professional Window Cleaning</div><div class="hero-title">{BUSINESS_NAME}<br>{BUSINESS_SUB}</div><div class="hero-sub">📍 Schedule your appointment below &nbsp;·&nbsp; {BOOKING_NOTE}</div></div>""", unsafe_allow_html=True)
+# ══════════════════════════════════════════════════════════════════════════════
+# CLIENT VIEW
+# ══════════════════════════════════════════════════════════════════════════════
+today = date.today()
 
+# Create two columns for the Logo and the Business Title
+col_logo, col_text = st.columns([1, 4])
+
+with col_logo:
+    if logo_path.exists():
+        st.image(str(logo_path), width=150)
+    else:
+        # Fallback if image isn't found
+        st.markdown("<h1 style='font-size: 80px; margin: 0;'>🪟</h1>", unsafe_allow_html=True)
+
+with col_text:
+    st.markdown(f"""
+        <div style="padding-top: 10px;">
+            <div style="font-size: 0.75rem; letter-spacing: 0.2em; color: #5a8aaa; text-transform: uppercase; font-weight: 600; margin-bottom: 0.2rem;">
+                Professional Window Cleaning
+            </div>
+            <h1 style="font-family: 'Playfair Display', serif; font-size: 2.8rem; color: #1a2a3a; margin: 0; line-height: 1.1;">
+                {BUSINESS_NAME}
+            </h1>
+            <div style="color: #1e6fa8; font-size: 1.1rem; font-weight: 500; margin-top: 0.2rem;">
+                {BUSINESS_SUB}
+            </div>
+            <div style="color: #5a8aaa; font-size: 0.85rem; margin-top: 0.5rem;">
+                📍 Schedule your appointment below &nbsp;·&nbsp; {BOOKING_NOTE}
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+st.divider()
 cur = st.session_state.cal_month
 c_prev, c_title, c_next = st.columns([1,4,1])
 with c_prev:
