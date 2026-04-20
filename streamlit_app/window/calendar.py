@@ -28,11 +28,11 @@ BOOKING_NOTE  = "60-min appointment · We bring all equipment"
 script_path = Path(__file__).resolve().parent
 logo_path = script_path / "logofreshpoane.png"
     
-    # 3. Add the logo (check if exists first to avoid crashes)
-if logo_path.exists():
-    st.image(str(logo_path), width=120)
-else:
-    st.warning("Logo image not found at 'logofreshpoane.png'. Please add your logo to the project directory.")
+#     # 3. Add the logo (check if exists first to avoid crashes)
+# if logo_path.exists():
+#     st.image(str(logo_path), width=120)
+# else:
+#     st.warning("Logo image not found at 'logofreshpoane.png'. Please add your logo to the project directory.")
 
 
 
