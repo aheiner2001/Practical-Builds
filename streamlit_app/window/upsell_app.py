@@ -296,6 +296,13 @@ else:
         </button>
     </a>
     """, unsafe_allow_html=True)
+    st.markdown("""
+    <a href="https://notebooklm.google.com/notebook/10f219ed-c70e-4857-a070-dc1c12007f3a" target="_blank">
+        <button style="width:100%; padding: 12px; background-color:#28536b; color:white; font-weight:600; border:none; border-radius:12px; margin-bottom:20px;">
+           Schedule Time off
+        </button>
+    </a>
+    """, unsafe_allow_html=True)
 
     st.title("FreshPane Bidding")
     with st.form("creator"):
