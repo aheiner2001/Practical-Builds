@@ -190,6 +190,35 @@ div[data-testid="stButton"] > button[kind="primary"]:hover { background: #155d90
 .confirm-card { background:white;border:2px solid #1e6fa8;border-radius:16px;padding:1.5rem 1.8rem;margin-top:1.2rem;box-shadow:0 4px 20px rgba(30,111,168,0.12); }
 .footer-lnk { color:#7bbfe0 !important;text-decoration:none;font-weight:600; }
 hr { border-color: #c8dff0; }
+/* --- Add this inside your existing <style> block --- */
+
+@media (max-width: 672px) {
+    /* Reduce page padding so the calendar uses the whole screen */
+    .block-container { padding: 0.5rem !important; }
+    
+    /* Make calendar cells smaller and stack content */
+    .cal-cell { 
+        padding: 4px 1px !important; 
+        min-height: 60px !important; 
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    /* Shrink text sizes for mobile */
+    .day-num { font-size: 0.85rem !important; }
+    .slot-count { font-size: 0.5rem !important; line-height: 1; }
+    
+    /* Hide the dots/pips on mobile to save vertical space */
+    .today-dot, .slot-pip { display: none !important; }
+
+    /* Make the buttons easier to tap with thumbs */
+    div[data-testid="stButton"] > button {
+        padding: 8px 2px !important;
+        font-size: 0.7rem !important;
+        min-height: 35px;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
