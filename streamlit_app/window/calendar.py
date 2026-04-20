@@ -446,10 +446,21 @@ for week in calendar.monthcalendar(cur.year, cur.month):
             tdot   = "<div class='today-dot'></div>" if is_today else ""
             scount = f"<div class='slot-count'>{n_slots} open</div>" if n_slots and not is_past else ""
             st.markdown(f"<div class='{cls}'><div class='day-num'>{day_num}</div>{tdot}{pips}{scount}</div>", unsafe_allow_html=True)
+            # --- Replace your existing button block with this ---
             if not is_past and n_slots > 0:
-                if st.button(f"Select", key=f"c_{d.isoformat()}", help=f"{n_slots} slot(s)", use_container_width=True):
+                # We use a short "Select" to keep the grid tight
+                if st.button("Select", key=f"c_{d.isoformat()}", use_container_width=True):
                     st.session_state.selected_date = d
-                    st.session_state.pop("confirm_slot", None); st.session_state.pop("confirm_date", None); st.rerun()
+                    st.session_state.pop("confirm_slot", None)
+                    st.session_state.pop("confirm_date", None)
+        
+        # Smooth scroll trigger
+        st.markdown("""
+            <script>
+                window.parent.document.getElementById('booking-section').scrollIntoView({behavior: 'smooth'});
+            </script>
+        """, unsafe_allow_html=True)
+        st.rerun()
 
 st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 st.divider()
