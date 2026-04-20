@@ -468,7 +468,7 @@ with col_text:
                 {BUSINESS_SUB}
             </div>
             <div style="color: #5a8aaa; font-size: 0.85rem; margin-top: 0.5rem;">
-                📍 Schedule your appointment below &nbsp;·&nbsp; {BOOKING_NOTE}
+                📍 Select day and scroll to bottom to choose time &nbsp;·&nbsp; {BOOKING_NOTE}
             </div>
         </div>
     """, unsafe_allow_html=True)
