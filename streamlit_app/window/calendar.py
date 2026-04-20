@@ -152,9 +152,139 @@ if "admin_auth"    not in st.session_state: st.session_state.admin_auth = False
 if "selected_date" not in st.session_state: st.session_state.selected_date = None
 if "cal_month"     not in st.session_state: st.session_state.cal_month = date.today().replace(day=1)
 
-st.markdown("""
-https://freshbids.streamlit.app/?id=ec16eaec-29ee-4501-a4b5-bd33b683cd56
-""", unsafe_allow_html=True)
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+
+html, body, [class*="css"] { font-family: 'Outfit', sans-serif; }
+
+.stApp { background: linear-gradient(160deg, #e8f4fd 0%, #f0f8ff 40%, #e2eff9 100%); min-height: 100vh; color: #1a2a3a; }
+
+header[data-testid="stHeader"] { background: transparent; }
+
+.block-container { padding-top: 1.5rem; max-width: 1080px; }
+
+div[data-testid="stButton"] > button {
+
+    background: white; color: #1e6fa8; border: 1.5px solid #b8d9f0; border-radius: 10px;
+
+    padding: 0.45rem 0.8rem; font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 600;
+
+    letter-spacing: 0.03em; transition: all 0.18s ease; width: 100%; box-shadow: 0 1px 4px rgba(30,111,168,0.08);
+
+}
+
+div[data-testid="stButton"] > button:hover { background: #1e6fa8; color: white; border-color: #1e6fa8; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(30,111,168,0.25); }
+
+div[data-testid="stButton"] > button[kind="primary"] { background: #1e6fa8; color: white; border-color: #1e6fa8; }
+
+div[data-testid="stButton"] > button[kind="primary"]:hover { background: #155d90; box-shadow: 0 6px 24px rgba(30,111,168,0.35); }
+
+.cal-cell { background: white; border: 1.5px solid #d4e9f7; border-radius: 12px; padding: 10px 6px 8px; text-align: center; min-height: 72px; transition: all 0.18s ease; box-shadow: 0 1px 3px rgba(30,111,168,0.06); }
+
+.cal-cell.has-slots { border-color: #7bbfe0; }
+
+.cal-cell.has-slots:hover { background: #e8f4fd; border-color: #1e6fa8; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(30,111,168,0.18); }
+
+.cal-cell.selected { background: #1e6fa8 !important; border-color: #1e6fa8 !important; }
+
+.cal-cell.selected .day-num { color: white !important; }
+
+.cal-cell.selected .slot-count { color: rgba(255,255,255,0.8) !important; }
+
+.cal-cell.today { border-color: #f0a500 !important; }
+
+.cal-cell.past  { opacity: 0.38; }
+
+.cal-cell.empty { background: transparent; border-color: transparent; box-shadow: none; }
+
+.day-num { font-size: 1.05rem; font-weight: 700; color: #1a2a3a; line-height: 1; }
+
+.today-dot { width:5px;height:5px;background:#f0a500;border-radius:50%;margin:3px auto 0; }
+
+.slot-pip { width:6px;height:6px;background:#1e6fa8;border-radius:50%;display:inline-block;margin:5px 1px 0; }
+
+.cal-cell.selected .slot-pip { background: rgba(255,255,255,0.7); }
+
+.slot-count { font-size:0.6rem;color:#1e6fa8;font-weight:700;letter-spacing:0.05em;margin-top:3px; }
+
+.dow-hdr { text-align:center;font-size:0.68rem;font-weight:700;letter-spacing:0.14em;color:#5a8aaa;text-transform:uppercase;padding-bottom:10px; }
+
+.hero-card { background: linear-gradient(135deg, #1e6fa8 0%, #0d4f7c 100%); border-radius: 20px; padding: 2.2rem 2.5rem; margin-bottom: 1.8rem; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(30,111,168,0.3); }
+
+.hero-card::before { content: '🪟'; position: absolute; right: 2rem; top: 50%; transform: translateY(-50%); font-size: 5rem; opacity: 0.15; }
+
+.hero-label { font-size:0.7rem;letter-spacing:0.2em;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:600;margin-bottom:0.3rem; }
+
+.hero-title { font-family:'Playfair Display',serif;font-size:2.4rem;color:white;line-height:1.1;margin:0; }
+
+.hero-sub   { color:rgba(255,255,255,0.7);font-size:0.88rem;margin-top:0.5rem; }
+
+.confirm-card { background:white;border:2px solid #1e6fa8;border-radius:16px;padding:1.5rem 1.8rem;margin-top:1.2rem;box-shadow:0 4px 20px rgba(30,111,168,0.12); }
+
+.footer-lnk { color:#7bbfe0 !important;text-decoration:none;font-weight:600; }
+
+hr { border-color: #c8dff0; }
+
+/* --- Add this inside your existing <style> block --- */
+
+
+
+@media (max-width: 672px) {
+
+    /* Reduce page padding so the calendar uses the whole screen */
+
+    .block-container { padding: 0.5rem !important; }
+
+    
+
+    /* Make calendar cells smaller and stack content */
+
+    .cal-cell { 
+
+        padding: 4px 1px !important; 
+
+        min-height: 60px !important; 
+
+        display: flex;
+
+        flex-direction: column;
+
+        justify-content: center;
+
+    }
+
+    
+
+    /* Shrink text sizes for mobile */
+
+    .day-num { font-size: 0.85rem !important; }
+
+    .slot-count { font-size: 0.5rem !important; line-height: 1; }
+
+    
+
+    /* Hide the dots/pips on mobile to save vertical space */
+
+    .today-dot, .slot-pip { display: none !important; }
+
+
+
+    /* Make the buttons easier to tap with thumbs */
+
+    div[data-testid="stButton"] > button {
+
+        padding: 8px 2px !important;
+
+        font-size: 0.7rem !important;
+
+        min-height: 35px;
+
+    }
+
+}
+
+</style>
 
 admin_mode = st.query_params.get("admin", "false").lower() == "true"
 
