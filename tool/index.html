@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weight Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #2563eb;
+      --bg: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --green: #16a34a;
+      --red: #dc2626;
+    }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      background: #f9fafb;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: var(--bg);
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 1.125rem; font-weight: 700; }
+    .btn-icon {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+    }
+    nav.tabs {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    nav.tabs button {
+      flex: 1;
+      padding: 12px 8px;
+      min-height: 44px;
+      border: none;
+      background: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    nav.tabs button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    main { padding: 16px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .card h2, .card h3 { font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .stat-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .stat-card .label { font-size: 12px; color: var(--muted); }
+    .stat-card .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+    .stat-card .value.positive { color: var(--green); }
+    .stat-card .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .badge-change {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+    .badge-change.down { color: var(--green); background: #dcfce7; }
+    .badge-change.up { color: var(--red); background: #fee2e2; }
+    .section-title { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 16px 0 8px; }
+    .chart-wrap { position: relative; height: 220px; margin: 8px 0; }
+    .progress-wrap { margin-top: 12px; }
+    .progress-bar {
+      height: 12px;
+      background: var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 6px;
+      transition: width 0.3s;
+    }
+    .progress-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .collapsible-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      min-height: 44px;
+      font-weight: 600;
+    }
+    .collapsible-body { display: none; margin-top: 8px; overflow-x: auto; }
+    .collapsible-body.open { display: block; }
+    table.monthly { width: 100%; font-size: 12px; border-collapse: collapse; }
+    table.monthly th, table.monthly td { padding: 8px 4px; text-align: left; border-bottom: 1px solid var(--border); }
+    table.monthly th { color: var(--muted); font-weight: 500; }
+    .footer-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .btn {
+      min-height: 44px;
+      padding: 0 16px;
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-secondary { background: #f3f4f6; color: var(--text); }
+    .btn-danger { background: #fee2e2; color: var(--red); }
+    .btn-sm { min-height: 36px; padding: 0 12px; font-size: 14px; }
+    label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+    input[type="number"],
+    input[type="date"],
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      font-size: 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    .form-group { margin-bottom: 16px; }
+    .existing-entry {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .existing-entry p { margin-bottom: 8px; }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .pills label {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      margin: 0;
+      font-weight: 400;
+    }
+    .pills input { display: none; }
+    .pills input:checked + span,
+    .pills label:has(input:checked) {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .pills label:has(input:checked) { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .set-row {
+      display: grid;
+      grid-template-columns: 1fr 52px 52px 64px 36px;
+      gap: 6px;
+      align-items: end;
+      margin-bottom: 8px;
+    }
+    .set-row input { margin-bottom: 0; min-height: 44px; padding: 8px; font-size: 14px; }
+    .set-row .btn-remove {
+      min-height: 44px;
+      width: 36px;
+      padding: 0;
+      background: #fee2e2;
+      color: var(--red);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    .workout-list { max-height: 400px; overflow-y: auto; }
+    .workout-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .workout-item .meta { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .type-badge {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #dbeafe;
+      color: var(--accent);
+    }
+    #settings-panel {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+    }
+    #settings-panel.open { display: block; }
+    .settings-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+    }
+    .settings-drawer {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: min(320px, 90vw);
+      background: var(--bg);
+      padding: 16px;
+      box-shadow: -4px 0 24px rgba(0,0,0,0.1);
+      overflow-y: auto;
+    }
+    .settings-drawer h2 { margin-bottom: 16px; }
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      background: var(--text);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 200;
+      max-width: calc(100% - 32px);
+      transition: transform 0.3s ease;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    input[type="file"] { display: none; }
+    .hidden { display: none !important; }
+    .sunday-card { border-left: 4px solid var(--accent); }
+    .sunday-card .week-range { font-weight: 700; font-size: 1rem; }
+    .sunday-card .detail { font-size: 14px; color: var(--muted); margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Weight Tracker</h1>
+      <button type="button" class="btn-icon" id="btn-settings" aria-label="Settings">⚙</button>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button type="button" class="active" data-tab="dashboard">Dashboard</button>
+      <button type="button" data-tab="log">Log</button>
+      <button type="button" data-tab="workouts">Workouts</button>
+    </nav>
+
+    <main>
+      <section id="dashboard" class="tab-panel active">
+        <div id="sunday-summary-container"></div>
+        <div class="stat-grid" id="stat-cards"></div>
+        <p class="section-title">Running averages</p>
+        <div class="card" id="running-averages"></div>
+        <p class="section-title">Personal records</p>
+        <div class="card" id="personal-records"></div>
+        <p class="section-title">Weight over time</p>
+        <div class="card">
+          <div class="chart-wrap">
+            <canvas id="weight-chart"></canvas>
+          </div>
+          <div id="goal-progress" class="progress-wrap hidden"></div>
+        </div>
+        <div class="card">
+          <div class="collapsible-header" id="monthly-toggle">
+            <span>Monthly breakdown</span>
+            <span id="monthly-chevron">▼</span>
+          </div>
+          <div class="collapsible-body" id="monthly-body">
+            <table class="monthly">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Avg</th>
+                  <th>Weigh-ins</th>
+                  <th>Workouts</th>
+                  <th>Change</th>
+                </tr>
+              </thead>
+              <tbody id="monthly-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="footer-actions">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-import">Import CSV</button>
+          <input type="file" id="csv-import" accept=".csv">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-export">Export CSV</button>
+        </div>
+      </section>
+
+      <section id="log" class="tab-panel">
+        <div class="card">
+          <h2>Weight</h2>
+          <div id="weight-form-area"></div>
+        </div>
+        <div class="card">
+          <h2>Food log</h2>
+          <div id="food-form-area"></div>
+        </div>
+      </section>
+
+      <section id="workouts" class="tab-panel">
+        <div class="card">
+          <h2>Log a workout</h2>
+          <form id="workout-form">
+            <div class="form-group">
+              <label for="workout-date">Date</label>
+              <input type="date" id="workout-date" required>
+            </div>
+            <div class="form-group">
+              <label>Type</label>
+              <div class="pills" id="workout-type-pills">
+                <label><input type="radio" name="workout-type" value="strength" checked><span>Strength</span></label>
+                <label><input type="radio" name="workout-type" value="cardio"><span>Cardio</span></label>
+                <label><input type="radio" name="workout-type" value="flexibility"><span>Flexibility</span></label>
+                <label><input type="radio" name="workout-type" value="sport"><span>Sport</span></label>
+                <label><input type="radio" name="workout-type" value="other"><span>Other</span></label>
+              </div>
+            </div>
+            <div id="sets-builder">
+              <label>Exercises</label>
+              <div id="set-rows"></div>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-add-exercise">Add exercise</button>
+            </div>
+            <div class="form-group">
+              <label for="workout-notes">Notes (optional)</label>
+              <textarea id="workout-notes" placeholder="Workout notes..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%">Save workout</button>
+          </form>
+        </div>
+        <p class="section-title">History</p>
+        <div class="workout-list" id="workout-history"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="settings-panel">
+    <div class="settings-backdrop" id="settings-backdrop"></div>
+    <div class="settings-drawer">
+      <h2>Settings</h2>
+      <form id="settings-form">
+        <div class="form-group">
+          <label for="goal-weight">Goal weight (lbs)</label>
+          <input type="number" id="goal-weight" step="0.1" min="50" max="500">
+        </div>
+        <div class="form-group">
+          <label for="height-inches">Height (inches)</label>
+          <input type="number" id="height-inches" step="0.1" min="24" max="96">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-bottom:8px">Save</button>
+        <button type="button" class="btn btn-secondary" style="width:100%" id="settings-close">Close</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const START_WEIGHT = 220;
+    const START_DATE = '2024-12-27';
+    const GOAL_WEIGHT = null;
+
+    const KEYS = {
+      entries: 'wt_entries',
+      food: 'wt_food',
+      workouts: 'wt_workouts',
+      settings: 'wt_settings',
+      sunday: 'wt_sunday_summary'
+    };
+
+    let weightChart = null;
+
+    function todayISO() {
+      const d = new Date();
+      return d.toISOString().slice(0, 10);
+    }
+
+    function parseJSON(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveJSON(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    function getEntries() {
+      return parseJSON(KEYS.entries, []).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    function setEntries(entries) {
+      saveJSON(KEYS.entries, entries);
+    }
+
+    function getFood() {
+      return parseJSON(KEYS.food, []);
+    }
+
+    function setFood(food) {
+      saveJSON(KEYS.food, food);
+    }
+
+    function getWorkouts() {
+      return parseJSON(KEYS.workouts, []);
+    }
+
+    function setWorkouts(workouts) {
+      saveJSON(KEYS.workouts, workouts);
+    }
+
+    function getSettings() {
+      return parseJSON(KEYS.settings, { goalWeight: null, heightInches: null });
+    }
+
+    function setSettings(settings) {
+      saveJSON(KEYS.settings, settings);
+    }
+
+    function getSundaySummary() {
+      return parseJSON(KEYS.sunday, null);
+    }
+
+    function setSundaySummary(data) {
+      saveJSON(KEYS.sunday, data);
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    function getMostRecentWeight(entries) {
+      if (!entries.length) return null;
+      return entries[entries.length - 1];
+    }
+
+    function getCurrentWeight(entries) {
+      const recent = getMostRecentWeight(entries);
+      return recent ? recent.weight : START_WEIGHT;
+    }
+
+    function linearRegression(points) {
+      const n = points.length;
+      if (n < 2) return { slope: 0, intercept: points[0]?.y ?? 0 };
+      let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+      for (const p of points) {
+        sumX += p.x;
+        sumY += p.y;
+        sumXY += p.x * p.y;
+        sumXX += p.x * p.x;
+      }
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX) || 0;
+      const intercept = (sumY - slope * sumX) / n;
+      return { slope, intercept };
+    }
+
+    function bmiCategory(bmi) {
+      if (bmi < 18.5) return 'Underweight';
+      if (bmi < 25) return 'Normal';
+      if (bmi < 30) return 'Overweight';
+      return 'Obese';
+    }
+
+    function calcBMI(weightLbs, heightInches) {
+      if (!heightInches) return null;
+      return (weightLbs / (heightInches ** 2)) * 703;
+    }
+
+    function avgWeightInWindow(entries, days) {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(start.getDate() - (days - 1));
+      const startStr = start.toISOString().slice(0, 10);
+      const endStr = end.toISOString().slice(0, 10);
+      const inWindow = entries.filter(e => e.date >= startStr && e.date <= endStr);
+      if (!inWindow.length) return null;
+      return inWindow.reduce((s, e) => s + e.weight, 0) / inWindow.length;
+    }
+
+    function weekAvg(entries, weekStartDate) {
+      const start = new Date(weekStartDate + 'T12:00:00');
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      const s = start.toISOString().slice(0, 10);
+      const e = end.toISOString().slice(0, 10);
+      const w = entries.filter(x => x.date >= s && x.date <= e);
+      if (!w.length) return null;
+      return w.reduce((a, b) => a + b.weight, 0) / w.length;
+    }
+
+    function getMostRecentSunday() {
+      const d = new Date();
+      const day = d.getDay();
+      const diff = day === 0 ? 0 : day;
+      const sun = new Date(d);
+      sun.setDate(sun.getDate() - diff);
+      return sun.toISOString().slice(0, 10);
+    }
+
+    function hasActivityOnDate(date, entries, food, workouts) {
+      if (entries.some(e => e.date === date)) return true;
+      if (food.some(f => f.date === date)) return true;
+      if (workouts.some(w => w.date === date)) return true;
+      return false;
+    }
+
+    function calcStreak(entries, food, workouts) {
+      let streak = 0;
+      const d = new Date();
+      for (;;) {
+        const iso = d.toISOString().slice(0, 10);
+        if (hasActivityOnDate(iso, entries, food, workouts)) {
+          streak++;
+          d.setDate(d.getDate() - 1);
+        } else break;
+      }
+      return streak;
+    }
+
+    function ensureSundaySummary() {
+      const entries = getEntries();
+      const workouts = getWorkouts();
+      const now = new Date();
+      const weekOf = getMostRecentSunday();
+      const cached = getSundaySummary();
+      if (now.getDay() !== 0) return;
+      if (cached && cached.weekOf === weekOf) return;
+
+      const weekStart = new Date(weekOf + 'T12:00:00');
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      const prevStart = new Date(weekStart);
+      prevStart.setDate(prevStart.getDate() - 7);
+      const prevStartStr = prevStart.toISOString().slice(0, 10);
+
+      const avg = weekAvg(entries, weekOf);
+      const prevAvg = weekAvg(entries, prevStartStr);
+      const weekWorkouts = workouts.filter(w => {
+        return w.date >= weekOf && w.date <= weekEnd.toISOString().slice(0, 10);
+      }).length;
+
+      let weeklyChange = null;
+      if (avg != null && prevAvg != null) weeklyChange = avg - prevAvg;
+
+      setSundaySummary({
+        weekOf,
+        weekStart: weekOf,
+        weekEnd: weekEnd.toISOString().slice(0, 10),
+        avgWeight: avg,
+        workoutCount: weekWorkouts,
+        weeklyChange
+      });
+    }
+
+    function renderSundaySummary() {
+      ensureSundaySummary();
+      const container = document.getElementById('sunday-summary-container');
+      const summary = getSundaySummary();
+      if (!summary) {
+        container.innerHTML = '';
+        return;
+      }
+      const range = `${summary.weekStart} – ${summary.weekEnd}`;
+      const avg = summary.avgWeight != null ? summary.avgWeight.toFixed(1) + ' lbs' : '—';
+      const wc = summary.weeklyChange != null
+        ? (summary.weeklyChange < 0 ? '−' : '+') + Math.abs(summary.weeklyChange).toFixed(1) + ' lbs vs prior week'
+        : '—';
+      container.innerHTML = `
+        <div class="card sunday-card">
+          <div class="week-range">Sunday summary</div>
+          <div class="detail">${range}</div>
+          <div class="detail">Avg weight: ${avg}</div>
+          <div class="detail">Workouts: ${summary.workoutCount}</div>
+          <div class="detail">Weekly change: ${wc}</div>
+        </div>`;
+    }
+
+    function renderStatCards() {
+      const entries = getEntries();
+      const settings = getSettings();
+      const current = getCurrentWeight(entries);
+      const goal = settings.goalWeight;
+      const lost = START_WEIGHT - current;
+      const toGoal = goal != null ? current - goal : null;
+      const bmi = settings.heightInches ? calcBMI(current, settings.heightInches) : null;
+
+      const lostClass = lost > 0 ? 'positive' : '';
+      const lostStr = lost > 0 ? `− ${lost.toFixed(1)} lbs` : lost < 0 ? `+ ${Math.abs(lost).toFixed(1)} lbs` : '0 lbs';
+
+      let bmiHtml = '—';
+      if (bmi != null) {
+        bmiHtml = `${bmi.toFixed(1)} <span class="sub">${bmiCategory(bmi)}</span>`;
+      }
+
+      document.getElementById('stat-cards').innerHTML = `
+        <div class="stat-card"><div class="label">Current weight</div><div class="value">${current.toFixed(1)}</div><div class="sub">lbs</div></div>
+        <div class="stat-card"><div class="label">Starting weight</div><div class="value">${START_WEIGHT}</div><div class="sub">lbs</div></div>
+        <div class="stat-card"><div class="label">Total lost</div><div class="value ${lostClass}">${lostStr}</div></div>
+        <div class="stat-card"><div class="label">Goal weight</div><div class="value">${goal != null ? goal : '—'}</div><div class="sub">lbs</div></div>
+        <div class="stat-card"><div class="label">Lbs to goal</div><div class="value">${toGoal != null ? toGoal.toFixed(1) : '—'}</div><div class="sub">lbs</div></div>
+        <div class="stat-card"><div class="label">BMI</div><div class="value" style="font-size:20px">${bmiHtml}</div></div>
+      `;
+    }
+
+    function renderRunningAverages() {
+      const entries = getEntries();
+      const avg7 = avgWeightInWindow(entries, 7);
+      const avg14 = avgWeightInWindow(entries, 14);
+
+      const now = new Date();
+      const day = now.getDay();
+      const thisWeekStart = new Date(now);
+      thisWeekStart.setDate(thisWeekStart.getDate() - (day === 0 ? 6 : day - 1));
+      const lastWeekStart = new Date(thisWeekStart);
+      lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+
+      const thisAvg = weekAvg(entries, thisWeekStart.toISOString().slice(0, 10));
+      const lastAvg = weekAvg(entries, lastWeekStart.toISOString().slice(0, 10));
+      let weeklyHtml = '—';
+      if (thisAvg != null && lastAvg != null) {
+        const diff = thisAvg - lastAvg;
+        const down = diff < 0;
+        weeklyHtml = `<span class="badge-change ${down ? 'down' : 'up'}">${down ? '↓' : '↑'} ${Math.abs(diff).toFixed(1)} lbs</span>`;
+      }
+
+      document.getElementById('running-averages').innerHTML = `
+        <p><strong>7-day average:</strong> ${avg7 != null ? avg7.toFixed(1) + ' lbs' : '—'}</p>
+        <p style="margin-top:8px"><strong>14-day average:</strong> ${avg14 != null ? avg14.toFixed(1) + ' lbs' : '—'}</p>
+        <p style="margin-top:8px"><strong>Weekly change:</strong> ${weeklyHtml}</p>
+      `;
+    }
+
+    function renderPersonalRecords() {
+      const entries = getEntries();
+      const food = getFood();
+      const workouts = getWorkouts();
+      let lowest = null;
+      for (const e of entries) {
+        if (!lowest || e.weight < lowest.weight) lowest = e;
+      }
+      const streak = calcStreak(entries, food, workouts);
+      document.getElementById('personal-records').innerHTML = `
+        <p><strong>Lowest recorded:</strong> ${lowest ? lowest.weight.toFixed(1) + ' lbs on ' + lowest.date : '—'}</p>
+        <p style="margin-top:8px"><strong>Current streak:</strong> ${streak} day${streak !== 1 ? 's' : ''}</p>
+      `;
+    }
+
+    function renderGoalProgress() {
+      const settings = getSettings();
+      const goal = settings.goalWeight;
+      const wrap = document.getElementById('goal-progress');
+      if (goal == null) {
+        wrap.classList.add('hidden');
+        return;
+      }
+      wrap.classList.remove('hidden');
+      const current = getCurrentWeight(getEntries());
+      const total = START_WEIGHT - goal;
+      const done = START_WEIGHT - current;
+      const pct = total !== 0 ? Math.min(100, Math.max(0, (done / total) * 100)) : 0;
+      const remaining = Math.max(0, current - goal);
+      wrap.innerHTML = `
+        <p class="section-title" style="margin-top:0">Goal progress</p>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="progress-label">${pct.toFixed(0)}% · ${remaining.toFixed(1)} lbs remaining</div>
+      `;
+    }
+
+    function renderChart() {
+      const entries = getEntries();
+      const start = new Date(START_DATE + 'T12:00:00');
+      const end = new Date();
+      const dataMap = {};
+      entries.forEach(e => { dataMap[e.date] = e.weight; });
+
+      function daysSinceStart(dateStr) {
+        const a = new Date(START_DATE + 'T12:00:00');
+        const b = new Date(dateStr + 'T12:00:00');
+        return Math.round((b - a) / 86400000);
+      }
+
+      const allDates = [];
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        allDates.push(d.toISOString().slice(0, 10));
+      }
+
+      const chartLabels = [];
+      const chartData = [];
+      const regPoints = [];
+
+      allDates.forEach((date) => {
+        if (dataMap[date] != null) {
+          chartLabels.push(date);
+          chartData.push(dataMap[date]);
+          regPoints.push({ x: daysSinceStart(date), y: dataMap[date] });
+        }
+      });
+
+      const { slope, intercept } = linearRegression(regPoints);
+      const trendData = regPoints.map(p => slope * p.x + intercept);
+
+      const ctx = document.getElementById('weight-chart').getContext('2d');
+      if (weightChart) weightChart.destroy();
+
+      const weights = chartData.length ? chartData : [START_WEIGHT];
+      const minW = Math.min(...weights);
+      const maxW = Math.max(...weights);
+      const pad = 2;
+
+      weightChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: chartLabels,
+          datasets: [
+            {
+              label: 'Weight',
+              data: chartData,
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37,99,235,0.1)',
+              tension: 0.2,
+              pointRadius: 3,
+              fill: true
+            },
+            {
+              label: 'Trend',
+              data: trendData,
+              borderColor: '#9ca3af',
+              borderDash: [6, 4],
+              pointRadius: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          events: [],
+          plugins: {
+            legend: { display: true, position: 'bottom' },
+            tooltip: { enabled: false },
+            title: { display: true, text: 'Weight over time' }
+          },
+          scales: {
+            y: {
+              min: minW - pad,
+              max: maxW + pad,
+              title: { display: true, text: 'lbs' }
+            },
+            x: { ticks: { maxTicksLimit: 8 } }
+          }
+        }
+      });
+    }
+
+    function renderMonthly() {
+      const entries = getEntries();
+      const workouts = getWorkouts();
+      const months = [];
+      const start = new Date(START_DATE.slice(0, 7) + '-01T12:00:00');
+      const now = new Date();
+      let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+      while (cur <= now) {
+        months.push(cur.toISOString().slice(0, 7));
+        cur.setMonth(cur.getMonth() + 1);
+      }
+
+      let prevAvg = null;
+      const rows = months.map(ym => {
+        const [y, m] = ym.split('-').map(Number);
+        const monthStart = `${ym}-01`;
+        const lastDay = new Date(y, m, 0).getDate();
+        const monthEnd = `${ym}-${String(lastDay).padStart(2, '0')}`;
+        const monthEntries = entries.filter(e => e.date >= monthStart && e.date <= monthEnd);
+        const avg = monthEntries.length
+          ? monthEntries.reduce((s, e) => s + e.weight, 0) / monthEntries.length
+          : null;
+        const wCount = workouts.filter(w => w.date >= monthStart && w.date <= monthEnd).length;
+        let change = '—';
+        if (avg != null && prevAvg != null) {
+          const d = avg - prevAvg;
+          change = (d < 0 ? '−' : '+') + Math.abs(d).toFixed(1);
+        }
+        if (avg != null) prevAvg = avg;
+        const label = new Date(y, m - 1, 1).toLocaleString('default', { month: 'short', year: 'numeric' });
+        return { label, avg, weighIns: monthEntries.length, wCount, change };
+      });
+
+      document.getElementById('monthly-tbody').innerHTML = rows.reverse().map(r => `<tr>
+          <td>${r.label}</td>
+          <td>${r.avg != null ? r.avg.toFixed(1) : '—'}</td>
+          <td>${r.weighIns}</td>
+          <td>${r.wCount}</td>
+          <td>${r.change}</td>
+        </tr>`).join('');
+    }
+
+    function renderWeightForm() {
+      const today = todayISO();
+      const entries = getEntries();
+      const existing = entries.find(e => e.date === today);
+      const area = document.getElementById('weight-form-area');
+
+      if (existing && !area.dataset.editing) {
+        area.innerHTML = `
+          <div class="existing-entry">
+            <p><strong>Today:</strong> ${existing.weight} lbs</p>
+            <button type="button" class="btn btn-secondary btn-sm" id="weight-edit-btn">Edit</button>
+          </div>`;
+        document.getElementById('weight-edit-btn').onclick = () => {
+          area.dataset.editing = '1';
+          renderWeightForm();
+        };
+        return;
+      }
+
+      area.dataset.editing = '';
+      area.innerHTML = `
+        <div class="form-group">
+          <label for="weight-date">Date</label>
+          <input type="date" id="weight-date" value="${today}" ${existing ? '' : 'max="' + today + '"'}>
+        </div>
+        <div class="form-group">
+          <label for="weight-input">Weight (lbs)</label>
+          <input type="number" id="weight-input" step="0.1" min="50" max="500" value="${existing ? existing.weight : ''}" required>
+        </div>
+        <button type="button" class="btn btn-primary" style="width:100%" id="weight-save-btn">Save weight</button>
+      `;
+
+      const dateInput = document.getElementById('weight-date');
+      if (today === dateInput.value && existing) dateInput.readOnly = true;
+
+      document.getElementById('weight-save-btn').onclick = () => {
+        const date = dateInput.value;
+        const weight = parseFloat(document.getElementById('weight-input').value);
+        if (isNaN(weight) || weight < 50 || weight > 500) {
+          showToast('Enter a valid weight (50–500 lbs)');
+          return;
+        }
+        let list = getEntries().filter(e => e.date !== date);
+        list.push({ date, weight });
+        list.sort((a, b) => a.date.localeCompare(b.date));
+        setEntries(list);
+        showToast('Weight saved');
+        area.dataset.editing = '';
+        renderAll();
+      };
+    }
+
+    function renderFoodForm() {
+      const today = todayISO();
+      const food = getFood();
+      const existing = food.find(f => f.date === today);
+      const area = document.getElementById('food-form-area');
+
+      let existingHtml = '';
+      if (existing && !area.dataset.editing) {
+        existingHtml = `
+          <div class="existing-entry">
+            <p><strong>Today:</strong> ${existing.calories != null ? existing.calories + ' cal' : 'No calories'}${existing.notes ? ' — ' + existing.notes : ''}</p>
+            <button type="button" class="btn btn-secondary btn-sm" id="food-edit-btn">Edit</button>
+          </div>`;
+        area.innerHTML = existingHtml;
+        document.getElementById('food-edit-btn').onclick = () => {
+          area.dataset.editing = '1';
+          renderFoodForm();
+        };
+        return;
+      }
+
+      area.dataset.editing = '';
+      area.innerHTML = `
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="food-date" value="${today}" readonly>
+        </div>
+        <div class="form-group">
+          <label for="food-calories">Calories (optional)</label>
+          <input type="number" id="food-calories" min="0" step="1" value="${existing?.calories ?? ''}">
+        </div>
+        <div class="form-group">
+          <label for="food-notes">Notes (optional)</label>
+          <textarea id="food-notes" placeholder="What did you eat today?">${existing?.notes ?? ''}</textarea>
+        </div>
+        <button type="button" class="btn btn-primary" style="width:100%" id="food-save-btn">Save food log</button>
+        ${existing ? '' : ''}
+      `;
+
+      document.getElementById('food-save-btn').onclick = () => {
+        const date = document.getElementById('food-date').value;
+        const calRaw = document.getElementById('food-calories').value;
+        const calories = calRaw === '' ? null : parseInt(calRaw, 10);
+        const notes = document.getElementById('food-notes').value.trim() || null;
+        let list = getFood().filter(f => f.date !== date);
+        list.push({ date, calories, notes });
+        setFood(list);
+        showToast('Food log saved');
+        area.dataset.editing = '';
+        renderAll();
+      };
+    }
+
+    function createSetRow(data = {}) {
+      const row = document.createElement('div');
+      row.className = 'set-row';
+      row.innerHTML = `
+        <input type="text" placeholder="Exercise" class="ex-name" value="${data.exercise || ''}">
+        <input type="number" class="ex-sets" min="1" placeholder="Sets" value="${data.sets ?? ''}">
+        <input type="number" class="ex-reps" min="1" placeholder="Reps" value="${data.reps ?? ''}">
+        <input type="number" class="ex-weight" min="0" step="0.5" placeholder="lbs" value="${data.weight ?? ''}">
+        <button type="button" class="btn-remove" aria-label="Remove">×</button>
+      `;
+      row.querySelector('.btn-remove').onclick = () => row.remove();
+      return row;
+    }
+
+    function initWorkoutForm() {
+      document.getElementById('workout-date').value = todayISO();
+      const rows = document.getElementById('set-rows');
+      rows.innerHTML = '';
+      rows.appendChild(createSetRow());
+
+      function toggleSets() {
+        const type = document.querySelector('input[name="workout-type"]:checked').value;
+        document.getElementById('sets-builder').classList.toggle('hidden', type !== 'strength');
+      }
+      document.querySelectorAll('input[name="workout-type"]').forEach(r => {
+        r.addEventListener('change', toggleSets);
+      });
+      toggleSets();
+
+      document.getElementById('btn-add-exercise').onclick = () => {
+        rows.appendChild(createSetRow());
+      };
+
+      document.getElementById('workout-form').onsubmit = (e) => {
+        e.preventDefault();
+        const date = document.getElementById('workout-date').value;
+        const type = document.querySelector('input[name="workout-type"]:checked').value;
+        const notes = document.getElementById('workout-notes').value.trim() || null;
+        let sets = [];
+        if (type === 'strength') {
+          document.querySelectorAll('#set-rows .set-row').forEach(row => {
+            const exercise = row.querySelector('.ex-name').value.trim();
+            const setsN = parseInt(row.querySelector('.ex-sets').value, 10);
+            const reps = parseInt(row.querySelector('.ex-reps').value, 10);
+            const weight = parseFloat(row.querySelector('.ex-weight').value);
+            if (exercise) sets.push({ exercise, sets: setsN || 0, reps: reps || 0, weight: weight || 0 });
+          });
+        }
+        const workout = {
+          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+          date,
+          type,
+          sets,
+          notes
+        };
+        const list = getWorkouts();
+        list.push(workout);
+        setWorkouts(list);
+        document.getElementById('workout-notes').value = '';
+        rows.innerHTML = '';
+        rows.appendChild(createSetRow());
+        showToast('Workout saved');
+        renderWorkoutHistory();
+        renderAll();
+      };
+    }
+
+    function renderWorkoutHistory() {
+      const workouts = getWorkouts().sort((a, b) => b.date.localeCompare(a.date) || 0);
+      const el = document.getElementById('workout-history');
+      if (!workouts.length) {
+        el.innerHTML = '<p class="card" style="color:var(--muted)">No workouts yet.</p>';
+        return;
+      }
+      el.innerHTML = workouts.map(w => {
+        let detail = '';
+        if (w.type === 'strength' && w.sets?.length) {
+          detail = w.sets.map(s => `${s.exercise}: ${s.sets}×${s.reps} @ ${s.weight} lbs`).join('<br>');
+        } else if (w.notes) {
+          detail = w.notes.length > 80 ? w.notes.slice(0, 80) + '…' : w.notes;
+        }
+        return `
+          <div class="workout-item" data-id="${w.id}">
+            <div class="meta">
+              <span><strong>${w.date}</strong> <span class="type-badge">${w.type}</span></span>
+              <button type="button" class="btn btn-danger btn-sm workout-delete">Delete</button>
+            </div>
+            ${detail ? `<div style="font-size:14px">${detail}</div>` : ''}
+          </div>`;
+      }).join('');
+
+      el.querySelectorAll('.workout-delete').forEach(btn => {
+        btn.onclick = () => {
+          if (!confirm('Delete this workout?')) return;
+          const id = btn.closest('.workout-item').dataset.id;
+          setWorkouts(getWorkouts().filter(w => w.id !== id));
+          showToast('Workout deleted');
+          renderWorkoutHistory();
+          renderAll();
+        };
+      });
+    }
+
+    function renderSettingsForm() {
+      const s = getSettings();
+      document.getElementById('goal-weight').value = s.goalWeight ?? '';
+      document.getElementById('height-inches').value = s.heightInches ?? '';
+    }
+
+    function importCSV(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const lines = reader.result.trim().split(/\r?\n/);
+        let imported = 0, skipped = 0;
+        const entries = getEntries();
+        const dates = new Set(entries.map(e => e.date));
+        const newEntries = [...entries];
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          if (i === 0 && line.toLowerCase().includes('date')) continue;
+          const [date, weightStr] = line.split(',').map(s => s.trim());
+          const weight = parseFloat(weightStr);
+          if (!date || isNaN(weight)) continue;
+          if (dates.has(date)) { skipped++; continue; }
+          dates.add(date);
+          newEntries.push({ date, weight });
+          imported++;
+        }
+        newEntries.sort((a, b) => a.date.localeCompare(b.date));
+        setEntries(newEntries);
+        showToast(`Imported ${imported} new entries, skipped ${skipped} duplicates`);
+        renderAll();
+      };
+      reader.readAsText(file);
+    }
+
+    function exportCSV() {
+      const entries = getEntries();
+      const lines = ['date,weight', ...entries.map(e => `${e.date},${e.weight}`)];
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `weight-log-${todayISO()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function renderAll() {
+      renderSundaySummary();
+      renderStatCards();
+      renderRunningAverages();
+      renderPersonalRecords();
+      renderGoalProgress();
+      renderChart();
+      renderMonthly();
+      renderWeightForm();
+      renderFoodForm();
+      renderWorkoutHistory();
+    }
+
+    function initTabs() {
+      document.querySelectorAll('nav.tabs button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+      });
+    }
+
+    function initMonthlyToggle() {
+      const body = document.getElementById('monthly-body');
+      const chevron = document.getElementById('monthly-chevron');
+      document.getElementById('monthly-toggle').onclick = () => {
+        body.classList.toggle('open');
+        chevron.textContent = body.classList.contains('open') ? '▲' : '▼';
+      };
+    }
+
+    function initSettings() {
+      const panel = document.getElementById('settings-panel');
+      document.getElementById('btn-settings').onclick = () => {
+        renderSettingsForm();
+        panel.classList.add('open');
+      };
+      document.getElementById('settings-backdrop').onclick = () => panel.classList.remove('open');
+      document.getElementById('settings-close').onclick = () => panel.classList.remove('open');
+      document.getElementById('settings-form').onsubmit = (e) => {
+        e.preventDefault();
+        const gw = document.getElementById('goal-weight').value;
+        const hi = document.getElementById('height-inches').value;
+        setSettings({
+          goalWeight: gw === '' ? null : parseFloat(gw),
+          heightInches: hi === '' ? null : parseFloat(hi)
+        });
+        panel.classList.remove('open');
+        showToast('Settings saved');
+        renderAll();
+      };
+    }
+
+    function initImportExport() {
+      document.getElementById('btn-import').onclick = () => document.getElementById('csv-import').click();
+      document.getElementById('csv-import').onchange = (e) => {
+        const f = e.target.files[0];
+        if (f) importCSV(f);
+        e.target.value = '';
+      };
+      document.getElementById('btn-export').onclick = exportCSV;
+    }
+
+    initTabs();
+    initMonthlyToggle();
+    initSettings();
+    initImportExport();
+    initWorkoutForm();
+    renderAll();
+  </script>
+</body>
+</html>
